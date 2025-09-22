@@ -1,32 +1,46 @@
 from pymongo import MongoClient, errors
-from pydantic import BaseModel, ValidationError
-
 from typing import Optional, Dict, Union
 from src.database.modelConfig.dbModel import dbModel
 
+from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+
+
 from src.database.envConfig.envMongo import EnvLoaderMongo
+from src.database.modelConfig.configMongo import MongoParamBuilder
 
 
-class MongoConfig(BaseModel):
-    mongo_uri:str
-    mongo_user: Optional[str]
-    mongo_password:Optional[str]
 
 class MongoModel(dbModel):
     def __init__(self):
-        self.env_loader=EnvLoaderMongo()
-        self.configMongo=self.env_loader.get_config()
-
-        self.configMongo_lower = {chave.lower(): valor for chave, valor in self.configMongo.items()}
-
-        try:
-            self.config=MongoConfig(**self.configMongo_lower)
-        except ValidationError as err:
-            raise ValueError(f'Uma ou mais variáveis de ambiente para a conexão com o mongoDB está faltando.\nErro de validação{err}')
-        self.connMongo=None
+        self.env_data = MongoParamBuilder()
+        self.parametros = self.env_data.buil_data_env()
+        self.client = None
 
     def connect_db(self)->Union[MongoClient, str]:
-        return
-        # try:
-        #     self.host = self.config.mongo_uri.replace()
-        #     self.connMongo = MongoClient()    
+        if self.client:
+            print("COonxão com Mongo já está ativa.")
+            return self.client
+        try:
+            self.client = MongoClient(**self.parametros)
+            # self.res = self.client.admin.command('ping')  
+            # return self.res
+            return self.client
+        except (ConnectionFailure, ServerSelectionTimeoutError) as err:
+            return f'Erro ao conectar ao banco de dados:\n {err}'
+        except Exception as err:
+            return f'Erro inesperado na conexão:\n {err}'
+
+    def diconnect_db(self):
+        if self.client and not self.client.close():
+            self.client.close()
+        # return f"Errro"
+    
+
+# try:
+#     mongoModel = MongoModel()
+#     res = mongoModel.connect_db()
+#     question = res.admin.command('ping')
+
+#     print(question)
+# except errors.ConnectionFailure as err: 
+#     print(f"Erro{err}")
