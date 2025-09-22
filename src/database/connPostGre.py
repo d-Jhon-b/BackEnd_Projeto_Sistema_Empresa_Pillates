@@ -64,19 +64,18 @@ class PostGreModel(dbModel):
 try:
     db_instance = PostGreModel()
     
-    # 6. Chama o método de instância na instância
+   
     sql_conn = db_instance.connect_db()
     
-    # 7. Usa o objeto de conexão para criar um cursor
+   
     cursor = sql_conn.cursor()
     
     print("Cursor criado com sucesso!")
 
-    # Exemplo de consulta
     cursor.execute("SELECT version();")
     print("Versão do banco de dados:", cursor.fetchone())
 
-    # Lembre-se de fechar a conexão no final
+  
     cursor.close()
     sql_conn.close()
     print("Conexão encerrada.")
