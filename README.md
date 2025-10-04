@@ -25,5 +25,7 @@
                 Isso criara um novo arquivo para determinar uma nova migração
                 Ao terminar de editar as funções upgrade e downgrade no novo arquivo criado você pode aplicar ele.
                 -Aplicação:
-                    para aplicar upgrade: alembic upgrade head
+                    para aplicar upgrade: alembic upgrade head (caso)
                     para aplicar um downgrade: alembic downgrade head
+                    para verificar o status do upgrade ou downgrade: alembic history
+                    para mostrar a revisão do conteúdo: alembic current 
