@@ -9,10 +9,13 @@ class TipoDocumento(str.lower(), Enum):
     CPF = 'cpf'
     CNPJ = 'cnpj'
 
-class levelAccess(str,Enum):
-    SUPREMO = 'SUPREMO'
-    COLABORADOR = 'COLABORADOR'
-    MIN = 'MIN'
+class LevelAccess(str.lower(),Enum):
+    SUPREMO = 'supremo'
+    COLABORADOR = 'colaborador'
+    INSTRUTOR = 'instrutor'
+    ALUNO = 'aluno'
+    #        sa.Column('lv_acesso', sa.Enum('supremo', 'colaborador', 'instrutor','aluno',  name='lv_acesso_enum')),
+
 
 class PydanticObjectId(str):
     @classmethod
@@ -27,15 +30,15 @@ class PydanticObjectId(str):
     
 
 
-class User(BaseModel):
+class UserConfig(BaseModel):
     idUserPostGre:Optional[int]=Field(None, title='ID para banco de dados Relacional')
     idUserMongo: Optional[PydanticObjectId]=Field(None, alias="_id", title="ID para MongoDB")
-    fotoUser: Optional[str]= Field(None,max_digits=26,title='has da foto/imagem')
     nomeUser: Optional[str] = Field(..., max_length=255, title='Nome Completo' )
+    fotoUser: Optional[str]= Field(None,max_digits=26,title='has da foto/imagem')
     nascUser: date = Field(...,title='Data de Nascimento.\nEXEMPLO: (YYYY-MM-DD)')
     tipoDocUser: TipoDocumento = Field(..., title='Tipo de documento')
     numDocUser:  str=Field(..., max_length=14, title=f'Número do Documento') 
-    lvAccess: levelAccess = Field(...,title='Nível de acesso')
+    lvAccess: LevelAccess = Field(...,title='Nível de acesso')
     
 
 
