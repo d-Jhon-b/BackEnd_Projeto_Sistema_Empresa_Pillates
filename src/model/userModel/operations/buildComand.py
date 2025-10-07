@@ -13,23 +13,47 @@ class BuildComand():
 
     def build_comand(self, nomeTabela:str, **data)->Optional[Tuple[sql.Composed, Tuple]]:
         self.nomeTabela = nomeTabela
-        self.data = data
+        self.columns = data.keys()
+        self.valores = data.values()
         match self.tipoOperacao:
             case 'insert':
-                for self.chave, self.valor in data.items():
-                    print(f'{self.chave}: {self.valor}')
-                # try:
-                #     self.nomeTabela = nomeTabela
-                #     self.comand = f"""
-                #     insert into {self.nomeTabela}(name_user, foto_user, nasc_user, tipo_doc_user, num_doc_user, lv_acesso)
-                #     values({data['name_user'], data['foto_user'], data['nasc_user'], data['tipo_doc_user'], data['num_doc_user'],data['lv_acesso']})
-                #     """
-                #     return self.comand
-                # except:
-                #     return f'Erro ao acessar'
+                # for self.chave, self.valor in data.items():
+                #     print(f'{self.chave}: {self.valor}')
+                self.columnNames =', '.join(self.columns)
+                self.placeholderValues = ','.join(['%s'] * len(self.columns))
+                try:
+                    print(self.columnNames)
+                    print(self.placeholderValues)
+                    self.comand_str = f"""
+                    insert into {self.nomeTabela}({self.columnNames})
+                    values({self.placeholderValues})
+                    """
+                    return self.comand_str, tuple(self.valores)
+                except Exception as e:
+                    print(f'Erro ao construir comando: {e}')
+                    return None
+                
             case 'update':
                 return
             case 'delete':
                 return
             case 'select':
                 return
+            case _:
+                print(f'Operação {self.tipoOperacao} invalido')
+                return None
+            
+
+
+# data = {'name_user': 'jhon', 
+#         'foto_user': None,
+#         'nasc_user': '2005-05-03',
+#         'tipo_doc_user': 'cpf',
+#         'num_doc_user': '42502556899',
+#         'lv_acesso':'supremo'
+        
+#         }
+# typeOperation = 'INSERT'.lower()
+# objBUildComand= BuildComand(typeOperation)
+# buildComand = objBUildComand.build_comand('usuario', **data)
+# print(buildComand)

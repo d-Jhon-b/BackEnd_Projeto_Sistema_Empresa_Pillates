@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column('id_user', sa.Integer, primary_key=True, nullable=False, autoincrement=True),
         sa.Column('name_user', sa.String(100), nullable=False),
         sa.Column('foto_user', sa.String(255), nullable=True),
-        sa.Column('nasc_user', sa.Date, nullable=True),
+        sa.Column('nasc_user', sa.Date, nullable=False),
         sa.Column('tipo_doc_user', sa.Enum('cpf', 'cnpj',name='tipo_doc_user_enum'), nullable=False),
         sa.Column('num_doc_user', sa.String(14), nullable=False),
         sa.Column('lv_acesso', sa.Enum('supremo', 'colaborador', 'instrutor','aluno',  name='lv_acesso_enum')),

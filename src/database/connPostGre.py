@@ -1,7 +1,7 @@
 from psycopg2 import connect, OperationalError, Error
 from psycopg2.extensions import connection
 from pydantic import BaseModel, ValidationError
-
+from time import sleep
 
 from typing import Optional, Dict, Union
 from src.database.modelConfig.dbModel import dbModel
@@ -37,8 +37,12 @@ class PostGreModel(dbModel):
             raise OperationalError(f'Erro ao conectar ao banco de dados PostGreSQL.\nERRO:{err}')
 
     def diconnect_db(self):
+
+        print(f'conexão sendo encerrada')
+        sleep(2)
         if self.conn and not self.conn.closed:
             self.conn.close()
+            print('conexão encerrada')
 
             
 
