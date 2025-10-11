@@ -7,4 +7,4 @@ class InserTypeOperation():
         conPostGRe = postGre.connect_db()
         discPostGRe = postGre.diconnect_db()
 
-    def InsertUser():
+    # def InsertUser():

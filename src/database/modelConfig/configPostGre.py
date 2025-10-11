@@ -9,6 +9,8 @@ class PostGreConfig(BaseModel):
     user:str
     password:str
     port:str
+    #para o modelo asyncrono do FastAPI
+    driver: str = 'asyncpg'
 
 class PostGreParamBuilder():
     def __init__(self):
@@ -21,12 +23,25 @@ class PostGreParamBuilder():
             raise ValueError(f'Variáveis de ambiente do PostGe faltando: {err}')
         
     def build_data_env(self)->dict:
-        data_env = {
-            "database": self.config.database, 
-            "user": self.config.user,
-            "password": self.config.password,
-            "host": self.config.host,
-            "port": self.config.port
+        # self.data_env = {
+        #     "database": self.config.database, 
+        #     "user": self.config.user,
+        #     "password": self.config.password,
+        #     "host": self.config.host,
+        #     "port": self.config.port,
+        #     "DRIVER": self.config.driver
             
-            }
-        return data_env
+        #     }
+
+        self.url_connection = (
+            f"postgresql+{self.config.driver}://"
+            f"{self.config.user}:{self.config.password}@"
+            f"{self.config.host}:{self.config.port}/"
+            f"{self.config.database}"
+        )    
+        print(self.url_connection)    
+        return  self.url_connection
+
+
+# param = PostGreParamBuilder()
+# build = param.build_data_env()
