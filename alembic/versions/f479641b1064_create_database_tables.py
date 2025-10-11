@@ -55,7 +55,7 @@ def upgrade() -> None:
         'contato',
         sa.Column('id_contato', sa.Integer,primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
-        sa.Column('tipo_contato', sa.Enum('RESIDENCIAL', 'COMERCIAL', 'FAMILIAR', name='tipo_contato_enum')),
+        sa.Column('tipo_contato', sa.Enum('RESIDENCIAL', 'COMERCIAL', 'FAMILIAR', name='tipo_contato_enum'), nullable=False),
         sa.Column('numero_contato', sa.String(255), nullable=False)
     )
 
