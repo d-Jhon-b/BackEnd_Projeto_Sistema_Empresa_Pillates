@@ -87,33 +87,33 @@ async def get_postgre_session() -> AsyncGenerator[AsyncSession, None]:
             raise
 
 
-if __name__ == '__main__':
-    import asyncio
-    from sqlalchemy import text
+# if __name__ == '__main__':
+#     import asyncio
+#     from sqlalchemy import text
     
-    async def run_simple_test():
+#     async def run_simple_test():
         
-        # 1. Configurar o Engine
-        POSTGRE_DB_CONNECTOR.setup_engine() 
-        print("Engine configurado. Tentando obter sessão...")
+#         # 1. Configurar o Engine
+#         POSTGRE_DB_CONNECTOR.setup_engine() 
+#         print("Engine configurado. Tentando obter sessão...")
         
-        # 2. Chamar a função de dependência para obter a sessão
-        async with get_postgre_session() as session:
+#         # 2. Chamar a função de dependência para obter a sessão
+#         async with get_postgre_session() as session:
             
-            # 3. Executar a consulta
-            result = await session.execute(text("SELECT version()"))
-            version_info = result.scalar_one() 
+#             # 3. Executar a consulta
+#             result = await session.execute(text("SELECT version()"))
+#             version_info = result.scalar_one() 
             
-            print("\n-------------------------------------------")
-            print(f"✅ CONEXÃO BEM-SUCEDIDA!")
-            print(f"Versão do PostgreSQL: {version_info}")
-            print("-------------------------------------------")
+#             print("\n-------------------------------------------")
+#             print(f"✅ CONEXÃO BEM-SUCEDIDA!")
+#             print(f"Versão do PostgreSQL: {version_info}")
+#             print("-------------------------------------------")
             
-        # 4. Encerra o Engine
-        await POSTGRE_DB_CONNECTOR.disconnect_db()
+#         # 4. Encerra o Engine
+#         await POSTGRE_DB_CONNECTOR.disconnect_db()
 
-    # Executar a função assíncrona
-    asyncio.run(run_simple_test())
+#     # Executar a função assíncrona
+#     asyncio.run(run_simple_test())
         
 
 # try:

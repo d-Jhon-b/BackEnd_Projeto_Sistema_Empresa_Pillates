@@ -39,33 +39,7 @@ class UserConfig(BaseModel):
     tipoDocUser: TipoDocumento = Field(..., title='Tipo de documento')
     numDocUser:  str=Field(..., max_length=14, title=f'Número do Documento') 
     lvAccess: LevelAccess = Field(...,title='Nível de acesso')
-    
-
-
-    class Config:
-        """Configurações Pydantic."""
-        
-        # Permite que o Pydantic reconheça tanto o campo 'mongo_id' quanto o alias '_id'
-        populate_by_name = True 
-        
-        # Converte o ObjectId do Mongo para string quando o modelo é exportado para JSON
-        json_encoders = {
-            ObjectId: str
-        }
-        
-        # Garante que os valores das Enums ('cpf', 'SUPREMO') sejam usados em vez do objeto Enum
-        use_enum_values = True 
-        
-        # Exemplo para a documentação (swagger/openapi)
-        schema_extra = {
-            "example": {
-                "nameUser": "Alice da Silva",
-                "nascUser": "1990-05-15",
-                "tipoDocUser": "cpf",
-                "numDocUser": "12345678901",
-                "lvAccess": "COLABORADOR",
-            }
-        }
+    password_hash: str
 
 
 
