@@ -33,7 +33,7 @@ def upgrade() -> None:
         sa.Column('lv_acesso', sa.Enum('supremo', 'colaborador', 'instrutor','aluno',  name='lv_acesso_enum')),
         
         #aplicaçõe de conta:
-        sa.Column('tipo_email',sa.Enum('PESSOAL', 'COMERCIAL', name='tipo_email_enum'), nullable=False),
+        sa.Column('tipo_email',sa.Enum('pesssoal', 'comercial', name='tipo_email_enum'), nullable=False),
         sa.Column('email_user', sa.String(255), nullable=False),
         sa.Column('senha_user', sa.String(255), nullable= False),
 
@@ -273,7 +273,7 @@ def downgrade() -> None:
 
     op.execute('DROP TYPE tipo_especializacao_enum;')
     op.execute('DROP TYPE tipo_contato_enum;')
-    # op.execute('DROP TYPE tipo_email_enum;')
+    op.execute('DROP TYPE tipo_email_enum;')
     op.execute('DROP TYPE tipo_endereco_enum;')
     op.execute('DROP TYPE lv_acesso_enum;')
     op.execute('DROP TYPE tipo_doc_user_enum;')
