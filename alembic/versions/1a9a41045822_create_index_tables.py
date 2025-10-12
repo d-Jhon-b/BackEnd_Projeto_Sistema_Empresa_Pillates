@@ -26,7 +26,7 @@ def upgrade() -> None:
     # Tabelas de detalhes do Usuário (FKs para 'usuario.id_user')
    
     op.create_index(op.f('ix_endereco_fk_id_user'), 'endereco', ['fk_id_user'], unique=False)
-    op.create_index(op.f('ix_email_fk_id_user'), 'email', ['fk_id_user'], unique=False)
+    # op.create_index(op.f('ix_email_fk_id_user'), 'email', ['fk_id_user'], unique=False)
     op.create_index(op.f('ix_contato_fk_id_user'), 'contato', ['fk_id_user'], unique=False)
     
    
@@ -122,5 +122,5 @@ def downgrade() -> None:
 
     # Remoção de Índices de detalhes do Usuário
     op.drop_index(op.f('ix_contato_fk_id_user'), table_name='contato')
-    op.drop_index(op.f('ix_email_fk_id_user'), table_name='email')
+    # op.drop_index(op.f('ix_email_fk_id_user'), table_name='email')
     op.drop_index(op.f('ix_endereco_fk_id_user'), table_name='endereco')

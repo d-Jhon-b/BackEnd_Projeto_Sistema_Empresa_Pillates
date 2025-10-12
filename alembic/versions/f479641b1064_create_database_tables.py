@@ -32,6 +32,11 @@ def upgrade() -> None:
         sa.Column('num_doc_user', sa.String(14), nullable=False),
         sa.Column('lv_acesso', sa.Enum('supremo', 'colaborador', 'instrutor','aluno',  name='lv_acesso_enum')),
         
+        #aplicaçõe de conta:
+        sa.Column('tipo_email',sa.Enum('PESSOAL', 'COMERCIAL', name='tipo_email_enum'), nullable=False),
+        sa.Column('email_user', sa.String(255), nullable=False),
+        sa.Column('senha_user', sa.String(255), nullable= False),
+
         #Criar uma contraint para tornar o documento de um usuario unico em todo o sistema
         sa.UniqueConstraint('num_doc_user', name='uq_usuario_num_doc')
     )
@@ -43,14 +48,14 @@ def upgrade() -> None:
         sa.Column('endereco', sa.String(255), nullable=False),
         sa.Column('cep', sa.String(8), nullable=True)
     )
-    op.create_table(
-        'email',
-        sa.Column('id_email', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
-        sa.Column('tipo_email',sa.Enum('PESSOAL', 'COMERCIAL', name='tipo_email_enum'), nullable=False),
-        sa.Column('endereco_email', sa.String(255), nullable=False),
-        sa.UniqueConstraint('fk_id_user','endereco_email', name='uq_email_user_email')
-    )
+    # op.create_table(
+    #     'email',
+    #     sa.Column('id_email', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
+    #     sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
+    #     sa.Column('tipo_email',sa.Enum('PESSOAL', 'COMERCIAL', name='tipo_email_enum'), nullable=False),
+    #     sa.Column('endereco_email', sa.String(255), nullable=False),
+    #     sa.UniqueConstraint('fk_id_user','endereco_email', name='uq_email_user_email')
+    # )
     op.create_table(
         'contato',
         sa.Column('id_contato', sa.Integer,primary_key=True, autoincrement=True, nullable=False),
@@ -245,13 +250,13 @@ def downgrade() -> None:
     # Constraint na tabela 'usuario'
     op.drop_constraint('uq_usuario_num_doc', 'usuario', type_='unique')
     # Constraint na tabela 'email'
-    op.drop_constraint('uq_email_user_email', 'email', type_='unique') 
+    # op.drop_constraint('uq_email_user_email', 'email', type_='unique') 
 
     # 6. DROP DAS TABELAS DE DETALHES DO USUÁRIO
     
     # Dependem de Usuario
     op.drop_table('contato')
-    op.drop_table('email')
+    # op.drop_table('email')
     op.drop_table('endereco')
     
     # 7. DROP DA TABELA PRINCIPAL
@@ -268,7 +273,7 @@ def downgrade() -> None:
 
     op.execute('DROP TYPE tipo_especializacao_enum;')
     op.execute('DROP TYPE tipo_contato_enum;')
-    op.execute('DROP TYPE tipo_email_enum;')
+    # op.execute('DROP TYPE tipo_email_enum;')
     op.execute('DROP TYPE tipo_endereco_enum;')
     op.execute('DROP TYPE lv_acesso_enum;')
     op.execute('DROP TYPE tipo_doc_user_enum;')

@@ -1,162 +1,225 @@
-from pydantic import BaseModel, ValidationError
-from typing import Dict
+from pydantic import BaseModel, Field, BeforeValidator, ConfigDict, ValidationError, model_validator
+from typing import Union, Optional, Any, Annotated, Dict
+from enum import Enum
+from bson import ObjectId
+from datetime import date
 
-#importando metodos para inserir/criar user: 
-from src.model.userModel.operationsDB.insertModel import InsertValues
-from src.model.userModel.operationsDB.selectModel import SelectValues
+
+from src.model.userModel.userConfig.userConfig import UserConfig, LevelAccess
+from src.model.userModel.user_types import BaseUserType, AlunoUser, AdminUser, SupremoUser
+# from src.model.userModel.operationsDB.insertModel import InsertValues
 
 
-#exportando tipos de user: 
-from src.model.userModel.admPlusModel import AdmPlus
-
-#Importando values
-from src.model.userModel.detailsConfig.enderecoConfig import EnderecoConfig
-# from src.model.userModel.userConfig.userConfig import UserConfig
-from src.model.userModel.userConfig.userConfigCompleto import UserConfigCompleto
 
 class UserModel():
-    def __init__(self, tipoUser:str, **data):
-        self.tabelaUser = "usuario"
-        self.tipo_logica = tipoUser.lower()
+    #def __init__(self, tipoUser:str, data:Dict[str,Any]):
+    USER_ROLE_MAP = {
+        'aluno': AlunoUser,
+        'instrutor': AlunoUser, # Instrutor também não insere dados (exemplo)
+        'colaborador': AdminUser,
+        'supremo': SupremoUser,
+    }
+
+
+#    def __init__(self, tipoUser:str, data:Dict[str,Any]):
+    def __init__(self,  data:Dict[str,Any]):
         
-        # Mantém os dados brutos
-        self.data_raw = data 
+        # self.tipoUser = tipoUser
+        self.config: Optional[UserConfig] = None 
+        self.db_inserter = InsertValues()
+        # self.role_behavior: Optional[BaseUserType] = None # <-- ESTA LINHA FOI ADICIONADA
 
         try:
-            # Validação
-            # Valida todos os dados (User, Endereço, Contato, Email)
-            self.user_data_validated = UserConfigCompleto(**data)
+            self.config = UserConfig(**data)
+            print("Dados do usuário validados e carregados com sucesso!")
+
+            # user_level = self.config.lv_acesso.value # Pega o valor do Enum (ex: 'aluno')
+            # # Busca a classe correta no nosso mapa
+            # BehaviorClass = self.USER_ROLE_MAP.get(user_level)
             
-            #Separação dos Dados Validados
-            self.usuario_data = self.user_data_validated.model_dump(
-                exclude={
-                    'enderecos',         # Detalhes aninhados
-                    'contatos',          # Detalhes aninhados
-                    'emails',            # Detalhes aninhados
-                    'id_user_post_gre',  # ID gerado pelo DB/Não deve ser inserido
-                    'id_user_mongo',     # ID do Mongo/Não é coluna do SQL
-                    'tipo_logica'        # Campo de controle/Não é coluna do DB
-                }
-            )
-            
-            self.enderecos_data = self.user_data_validated.enderecos
-            self.contatos_data = self.user_data_validated.contatos
-            self.emails_data = self.user_data_validated.emails
-            
-        except ValidationError as e:
-            # Captura erros de validação Pydantic
-            print(f"Erro de Validação dos Dados: {e}")
-            raise # Interrompe a criação se os dados forem inválidos
-            
-        print(f"Dados validados com sucesso para {self.tipo_logica}.")
+            # if BehaviorClass:
+            #     # 3. CRIE e INJETE o comportamento no modelo
+            #     self.role_behavior = BehaviorClass(self.config)
+            #     print(f"-> Comportamento '{BehaviorClass.__name__}' atribuído ao usuário.")
+            # else:
+            #     raise ValueError(f"Nível de acesso '{user_level}' não é válido ou não tem um comportamento definido.")
 
-
-    def _inserir_detalhes(self, fk_id_user: int) -> bool:
-        instance_Insert = InsertValues()
-        success = True
-
-        for endereco_model in self.enderecos_data:
-            data = endereco_model.model_dump()
-            # Adiciona a Chave Estrangeira
-            data['fk_id_user'] = fk_id_user 
-            
-            # Assumindo que a tabela é 'endereco'
-            if not instance_Insert.insert('endereco', **data):
-                success = False
-
-        for contato_model in self.contatos_data:
-            data = contato_model.model_dump()
-            data['fk_id_user'] = fk_id_user
-            # Assumindo que a tabela é 'contato'
-            if not instance_Insert.insert('contato', **data):
-                success = False
-                
-        for email_model in self.emails_data:
-            data = email_model.model_dump()
-            data['fk_id_user'] = fk_id_user
-            # Assumindo que a tabela é 'email'
-            if not instance_Insert.insert('email', **data):
-                success = False
-
-        return success
-    
-
-
-    def criar_novo_usuario(self):
-        match self.tipo_logica:
-            case "adm_supremo":
-                self.instance_Insert = InsertValues()
-                
-                #INSERIR O USUÁRIO
-                user_id = self.instance_Insert.insert(self.tabelaUser, **self.usuario_data)
-                
-                if not user_id:
-                    print("Falha ao criar o usuário.")
-                    return None
-                
-                #INSERIR OS DETALHES
-                if not self._inserir_detalhes(user_id):
-                    print(f"Atenção: Usuário criado (ID: {user_id}), mas houve falha na inserção dos detalhes.")
-                    # Rollback da transação principal aqui
-                    return user_id 
-
-                print(f"Usuário e detalhes criados com sucesso. User ID: {user_id}")
-                return user_id
-            
-
-            case "aluno":
-                return
-            # case "professor":
-            # case "adm":
-            # case "recepcionista":
-
-
-
-    
+        except (ValidationError, ValueError) as err:
+            print(f"❌ Erro ao criar modelo de usuário: {err}")
+            # Relança o erro para que o código que chamou saiba da falha
+            raise err
         
 
-data = {
-    # Campos da tabela 'usuario'
-    'name_user':'Carlos', 
-    'foto_user':'', 
-    'nasc_user':'2025-09-09', 
-    'tipo_doc_user':'cnpj', 
-    'num_doc_user':'00005171111', 
-    'lv_acesso':'colaborador',
 
-    # Campos das tabelas de detalhes (deve ser uma lista)
-    "enderecos": [
-        {
-            "tipo_endereco": "RESIDENCIAL",
-            "endereco": "Rua Principal, 55",
-            "cep": "01234-567"
-        }
-    ],
+
+    def save_to_database(self) -> Optional[int]:
+        """
+        Orquestra a inserção de um novo usuário e seus dados relacionados
+        em múltiplas tabelas de forma transacional.
+        """
+        if not self.config:
+            print("Erro: Não é possível salvar um usuário não validado.")
+            return None
+
+        print("🚀 Iniciando processo de gravação no banco de dados...")
+        
+        # 1. Preparar os dados para a tabela 'usuario'
+        user_table_data = self.config.model_dump(
+            exclude={'details', 'profissao_user', 'historico_medico', 'senha_user'}
+        )
+        # Adicione o hash da senha aqui!
+        # user_table_data['senha_user'] = hash_function(self.config.senha_user)
+
+        try:
+            # 2. Inserir na tabela principal 'usuario' e obter o ID
+            print("   - Inserindo dados na tabela 'usuario'...")
+            user_id = self.db_inserter.insert('usuario', **user_table_data)
+            
+            if not user_id:
+                raise Exception("Falha ao obter o ID do usuário após a inserção.")
+            
+            print(f"   - Usuário base criado com ID: {user_id}")
+
+            # 3. Inserir dados nas tabelas de detalhes (contato, endereco)
+            for contato in self.config.details.contatos:
+                contato_data = contato.model_dump()
+                contato_data['fk_id_user'] = user_id
+                self.db_inserter.insert('contato', **contato_data)
+            print(f"   - {len(self.config.details.contatos)} contato(s) inserido(s).")
+            
+            for endereco in self.config.details.enderecos:
+                endereco_data = endereco.model_dump()
+                endereco_data['fk_id_user'] = user_id
+                self.db_inserter.insert('endereco', **endereco_data)
+            print(f"   - {len(self.config.details.enderecos)} endereço(s) inserido(s).")
+
+            # 4. Inserir dados na tabela de papel específica (A LÓGICA PRINCIPAL)
+            user_level = self.config.lv_acesso
+            if user_level == LevelAccess.ALUNO:
+                print("   - Inserindo dados na tabela 'estudante'...")
+                estudante_data = {
+                    'fk_id_user': user_id,
+                    'profissao_user': self.config.profissao_user,
+                    'historico_medico': self.config.historico_medico
+                }
+                self.db_inserter.insert('estudante', **estudante_data)
+
+            elif user_level == LevelAccess.COLABORADOR:
+                print("   - Inserindo dados na tabela 'administracao'...")
+                admin_data = {'fk_id_user': user_id}
+                self.db_inserter.insert('administracao', **admin_data)
+
+            elif user_level == LevelAccess.SUPREMO:
+                print("   - Inserindo dados nas tabelas 'administracao' e 'adm_plus'...")
+                admin_data = {'fk_id_user': user_id}
+                self.db_inserter.insert('administracao', **admin_data)
+                self.db_inserter.insert('adm_plus', **admin_data)
+
+            print("✅ Processo de gravação concluído com sucesso!")
+            return user_id
+
+        except Exception as e:
+            print(f"🔥 ERRO CRÍTICO DURANTE A GRAVAÇÃO: {e}. A transação será revertida.")
+            # A lógica de rollback já está dentro do seu InsertValues, o que é ótimo!
+            return None
+    # def insert_data(self, table_name: str, data: Dict[str, Any]) -> Optional[Union[int, bool]]:
+    #     """
+    #     Delega a operação de inserção para o objeto de comportamento.
+    #     """
+    #     if self.role_behavior:
+    #         return self.role_behavior.insert_data(table_name, data)
+    #     else:
+    #         print("Erro: Usuário não foi inicializado com um comportamento válido.")
+    #         return None
+
+    # def get_data_for_database(self) -> Dict[str, Any]:
+    #     """Retorna os dados validados, prontos para o banco."""
+    #     if self.config:
+    #         # Excluindo a senha e os detalhes que serão inseridos separadamente
+    #         return self.config.model_dump(exclude={'senha_user', 'details'})
+    #     return {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+dados_admin_supremo = {
+    "name_user": "Super Admin",
+    "nasc_user": "1990-01-01",
+    "tipo_doc_user": "cnpj",
+    "num_doc_user": "11222333000181",
+    "lv_acesso": "supremo", # <-- NÍVEL DE ACESSO
+    "tipo_email_user": "COMERCIAL",
+    "email_user": "supremo@empresa.com",
+    "senha_user": "SuperSenhaAdmin123!",
+    # Adicionando um contato para testar a inserção de detalhes
     "contatos": [
-        {
-            "tipo_contato": "COMERCIAL",
-            "numero_contato": "11999998888"
-        }
-    ],
-    "emails": [
-        {
-            "tipo_email": "PESSOAL",
-            "endereco_email": "jhon.teste@empresa.com"
-        }
+        {"tipo_contato": "COMERCIAL", "numero_contato": "1133334444"}
     ]
 }
-UserNovo = UserModel("adm_supremo", **data)
-UserADm = UserNovo.criar_novo_usuario()
+
+# --- Dados para um usuário Aluno (com os campos obrigatórios) ---
+dados_aluno_completo = {
+    "name_user": "Aluno Dedicado",
+    "nasc_user": "2005-05-05",
+    "tipo_doc_user": "cpf",
+    "num_doc_user": "55566677788",
+    "lv_acesso": "aluno", # <-- NÍVEL DE ACESSO
+    "tipo_email_user": "PESSOAL",
+    "email_user": "aluno.dedicado@escola.com",
+    "senha_user": "SenhaAluno456",
+    
+    # Campos específicos e OBRIGATÓRIOS para o papel 'aluno'
+    "profissao_user": "Estudante de TI",
+    "historico_medico": "Nenhuma condição pré-existente.",
+
+    # Adicionando um endereço para testar a inserção de detalhes
+    "enderecos": [
+        {"tipo_endereco": "RESIDENCIAL", "endereco": "Rua dos Livros, 42", "cep": "87654321"}
+    ]
+}
 
 
+print("--- 1. TESTANDO CRIAÇÃO DO USUÁRIO SUPREMO ---")
+try:
+    # Passo 1: Validar os dados e criar o modelo em memória
+    admin_user = UserModel(data=dados_admin_supremo)
+    
+    # Passo 2: Chamar o método para salvar tudo no banco de dados
+    novo_id = admin_user.save_to_database()
 
-# # userNovo agora é uma instância validada de UserModel
-# print(UserNovo.name_user)
-# print(UserNovo.foto_user)
-# print(UserNovo.tipo_logica) # Novo atributo extra
+    if novo_id:
+        print(f"\n🎉 Sucesso! Usuário SUPREMO criado com o ID: {novo_id}")
+    else:
+        print("\n😔 Falha ao criar o usuário SUPREMO no banco de dados.")
+
+except (ValidationError, ValueError) as e:
+    print(f"\n🔥 Erro no processo de criação do usuário SUPREMO: {e}")
 
 
-#testando validação:
+print("\n" + "="*50 + "\n")
 
 
+print("--- 2. TESTANDO CRIAÇÃO DO USUÁRIO ALUNO ---")
+try:
+    # Passo 1: Validar os dados e criar o modelo em memória
+    aluno_user = UserModel(data=dados_aluno_completo)
+    
+    # Passo 2: Chamar o método para salvar tudo no banco de dados
+    novo_id = aluno_user.save_to_database()
 
+    if novo_id:
+        print(f"\n🎉 Sucesso! Usuário ALUNO criado com o ID: {novo_id}")
+    else:
+        print("\n😔 Falha ao criar o usuário ALUNO no banco de dados.")
+
+except (ValidationError, ValueError) as e:
+    print(f"\n🔥 Erro no processo de criação do usuário ALUNO: {e}")
