@@ -19,20 +19,22 @@ from logging.config import fileConfig
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 param_builder = PostGreParamBuilder()
-config_data = param_builder.build_data_env()
+DATABASE_URL = param_builder.build_sync_url_for_alembic()
 
 
 #sqlAlchemy_database_url = f'postgresql://{config_data['user']}:{config_data["password"]}@{config_data['host']}:{config_data['port']}/{config_data['database']}'
-sqlAlchemy_database_url = f"postgresql://{config_data['user']}:{config_data['password']}@{config_data['host']}:{config_data['port']}/{config_data['database']}"
+#sqlAlchemy_database_url = f"postgresql://{config_data['user']}:{config_data['password']}@{config_data['host']}:{config_data['port']}/{config_data['database']}"
+sqlAlchemy_database_url = DATABASE_URL
 config = context.config
+
 fileConfig(config.config_file_name)
 target_metadata = None
 
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
-# if config.config_file_name is not None:
-#     fileConfig(config.config_file_name)
-
-# target_metadata = None
+target_metadata = None
 
 
 def run_migrations_offline() -> None:

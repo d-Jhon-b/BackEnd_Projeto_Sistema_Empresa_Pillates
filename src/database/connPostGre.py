@@ -71,20 +71,33 @@ class PostGreModel(dbModel):
 
 POSTGRE_DB_CONNECTOR = PostGreModel()
 
-@asynccontextmanager
+# @asynccontextmanager
 async def get_postgre_session() -> AsyncGenerator[AsyncSession, None]:
     if not POSTGRE_DB_CONNECTOR.is_setup:
          # Idealmente, o setup_engine deve ser chamado no startup do FastAPI.
          raise ConnectionError("O Engine do PostGreSQL deve ser configurado.")
-         
+    
+    session: AsyncSession = POSTGRE_DB_CONNECTOR.AsyncSessionLocal()
+    try:
+        # Fornece a sessão para o endpoint
+        yield session
+        # Faz o commit após o endpoint ser executado com sucesso
+        await session.commit()
+    except Exception:
+        # Faz o rollback em caso de erro
+        await session.rollback()
+        raise
+    finally:
+        # Fecha a sessão, não importa o que aconteça
+        await session.close()
     # Usa a fábrica de sessões do objeto global
-    async with POSTGRE_DB_CONNECTOR.AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit() 
-        except Exception:
-            await session.rollback() 
-            raise
+    # async with POSTGRE_DB_CONNECTOR.AsyncSessionLocal() as session:
+    #     try:
+    #         yield session
+    #         await session.commit() 
+    #     except Exception:
+    #         await session.rollback() 
+    #         raise
 
 
 # if __name__ == '__main__':
@@ -105,7 +118,7 @@ async def get_postgre_session() -> AsyncGenerator[AsyncSession, None]:
 #             version_info = result.scalar_one() 
             
 #             print("\n-------------------------------------------")
-#             print(f"✅ CONEXÃO BEM-SUCEDIDA!")
+#             print(f" CONEXÃO BEM-SUCEDIDA!")
 #             print(f"Versão do PostgreSQL: {version_info}")
 #             print("-------------------------------------------")
             

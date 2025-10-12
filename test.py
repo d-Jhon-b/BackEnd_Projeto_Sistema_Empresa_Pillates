@@ -1,57 +1,54 @@
-import psycopg2
-from psycopg2 import OperationalError
+# # test_connection.py
+
+# import asyncio
+# from sqlalchemy.future import select
+
+# # Importa o conector e a função para obter a sessão
+# from src.database.connPostGre import POSTGRE_DB_CONNECTOR, get_postgre_session
+
+# # Importa o modelo que queremos testar
+# from src.model.userModel import Usuario
+
+# async def test_database_connection():
+#     """
+#     Um script simples para configurar o engine, conectar ao banco
+#     e fazer uma consulta na tabela de usuários.
+#     """
+#     print("--- Iniciando teste de conexão e ORM ---")
+    
+#     # É crucial configurar o engine antes de tentar obter uma sessão
+#     POSTGRE_DB_CONNECTOR.setup_engine()
+
+#     try:
+#         # Pega uma sessão do banco de dados usando nosso gerenciador de contexto
+#         async with get_postgre_session() as session:
+#             print("\n[SUCESSO] Sessão com o banco de dados obtida.")
+
+#             # Cria uma consulta simples para selecionar o primeiro usuário da tabela
+#             query = select(Usuario).limit(1)
+            
+#             # Executa a consulta
+#             result = await session.execute(query)
+            
+#             # Pega o primeiro objeto do resultado
+#             user = result.scalars().first()
+
+#             if user:
+#                 print("[SUCESSO] Consulta realizada. Primeiro usuário encontrado:")
+#                 # O __repr__ que definimos no modelo será usado aqui
+#                 print(f"   -> {user}")
+#             else:
+#                 print("[AVISO] Tabela 'usuario' está vazia, mas a conexão e o modelo estão funcionando!")
+
+#     except Exception as e:
+#         print(f"\n[ERRO] Ocorreu um problema durante o teste: {e}")
+    
+#     finally:
+#         # Garante que o pool de conexões será encerrado no final
+#         await POSTGRE_DB_CONNECTOR.disconnect_db()
+#         print("\n--- Teste finalizado ---")
 
 
-try:
-    conn=psycopg2.connect(
-        dbname="SIG_PILLATES_DB",
-        user="postgres",
-        password="962266514",
-        host="localhost",
-        port="5432"
-    )
-    cursor = conn.cursor()
-    print('conexão bem-sucedida')
-    cursor.execute('select version();')
-    db_version=cursor.fetchall()
-    print(f'versão do postgreSQL:\n{db_version}')
-except OperationalError as err:
-    print(f'erro ao conectar ao banco de dados:\n{err}')
-
-finally:
-    if 'cursor' in locals() and cursor:
-        cursor.close
-    if 'conexao' in locals() and conn:
-        conn.close()
-    print('conexão com postgreSQL foi encerrada')
-
-
-from pymongo import MongoClient
-from dotenv import load_dotenv
-import os
-
-# Carregar as variáveis do .env
-load_dotenv()
-
-# Obter URI do MongoDB
-uri = os.getenv("MONGO_URI")
-user = os.getenv("MONGO_USER")
-password = os.getenv("MONGO_PASSWORD")
-# Criar cliente e conectar
-client = MongoClient(uri, user, password)
-
-# Acessar um banco (cria automaticamente se não existir)
-db = client["meu_banco"]
-
-# Acessar uma coleção
-collection = db["minha_colecao"]
-
-# Inserir um documento (exempo)
-collection.insert_one({"nome": "João", "idade": 30})
-
-# Buscar e imprimir documentos
-for doc in collection.find():
-    print(doc)
-
-# Encerrar conexão (opcional, mas recomendado)
-client.close()
+# # Roda a função de teste assíncrona
+# if __name__ == "__main__":
+#     asyncio.run(test_database_connection())

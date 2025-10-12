@@ -39,8 +39,22 @@ class PostGreParamBuilder():
             f"{self.config.host}:{self.config.port}/"
             f"{self.config.database}"
         )    
-        print(self.url_connection)    
+        print(f"URL Async (App): {self.url_connection}")
         return  self.url_connection
+    
+    def build_sync_url_for_alembic(self) -> str:
+        """
+        Constrói a URL de conexão SÍNCRONA, específica para o Alembic.
+        """
+        sync_driver = "psycopg2"
+        url_connection = (
+            f"postgresql+{sync_driver}://"  # Força o uso do driver síncrono
+            f"{self.config.user}:{self.config.password}@"
+            f"{self.config.host}:{self.config.port}/"
+            f"{self.config.database}"
+        )
+        print(f"URL Sync (Alembic): {url_connection}")
+        return url_connection
 
 
 # param = PostGreParamBuilder()
