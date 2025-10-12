@@ -26,7 +26,7 @@ def upgrade() -> None:
     'usuario',
         sa.Column('id_user', sa.Integer, primary_key=True, nullable=False, autoincrement=True),
         sa.Column('name_user', sa.String(100), nullable=False),
-        sa.Column('foto_user', sa.String(255), nullable=True),
+        sa.Column('foto_user', sa.String(255), nullable=True, default='imageUser.png'),
         sa.Column('nasc_user', sa.Date, nullable=True),
         sa.Column('tipo_doc_user', sa.Enum('cpf', 'cnpj',name='tipo_doc_user_enum'), nullable=False),
         sa.Column('num_doc_user', sa.String(14), nullable=False),
@@ -157,7 +157,14 @@ def upgrade() -> None:
         
         sa.Column('descricao_plano', sa.String(255), nullable=True),
         sa.Column('valor_plano', sa.Numeric(precision=10, scale=2)),
-        sa.Column('qtde_aulas_totaia', sa.Integer, nullable=False)
+        sa.CheckConstraint('valor_plano <= 999.99', name='chk_valor_plano_max'),
+
+
+        sa.Column('qtde_aulas_totaia', sa.Integer, nullable=False),
+        
+        # Aplicação da restrição de valor máximo para qtde_aulas_totaia
+        sa.CheckConstraint('qtde_aulas_totaia <= 1000', name='chk_aulas_totaia_max')
+
     )
     #tabela de adesao de plano
     op.create_table(
@@ -235,6 +242,9 @@ def downgrade() -> None:
     # Aula depende de Estudio e Professor
     op.drop_table('aula')
     op.drop_table('estudio')
+
+    op.drop_constraint('chk_valor_plano_max', 'planos', type_='check')
+    op.drop_constraint('chk_aulas_totaia_max', 'planos', type_='check')
     op.drop_table('planos')
 
     # 4. DROP DAS TABELAS DE PAPÉIS (DEPENDEM DE USUARIO)

@@ -8,7 +8,6 @@ from src.model.configModel.userConfig import UserConfig
 
 
 class EstudanteConfig(UserConfig):
-    """Modelo para Estudante (herda de UserConfig)."""
     # Campos específicos da tabela 'estudante'
     profissao_user: Optional[str] = Field(None, max_length=255, title='Profissão do Usuário (Estudante)')
     historico_medico: str = Field(..., max_length=255, title='Histórico Médico')

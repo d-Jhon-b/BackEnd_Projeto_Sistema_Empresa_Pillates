@@ -79,7 +79,6 @@ async def criar_novo_aluno(
 ):
     dados_para_inserir = user_data.model_dump()
     resultado = user_model.inserir_novo_usuario(dados_para_inserir)
-    
     if resultado['status'] == 'error':
         if "Permissão negada" in resultado['message']:
             raise HTTPException(
@@ -91,7 +90,6 @@ async def criar_novo_aluno(
                 status_code=status.HTTP_400_BAD_REQUEST, 
                 detail=resultado['message']
             )
-            
     return resultado
 
 
@@ -126,12 +124,14 @@ async def criar_novo_instrutor(
     "/administracao", 
     status_code=status.HTTP_201_CREATED,
     response_model=Dict[str, Any], 
-    dependencies=[Depends(require_user_creation_permission)], 
+    # dependencies=[Depends(require_user_creation_permission)], 
     summary="Cria um novo usuário de Administração (Colaborador/Supremo)."
 )
 async def criar_novo_administrador(
     user_data: AdministracaoConfig, 
     user_model: UserModel = Depends(get_user_model) 
+    # user_model: UserModel = Depends(lambda: UserModel(NivelAcessoEnum.SUPREMO.value))
+
 ):
     dados_para_inserir = user_data.model_dump()
     resultado = user_model.inserir_novo_usuario(dados_para_inserir)
@@ -151,7 +151,7 @@ async def criar_novo_administrador(
 
 @router.post(
     "/login", 
-    response_model=LoginResponse, # Novo schema de resposta com token
+    response_model=LoginResponse, 
     summary="Realiza o login do usuário e retorna dados de autenticação (JWT)."
 )
 async def fazer_login_endpoint(
