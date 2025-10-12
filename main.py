@@ -117,7 +117,7 @@ app.include_router(user_router, prefix="/v1")
 @app.get("/", tags=["Root"])
 def read_root():
     """Endpoint raiz para testar se a API está online."""
-    return {"message": "Bem-vindo à API de Gerenciamento de Usuários. Acesse /docs para a documentação."}
+    return {"message": "Bem-vindo à APIrest para a SIG_PILLATES.\nAcesse /docs para a documentação."}
 
 if __name__ == "__main__":
     # Comando para rodar a aplicação: uvicorn main:app --reload

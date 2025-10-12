@@ -23,26 +23,20 @@ def upgrade() -> None:
     """Adiciona índices nas colunas de Chave Estrangeira (FKs)."""
     
    
-    # Tabelas de detalhes do Usuário (FKs para 'usuario.id_user')
    
     op.create_index(op.f('ix_endereco_fk_id_user'), 'endereco', ['fk_id_user'], unique=False)
     # op.create_index(op.f('ix_email_fk_id_user'), 'email', ['fk_id_user'], unique=False)
     op.create_index(op.f('ix_contato_fk_id_user'), 'contato', ['fk_id_user'], unique=False)
     
    
-    # Tabelas de Papéis (FKs para 'usuario.id_user')
    
-    op.create_index(op.f('ix_estudante_fk_id_user'), 'estudante', ['fk_id_user'], unique=True) # Unique, pois a relação é 1:1 com 'usuario'
-    op.create_index(op.f('ix_professor_fk_id_user'), 'professor', ['fk_id_user'], unique=True) # Unique, pois a relação é 1:1 com 'usuario'
-    op.create_index(op.f('ix_administracao_fk_id_user'), 'administracao', ['fk_id_user'], unique=True) # Unique
-    op.create_index(op.f('ix_recepcionista_fk_id_user'), 'recepcionista', ['fk_id_user'], unique=True) # Unique
-    op.create_index(op.f('ix_adm_plus_fk_id_user'), 'adm_plus', ['fk_id_user'], unique=True) # Unique
+    op.create_index(op.f('ix_estudante_fk_id_user'), 'estudante', ['fk_id_user'], unique=True) 
+    op.create_index(op.f('ix_professor_fk_id_user'), 'professor', ['fk_id_user'], unique=True) 
+    op.create_index(op.f('ix_administracao_fk_id_user'), 'administracao', ['fk_id_user'], unique=True) 
+    op.create_index(op.f('ix_recepcionista_fk_id_user'), 'recepcionista', ['fk_id_user'], unique=True) 
+    op.create_index(op.f('ix_adm_plus_fk_id_user'), 'adm_plus', ['fk_id_user'], unique=True) 
 
    
-    # Tabelas de Registro, Ligação e Adesão
-   
-
-    # Tabela 'registro_do_aluno' (FKs para 'estudante' e 'professor')
     op.create_index(op.f('ix_registro_aluno_fk_id_estudante'), 'registro_do_aluno', ['fk_id_estudante'], unique=False)
     op.create_index(op.f('ix_registro_aluno_fk_id_professor'), 'registro_do_aluno', ['fk_id_professor'], unique=False)
     
