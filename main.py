@@ -97,6 +97,7 @@ app.openapi = configure_openapi_security
 Mudar a politica de cors para um arquivo separado e só receber a a validação
 """
 origins = [
+    "http://localhost:5000",
     "http://localhost:3000",  # Exemplo de um front-end React(espero que seja.... )
     "http://127.0.0.1:8000",
     "*" # Permite todas as origens - retirar quando for aprensetar ou terminar a produção -remover
