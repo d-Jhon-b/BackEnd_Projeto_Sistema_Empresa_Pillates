@@ -9,6 +9,7 @@ class PostGreConfig(BaseModel):
     user:str
     password:str
     port:str
+    url_neon:str
 
 class PostGreParamBuilder():
     def __init__(self):
@@ -27,6 +28,15 @@ class PostGreParamBuilder():
             "password": self.config.password,
             "host": self.config.host,
             "port": self.config.port
-            
             }
         return data_env
+    
+    def build_url_env(self)->Optional[str]:
+        self.url_postGre_neon = self.config.url_neon
+
+        return str(self.url_postGre_neon)
+    
+
+# postGreTest = PostGreParamBuilder()
+# data = postGreTest.build_url_env()
+# print(data)

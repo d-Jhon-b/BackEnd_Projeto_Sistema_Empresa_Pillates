@@ -26,18 +26,19 @@ def upgrade() -> None:
     'usuario',
         sa.Column('id_user', sa.Integer, primary_key=True, nullable=False, autoincrement=True),
         sa.Column('name_user', sa.String(100), nullable=False),
-        sa.Column('foto_user', sa.String(255), nullable=True, default='imageUser.png'),
+        sa.Column('foto_user', sa.String(255), nullable=True, default='fotoUser.png'),
         sa.Column('nasc_user', sa.Date, nullable=True),
         sa.Column('tipo_doc_user', sa.Enum('cpf', 'cnpj',name='tipo_doc_user_enum'), nullable=False),
         sa.Column('num_doc_user', sa.String(14), nullable=False),
         sa.Column('lv_acesso', sa.Enum('supremo', 'colaborador', 'instrutor','aluno',  name='lv_acesso_enum')),
         
         #aplicaçõe de conta:
-        sa.Column('tipo_email',sa.Enum('pesssoal', 'comercial', name='tipo_email_enum'), nullable=False),
+        sa.Column('tipo_email',sa.Enum('pessoal', 'comercial', name='tipo_email_enum'), nullable=False),
         sa.Column('email_user', sa.String(255), nullable=False),
         sa.Column('senha_user', sa.String(255), nullable= False),
 
         #Criar uma contraint para tornar o documento de um usuario unico em todo o sistema
+        sa.UniqueConstraint('email_user', name='uq_usuario_email_user'),
         sa.UniqueConstraint('num_doc_user', name='uq_usuario_num_doc')
     )
     op.create_table(
@@ -258,6 +259,7 @@ def downgrade() -> None:
     # 5. DROP DAS CONSTRAINTS ÚNICAS (SEPARADAMENTE)
     
     # Constraint na tabela 'usuario'
+    op.drop_constraint('uq_usuario_email_user', 'usuario', type_='unique')
     op.drop_constraint('uq_usuario_num_doc', 'usuario', type_='unique')
     # Constraint na tabela 'email'
     # op.drop_constraint('uq_email_user_email', 'email', type_='unique') 

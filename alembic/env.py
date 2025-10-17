@@ -18,15 +18,24 @@ from logging.config import fileConfig
 #Adiciona a raiz do projeto AO sys.path (Variaveis de ambiente)
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+#postGreSQL local:
+# param_builder = PostGreParamBuilder()
+# config_data = param_builder.build_data_env()
+# sqlAlchemy_database_url = f"postgresql://{config_data['user']}:{config_data['password']}@{config_data['host']}:{config_data['port']}/{config_data['database']}"
+
+
+#postGreSQL neon(nuvem)
 param_builder = PostGreParamBuilder()
-config_data = param_builder.build_data_env()
+config_data = param_builder.build_url_env()
+print(config_data)
+sqlAlchemy_database_url = config_data
 
-
-#sqlAlchemy_database_url = f'postgresql://{config_data['user']}:{config_data["password"]}@{config_data['host']}:{config_data['port']}/{config_data['database']}'
-sqlAlchemy_database_url = f"postgresql://{config_data['user']}:{config_data['password']}@{config_data['host']}:{config_data['port']}/{config_data['database']}"
 config = context.config
 fileConfig(config.config_file_name)
 target_metadata = None
+
+
+
 
 
 # if config.config_file_name is not None:
