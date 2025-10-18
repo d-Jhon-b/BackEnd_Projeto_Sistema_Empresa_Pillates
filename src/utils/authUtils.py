@@ -6,24 +6,17 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
 
-# 2. Importa a classe carregadora de ambiente que você criou
 from src.database.envConfig.envJwt import EnvLoaderJwt 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- ESQUEMA BEARER GLOBAL (Substitui OAuth2) ---
-# Usamos HTTPBearer para simplificar o modal de autorização no Swagger UI, 
-# pois ele não exige username/password, apenas o campo para o token.
 bearer_scheme = HTTPBearer(scheme_name="Bearer (JWT Personalizado)")
 
 
-# --- JWT MANAGER CLASS ---
 
 class JWTAuthManager:
     """
-    Gerencia todas as operações de JWT, incluindo carregamento de 
-    configurações, criação de tokens, decodificação/validação, e serve 
-    como dependência do FastAPI via o método __call__.
+    Gerencia todas as operações de JWT
     """
     def __init__(self):
         # Carregamento de Configurações JWT do .env
@@ -33,14 +26,13 @@ class JWTAuthManager:
             logging.error(f"Falha ao carregar configurações JWT do .env: {e}")
             raise RuntimeError(f"A API não pode iniciar sem as configurações JWT corretas: {e}")
 
-        # 2Atribui as constantes como atributos da classe
+        # Atribui as constantes como atributos da classe
         self.secret_key = jwt_config["JWT_SECRET_KEY"]
         self.algorithm = jwt_config["JWT_ALGORITHM"]
         self.expire_minutes = jwt_config["JWT_ACCESS_TOKEN_EXPIRE_MINUTES"]
 
 
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
-        """Gera um token JWT com base nos dados do usuário."""
         to_encode = data.copy()
         
         # Define o tempo de expiração
@@ -56,7 +48,6 @@ class JWTAuthManager:
         return encoded_jwt
 
     def decode_access_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """Decodifica e valida o token JWT."""
         try:
             # Decodifica com os atributos da classe
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
@@ -64,13 +55,9 @@ class JWTAuthManager:
         except JWTError:
             return None
 
-    # Parâmetro 'credentials' é agora um objeto HTTPAuthorizationCredentials
-    # Depende do nosso novo esquema bearer_scheme
+
     def __call__(self, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> Dict[str, Any]:
-        """ Recebe as credenciais HTTP (esquema e token) via HTTPBearer."""
-        # Extrai a string do token ('<token>' de 'Bearer <token>')
         token = credentials.credentials 
-        
         payload = self.decode_access_token(token)
         
         if payload is None:
@@ -100,10 +87,8 @@ auth_manager = JWTAuthManager()
 #         test_token = auth_manager.create_access_token(test_user_data)
 #         print(f"Token criado (mascarado): {test_token[:15]}...{test_token[-15:]}")
 
-#         # Decodificar o token
 #         decoded_payload = auth_manager.decode_access_token(test_token)
         
-#         # VALIDATION
 #         if decoded_payload and decoded_payload.get("id_user") == test_user_data["id_user"]:
 #             print("\nSUCESSO: Token criado e decodificado com sucesso!")
 #             # Tenta decodificar um token inválido (apenas para teste de erro)

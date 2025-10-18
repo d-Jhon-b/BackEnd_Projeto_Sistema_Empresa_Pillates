@@ -7,10 +7,10 @@ import logging
 # from src.model.configModel.userConfig import UserConfig # O esquema base
 # from src.model.configModel.typeUser.adm import AdministracaoConfig # Exemplo de esquema de subtipo
 
-from src.model.configModel.all_user_config import UsuarioCompletoConfig # Seu schema que engloba tudo, se existir
+# from src.model.configModel.all_user_config import UsuarioCompletoConfig 
 
-from src.model.configModel.operations.insertModel import InserValues # Sua classe de INSERT
-from src.model.configModel.operations.selectModel import SelectValues # Sua classe de SELECT
+from src.model.configModel.operations.insertModel import InserValues 
+from src.model.configModel.operations.selectModel import SelectValues 
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -58,35 +58,27 @@ class UserModel:
         # O campo 'senha_user' no DB DEVE conter o hash. Se estiver ausente ou vazio, é um erro.
         hash_string_db = dados_usuario.get('senha_user')
         
-        # --- PONTO DE INSPEÇÃO (LOG DE INFORMAÇÃO) ---
         # Este log mostrará o hash exato lido do DB no console.
         logging.info(f"INSPEÇÃO: Hash de senha lido do DB para {email}: '{hash_string_db}'")
-        # ---------------------------------------------
         
-        # 1. VERIFICAÇÃO CRÍTICA: Garante que o hash não é None, vazio, ou malformado.
         if not hash_string_db or not isinstance(hash_string_db, str):
             # Se o hash não foi encontrado ou não é uma string, loga o erro e falha.
             logging.error(f"Erro de integridade: Hash de senha ausente ou inválido para o usuário {email}.")
             return None
             
         try:
-            # 2. Converte o hash (string do DB) e a senha plana (string de entrada) para bytes
             hash_armazenado = hash_string_db.encode('utf-8')
             senha_bytes = senha_plana.encode('utf-8')
 
-            # 3. Realiza a verificação
-            # A linha abaixo é onde a exceção "Invalid salt" ocorre se 'hash_armazenado' for inválido.
             if bcrypt.checkpw(senha_bytes, hash_armazenado): 
                 logging.info(f"Login bem-sucedido para o usuário ID: {dados_usuario['id_user']}.")
                 
-                # Remove o hash da senha antes de retornar os dados do usuário para a Controller
                 dados_usuario.pop('senha_user', None) 
                 return dados_usuario 
             else:
                 logging.warning(f"Tentativa de login falhou: Senha incorreta para {email}.")
                 return None
         except ValueError as e:
-            # Este bloco captura o erro "Invalid salt" e o loga.
             logging.error(f"Erro fatal no bcrypt ao tentar logar {email}. Provável hash malformado no DB. Erro: {e}")
             return None
         
@@ -97,7 +89,6 @@ class UserModel:
             
         # hash_armazenado = dados_usuario['senha_user'].strip().encode('utf-8')
         
-        # # 2. Verificar a senha (bcrypt)
         # if bcrypt.checkpw(senha_plana.encode('utf-8'), hash_armazenado):
         #     logging.info(f"Login bem-sucedido para o usuário ID: {dados_usuario['id_user']}.")
             
