@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.Column('tipo_email',sa.Enum('pessoal', 'comercial', name='tipo_email_enum'), nullable=False),
         sa.Column('email_user', sa.String(255), nullable=False),
         sa.Column('senha_user', sa.String(255), nullable= False),
-
+            
         #Criar uma contraint para tornar o documento de um usuario unico em todo o sistema
         sa.UniqueConstraint('email_user', name='uq_usuario_email_user'),
         sa.UniqueConstraint('num_doc_user', name='uq_usuario_num_doc')
@@ -45,7 +45,7 @@ def upgrade() -> None:
         'endereco',
         sa.Column('id_endereco', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
-        sa.Column('tipo_endereco', sa.Enum('RESIDENCIAL', 'COMERCIAL', name='tipo_endereco_enum'), nullable=False),
+        sa.Column('tipo_endereco', sa.Enum('residencial', 'comercial', name='tipo_endereco_enum'), nullable=False),
         sa.Column('endereco', sa.String(255), nullable=False),
         sa.Column('cep', sa.String(8), nullable=True)
     )
@@ -61,7 +61,7 @@ def upgrade() -> None:
         'contato',
         sa.Column('id_contato', sa.Integer,primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
-        sa.Column('tipo_contato', sa.Enum('RESIDENCIAL', 'COMERCIAL', 'FAMILIAR', name='tipo_contato_enum'), nullable=False),
+        sa.Column('tipo_contato', sa.Enum('residencial', 'comercial', 'familiar', name='tipo_contato_enum'), nullable=False),
         sa.Column('numero_contato', sa.String(255), nullable=False)
     )
 
