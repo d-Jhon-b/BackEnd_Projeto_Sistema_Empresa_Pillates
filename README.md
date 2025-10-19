@@ -1,31 +1,78 @@
-#  Repositório do backEnd - Empresa Pilates
+Repositório Backend - Sistema de Gestão de Pilates
+Sobre o Projeto
+Este repositório contém o código-fonte do backend
 
 
-#  Sobre a contruçãp
-    #  Sobre o ambiente virtual(venv)
-    #  Sobre a biblioteca alembic (parte de migration)
-        # instalação:
-            #  pip install alembic  
-        # Uso:
-            
-        # Comandos: 
-            # Criar uma nova etapa: 
-                -Inciar projeto com alembic para as migration
-                alembic init alembic  
-                    *Alterar seus dados de conexão no arquivo: alembic.ini. Procure o valor "sqlalchemy.url" e altere para seu banco de dados
+Configuração e Primeiros Passos
+1. Ambiente Virtual (venv)
+Recomendamos o uso de um ambiente virtual para isolar as dependências do projeto.
+`python -m venv venv	Cria o ambiente virtual.`
+
+Ativa o ambiente em sistemas Unix/macOS.
+`source venv/bin/activate`  
+
+Ativa o ambiente no Windows (CMD/PowerShell).
+`venv\Scripts\activate`	
+
+para desativar:
+`deactivate`
+
+2. Instalação de Dependências
+Com o ambiente ativado, instale as bibliotecas necessárias:
+
+Bash
+`pip install -r requirements.txt`
 
 
-                -(Optional) EM nosso caso, alteramos o arquivo env.py. A razão dessa alteração é dado por conta de uma lógica próprio do nosso projeto
-                que busca os dados de arquivos .env
-                local: src/database/envCOnfig/ (arquivo para a configuração do env, seja mongo ou sql)
 
-                -Criar nova migration
-                #  alembic revision -m "create tabela usuarios"
+3. Configuração do Banco de Dados (.env)
+O projeto utiliza um arquivo de ambiente (.env) para gerenciar as credenciais do banco de dados (PostgreSQL).
 
-                Isso criara um novo arquivo para determinar uma nova migração
-                Ao terminar de editar as funções upgrade e downgrade no novo arquivo criado você pode aplicar ele.
-                -Aplicação:
-                    para aplicar upgrade: alembic upgrade head (caso)
-                    para aplicar um downgrade: alembic downgrade head
-                    para verificar o status do upgrade ou downgrade: alembic history
-                    para mostrar a revisão do conteúdo: alembic current 
+Crie um arquivo chamado .env na raiz do projeto.
+
+Defina a URL de conexão do SQLAlchemy:
+DATABASE_URL="postgresql+psycopg2://USUARIO:SENHA@HOST:PORTA/NOMEDOBANCO"
+# Exemplo: postgresql+psycopg2://user:password@localhost:5432/pilatesdb
+
+(A localização exata da configuração é: src/database/envConfig/envPostGre.py)
+
+
+Migrações com Alembic
+O Alembic é utilizado para gerenciar as migrações (mudanças estruturais) do banco de dados de forma segura.
+
+Instalação
+A instalação já deve estar inclusa no requirements.txt, mas se precisar:
+`pip install alembic`
+
+Inicialização (Feita Apenas uma Vez)
+Para iniciar o projeto Alembic no repositório:
+`alembic init alembic`
+Nota: Se você está configurando o projeto pela primeira vez, verifique se a URL de conexão em alembic.ini está correta, ou se o arquivo alembic/env.py está configurado para buscar a variável de ambiente .env (como é o caso neste projeto).
+
+Criação de Novas Migrações
+Sempre que houver mudanças nos modelos ORM (tabelas e colunas):
+`alembic revision -m "descrição_clara_da_mudanca"`
+# Exemplo: alembic revision -m "Adicionar coluna de histórico médico ao Estudante"
+Este comando criará um novo arquivo Python para você editar as funções upgrade() e downgrade().
+
+
+Aplicação das Migrações
+`alembic upgrade head`:	Aplica todas as migrações pendentes até a mais recente. (Uso Comum)
+`alembic downgrade -1`:	Desfaz a última migração aplicada.
+`alembic current`:	Mostra a revisão atual aplicada no banco de dados.
+`alembic history`:	Exibe o histórico de todas as migrações.
+
+
+4. Inicializar projeto
+Dentro do ambiente virtual aplicado no passo 1, aplicamos o comnado:
+`uvicorn main:app --reload`
+
+
+Tecnologias Utilizadas
+Python: Linguagem de programação principal.
+FastAPI: Framework de alto desempenho para a construção da API.
+SQLAlchemy: ORM (Object-Relational Mapper) para interação com o banco de dados.
+PostgreSQL (NEON): Banco de dados relacional.
+Alembic: Ferramenta de migração de banco de dados.
+Pydantic: Para validação e serialização de dados (Schemas).
+
