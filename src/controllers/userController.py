@@ -5,9 +5,51 @@ from src.utils.authUtils import auth_manager
 from src.schemas.user_schemas import UserResponse, LoginRequestSchema, NivelAcessoEnum, AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload
 
 class UserController:
-    def create_aluno(self, payload: AlunoCreatePayload, current_user: dict, db_session: Session):
-        self._check_permission(current_user)
 
+    # def _check_admin_permission(self, current_user: dict):
+    #     """Método privado para verificar se o usuário é admin (supremo ou colaborador)."""
+    #     creator_level = current_user.get("lv_acesso")
+    #     allowed_levels = [NivelAcessoEnum.SUPREMO.value, NivelAcessoEnum.COLABORADOR.value]
+    #     if creator_level not in allowed_levels:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_403_FORBIDDEN,
+    #             detail="Você não tem permissão para esta ação."
+    #         )
+
+    def _check_permission(self, current_user: dict, allowed_levels: list):
+        creator_level = current_user.get("lv_acesso")
+        if NivelAcessoEnum.SUPREMO.value not in allowed_levels:
+             allowed_levels.append(NivelAcessoEnum.SUPREMO.value)
+             
+        if creator_level not in allowed_levels:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para esta ação."
+            )
+
+    def _check_admin_permission(self, current_user: dict):
+        allowed_levels = [
+            NivelAcessoEnum.COLABORADOR.value
+        ]
+        self._check_permission(current_user, allowed_levels)
+
+    def _check_instrutor_permission(self, current_user: dict):
+        allowed_levels = [
+            NivelAcessoEnum.INSTRUTOR.value,
+            NivelAcessoEnum.COLABORADOR.value 
+        ]
+        self._check_permission(current_user, allowed_levels)
+
+    def _check_aluno_permission(self, current_user: dict):
+        allowed_levels = [
+            NivelAcessoEnum.ALUNO.value
+        ]
+        self._check_permission(current_user, allowed_levels)
+
+    
+    def create_aluno(self, payload: AlunoCreatePayload, current_user: dict, db_session: Session):
+        self._check_aluno_permission(current_user)
+        
         user_data_dict = payload.user_data.model_dump()
         user_data_dict['senha_user'] = payload.senha_user
         user_data_dict['lv_acesso'] = NivelAcessoEnum.ALUNO
@@ -19,7 +61,7 @@ class UserController:
         return self._execute_creation(db_session, user_data_dict, endereco_data_dict, contato_data_dict, extra_data_dict)
 
     def create_instrutor(self, payload: InstrutorCreatePayload, current_user: dict, db_session: Session):
-        self._check_permission(current_user)
+        self._check_instrutor_permission(current_user)
 
         user_data_dict = payload.user_data.model_dump()
         user_data_dict['senha_user'] = payload.senha_user
@@ -27,12 +69,17 @@ class UserController:
         
         endereco_data_dict = payload.endereco_data.model_dump() if payload.endereco_data else None
         contato_data_dict = payload.contato_data.model_dump() if payload.contato_data else None
-        extra_data_dict = {"tipo_especializacao": payload.tipo_especializacao.value}
+        extra_data_dict = {
+            "tipo_especializacao": payload.tipo_especializacao.value,
+            "numero_de_registro": payload.numero_de_registro, 
+            "formacao": payload.formacao,                 
+            "data_contratacao": payload.data_contratacao      
+        }
 
         return self._execute_creation(db_session, user_data_dict, endereco_data_dict, contato_data_dict, extra_data_dict)
 
     def create_colaborador(self, payload: ColaboradorCreatePayload, current_user: dict, db_session: Session):
-        self._check_permission(current_user)
+        self._check_admin_permission(current_user)
 
         user_data_dict = payload.user_data.model_dump()
         user_data_dict['senha_user'] = payload.senha_user
@@ -56,20 +103,19 @@ class UserController:
         access_token = auth_manager.create_access_token(data=token_data)
         return {"access_token": access_token, "token_type": "bearer"}
     
-    # def _check_permission(self, current_user: dict):
+
+
+
+    # def _check_instrutor_permission(self, current_user: dict):
     #     creator_level = current_user.get("lv_acesso")
-    #     allowed_levels = [NivelAcessoEnum.SUPREMO.value, NivelAcessoEnum.COLABORADOR.value]
+    #     allowed_levels = [NivelAcessoEnum.INSTRUTOR.value]
     #     if creator_level not in allowed_levels:
     #         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você não tem permissão para esta ação.")
-    def _check_admin_permission(self, current_user: dict):
-        """Método privado para verificar se o usuário é admin (supremo ou colaborador)."""
-        creator_level = current_user.get("lv_acesso")
-        allowed_levels = [NivelAcessoEnum.SUPREMO.value, NivelAcessoEnum.COLABORADOR.value]
-        if creator_level not in allowed_levels:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Você não tem permissão para esta ação."
-            )
+
+    
+
+        
+
     def _execute_creation(self, db_session: Session, user_data: dict, endereco_data: dict, contato_data: dict, extra_data: dict):
         user_model = UserModel(db_session=db_session)
         novo_usuario = user_model.create_new_user(
@@ -82,22 +128,6 @@ class UserController:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Não foi possível criar o usuário. O e-mail ou documento já pode existir.")
         return UserResponse.model_validate(novo_usuario)
     
-
-    # def get_user_by_id(self, user_id: int, current_user: dict, db_session: Session):
-    #     self._check_admin_permission(current_user) 
-
-    #     user_model = UserModel(db_session=db_session)
-    #     user = user_model.select_user_id(user_id=user_id)
-
-    #     if not user:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_404_NOT_FOUND,
-    #             detail="Usuário não encontrado."
-    #         )
-        
-    #     return UserResponse.model_validate(user)
-
-
     def get_user_by_id(self, user_id: int, current_user: dict, db_session: Session):
         
         requester_id = current_user.get("id_user")

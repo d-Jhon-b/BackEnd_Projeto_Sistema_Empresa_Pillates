@@ -25,9 +25,12 @@ app.add_middleware(
 
 app.include_router(auth_router.router)
 app.include_router(aluno_router.router)
-app.include_router(user_router.router)
 app.include_router(instrutor_router.router)
 app.include_router(colaborador_router.router)
+
+app.include_router(user_router.router)
+
+
 @app.get("/", tags=["Root"])
 def read_root():
     return {"message": "Bem-vindo à API do Sistema de Pilates!"}

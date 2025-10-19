@@ -76,6 +76,10 @@ class InstrutorCreatePayload(BaseModel):
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     tipo_especializacao: TipoEspecializacaoProfessorEnum # Campo específico do instrutor
+    numero_de_registro:str=Field(..., max_length=50)
+    formacao:str=Field(...,max_length=255)
+    data_contratacao:date
+
 
 class ColaboradorCreatePayload(BaseModel):
     user_data: UserBaseSchema

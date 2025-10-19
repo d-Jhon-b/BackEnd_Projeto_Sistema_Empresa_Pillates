@@ -80,6 +80,11 @@ def upgrade() -> None:
         sa.Column('id_professor', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
         sa.Column('tipo_especializacao', sa.Enum('cref', 'crefita', name='tipo_especializacao_enum'), nullable=False),
+        
+        
+        sa.Column('numero_de_registro', sa.String(50), nullable=False),
+        sa.Column('formacao', sa.String(255), nullable=True),  
+        sa.Column('data_contratacao', sa.Date, nullable=False)
     )
     op.create_table(
         'administracao',
@@ -154,17 +159,17 @@ def upgrade() -> None:
         'planos',
         sa.Column('id_plano', sa.Integer ,primary_key=True, autoincrement=True, nullable=False),
         sa.Column('tipo_plano', sa.Enum('mensal', 'trimestral', 'semestral','anual', name='enum_tipo_plano'), nullable=False),
-        sa.Column('modalidade_plano', sa.Enum('1x_semana', '2x_semana', '3x_semana', name= 'enum_num_aulas_semana')),
+        sa.Column('modalidade_plano', sa.Enum('1x_semana', '2x_semana', '3x_semana', name= 'enum_modalidade_plano'), nullable=False),
         
         sa.Column('descricao_plano', sa.String(255), nullable=True),
         sa.Column('valor_plano', sa.Numeric(precision=10, scale=2)),
         sa.CheckConstraint('valor_plano <= 999.99', name='chk_valor_plano_max'),
 
 
-        sa.Column('qtde_aulas_totaia', sa.Integer, nullable=False),
+        sa.Column('qtde_aulas_totais', sa.Integer, nullable=False),
         
         # Aplicação da restrição de valor máximo para qtde_aulas_totaia
-        sa.CheckConstraint('qtde_aulas_totaia <= 1000', name='chk_aulas_totaia_max')
+        sa.CheckConstraint('qtde_aulas_totais <= 1000', name='chk_aulas_totais_max')
 
     )
     #tabela de adesao de plano
@@ -245,7 +250,7 @@ def downgrade() -> None:
     op.drop_table('estudio')
 
     op.drop_constraint('chk_valor_plano_max', 'planos', type_='check')
-    op.drop_constraint('chk_aulas_totaia_max', 'planos', type_='check')
+    op.drop_constraint('chk_aulas_totais_max', 'planos', type_='check')
     op.drop_table('planos')
 
     # 4. DROP DAS TABELAS DE PAPÉIS (DEPENDEM DE USUARIO)
@@ -280,9 +285,9 @@ def downgrade() -> None:
     op.execute('DROP TYPE enum_status_pagamento;')
     op.execute('DROP TYPE enum_metodo_pagamento;')
     op.execute('DROP TYPE enum_status_contrato;')
-    op.execute('DROP TYPE enum_num_aulas_semana;')
+    # op.execute('DROP TYPE enum_num_aulas_semana;')
+    op.execute('drop type enum_modalidade_plano;')
     op.execute('DROP TYPE enum_tipo_plano;')
-
     op.execute('DROP TYPE tipo_especializacao_enum;')
     op.execute('DROP TYPE tipo_contato_enum;')
     op.execute('DROP TYPE tipo_email_enum;')

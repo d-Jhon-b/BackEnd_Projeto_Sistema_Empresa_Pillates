@@ -1,4 +1,16 @@
 
+
+
+class EstudioModel():
+    def __init__(self):
+        pass
+
+    def insert_estudio():
+        return
+    
+
+
+    
 # if __name__=="__main__":
 #     estudio = Estudio()
 

@@ -43,7 +43,7 @@ def upgrade() -> None:
             }
         ]
     )
-    #email para uso: emailTeste@gmail.com
+    #email para uso: soraya@exemplo.com
     #senha a user: senhaForte123
     hashed_password = '$2b$05$AwcnFEHChDo7ccpvK6cui.KtOgPp4VpjsnvFNVbteFOyxg1lKQWfa'
 
@@ -119,7 +119,9 @@ def downgrade() -> None:
     op.execute("DELETE FROM adm_plus WHERE fk_id_user >= 1")
     op.execute("DELETE FROM contato WHERE fk_id_user >= 1")
     op.execute("DELETE FROM estudante WHERE fk_id_user >= 1")
-    
+    op.execute('DELETE FROM professor WHERE FK_ID_USER >=1')
+    op.execute('DELETE FROM ADMINISTRACAO WHERE FK_ID_USER >=1')
+    op.execute('DELETE FROM recepcionista WHERE FK_ID_USER >=1')
     # ADICIONE ESTA LINHA PARA LIMPAR OS ENDEREÇOS
     op.execute("DELETE FROM endereco WHERE fk_id_user >= 1")
 

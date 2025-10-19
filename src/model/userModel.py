@@ -66,10 +66,14 @@ class UserModel():
                 self.session.add(self.estudante)
 
             elif self.lv_acesso == 'colaborador':
-                self.adm = Administracao(fk_id_user=self.fk_id_user)
-                self.session.add(self.adm)
-                if extra_data and extra_data.get('is_recepcionista', False):
+                self.is_recepcionista = extra_data.get('is_recepcionista', True)
+
+                if self.is_recepcionista:
                     self.session.add(Recepcionista(fk_id_user=self.fk_id_user))
+                else:
+                    self.adm = Administracao(fk_id_user=self.fk_id_user)
+                    self.session.add(self.adm)
+                
 
             elif self.lv_acesso == 'instrutor' and extra_data:
                 instrutor = Professor(fk_id_user=self.fk_id_user, **extra_data)
@@ -123,7 +127,7 @@ class UserModel():
             return None
         
         except Exception as err:
-            print(f'Erro ao processar Login')
+            print(f'Erro ao processar Login {err}')
             return None
 
     def select_user_id(self, user_id)-> Usuario | None:

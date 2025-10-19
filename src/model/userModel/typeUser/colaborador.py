@@ -13,16 +13,16 @@ class Administracao(Base.Base):
     fk_id_user = Column(Integer, ForeignKey('usuario.id_user'), nullable= False)
 
 
-    def __repr__(self):
-        return f"<AlunoID(id={self.id_adm}, fk_user_id='{self.fk_id_user}')>"
+    # def __repr__(self):
+    #     return f"<AlunoID(id={self.id_adm}, fk_user_id='{self.fk_id_user}')>"
 
 class Recepcionista(Base.Base):
     __tablename__='recepcionista'
-    id_id_recepcionista = Column(Integer, primary_key=True, nullable=False)
+    id_recepcionista = Column(Integer, primary_key=True, nullable=False)
     fk_id_user = Column(Integer, ForeignKey('usuario.id_user'), nullable= False)
 
-    def __repr__(self):
-        return f"<AlunoID(id={self.id_adm}, fk_user_id='{self.fk_id_user}')>"
+    # def __repr__(self):
+    #     return f"<AlunoID(id={self.id_adm}, fk_user_id='{self.fk_id_user}')>"
 
 
 # if __name__ == "__main__":

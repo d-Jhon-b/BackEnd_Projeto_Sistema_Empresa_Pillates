@@ -12,9 +12,12 @@ class Professor(Base.Base):
     id_professor = Column(Integer, primary_key=True, nullable=False)
     fk_id_user = Column(Integer, ForeignKey('usuario.id_user'), nullable= False)
     tipo_especializacao = Column(Enum('cref', 'crefita', name='tipo_especializacao_enum'), nullable=False)
+    numero_de_registro= Column(String(50), nullable=False)
+    formacao=Column(String(255), nullable=True)
+    data_contratacao=Column(Date, nullable=False)
 
     def __repr__(self):
-        return f"<AlunoID(id={self.id_professor}, fk_user_id='{self.fk_id_user}\nprofissçao:{self.tipo_especializacao}')>"
+        return f"\n\n\n<Professor(id={self.id_professor},\n\nformação:{self.formacao}\n\nfk_user_id='{self.fk_id_user}\n\n\ntipo_especializacao:{self.tipo_especializacao}'\n\n\n data de contratação:{self.data_contratacao})>"
     
 
 # if __name__ == "__main__":
@@ -25,8 +28,7 @@ class Professor(Base.Base):
 #         if not session:
 #             print(f'erro ao criar sessão para acesso')
 #         else:
-
-#             comand = select(Estudante)
+#             comand = select(Professor)
 #             res = session.execute(comand)
 #             todos_res = res.scalars().all()
 #             print(todos_res)
