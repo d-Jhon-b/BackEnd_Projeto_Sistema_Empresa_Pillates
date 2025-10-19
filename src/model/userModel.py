@@ -2,6 +2,7 @@ from src.model.userModel.userConfig import Usuario
 from src.model.userModel.valuesUser.enderecoUser import Endereco
 from src.model.userModel.valuesUser.contatoUser import Contato
 
+
 from src.database.connPostGreNeon import CreateSessionPostGre
 
 from src.model.userModel.validations.validarEmail import ValidarEmail
