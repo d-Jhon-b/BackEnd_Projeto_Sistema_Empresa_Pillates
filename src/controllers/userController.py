@@ -129,7 +129,7 @@ class UserController:
         return UserResponse.model_validate(novo_usuario)
     
     def get_user_by_id(self, user_id: int, current_user: dict, db_session: Session):
-        
+        self._check_admin_permission(current_user)
         requester_id = current_user.get("id_user")
         requester_level = current_user.get("lv_acesso")
 
@@ -142,7 +142,7 @@ class UserController:
             )
 
         user_model = UserModel(db_session=db_session)
-        user = user_model.select_user_by_id(user_id=user_id) # Corrigido para chamar select_user_by_id
+        user = user_model.select_user_id(user_id=user_id) # Corrigido para chamar select_user_by_id
 
         if not user:
             raise HTTPException(
@@ -150,6 +150,7 @@ class UserController:
                 detail="Usuário não encontrado."
             )
         return UserResponse.model_validate(user)
+    
     def get_all_users(self, studio_id: int | None, current_user: dict, db_session: Session):
         self._check_admin_permission(current_user)
 
