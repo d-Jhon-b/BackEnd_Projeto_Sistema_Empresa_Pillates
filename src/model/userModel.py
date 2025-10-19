@@ -1,163 +1,214 @@
-from typing import Dict, Any, Optional, List
-import bcrypt # Para hashing de senha
-import json # Para tratamento de dados
-import logging
+from src.model.userModel.userConfig import Usuario
+from src.model.userModel.valuesUser.enderecoUser import Endereco
+from src.model.userModel.valuesUser.contatoUser import Contato
 
+from src.database.connPostGreNeon import CreateSessionPostGre
 
-# from src.model.configModel.userConfig import UserConfig # O esquema base
-# from src.model.configModel.typeUser.adm import AdministracaoConfig # Exemplo de esquema de subtipo
+from src.model.userModel.validations.validarEmail import ValidarEmail
+from src.model.userModel.validations.ValidarSenha import ValidarSenha
+# from src.model.UserModel.operations.insertTypeUser import InsertTypeUser
+from src.model.userModel.typeUser.aluno import Estudante
+from src.model.userModel.typeUser.colaborador import Administracao, Recepcionista
+from src.model.userModel.typeUser.Instrutor import Professor
+from src.model.estudioModel.estudioConfig import Estudio
 
-from src.model.configModel.all_user_config import UsuarioCompletoConfig # Seu schema que engloba tudo, se existir
+from src.model.utils.fk_id_user import AnexarFkUser
+from src.model.utils.HashPassword import HashPassword
 
-from src.model.configModel.operations.insertModel import InserValues # Sua classe de INSERT
-from src.model.configModel.operations.selectModel import SelectValues # Sua classe de SELECT
+from datetime import date
+from typing import Dict, Union, Optional
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+import bcrypt
 
+# import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
-class UserModel:
-    def __init__(self, tipoUser: str):
-
-        self.user_executor_type = tipoUser.lower()
-        self.inserter = InserValues(self.user_executor_type)
-        self.selector = SelectValues() # 
-        
-        if not self.inserter.pode_inserir:
-            logging.warning("AVISO: UserModel inicializado, mas sem permissão/conexão para inserções.")
-
-
+class UserModel():
+    def __init__(self, db_session:Session):
+        self.session = db_session
     
-    def inserir_novo_usuario(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
-        # try:
-        #     self.usuario_validado = UsuarioCompletoConfig(**user_data) 
-        # except Exception as e:
-        #     return {'status': 'error', 'message': f'Erro de validação de dados: {e}'}
-
-        # self.senha_plana = self.usuario_validado.senha_user
-        self.user_data = user_data
-        self.senha_plana = user_data.get('senha_user')
-        if not self.senha_plana:
-            return {'status': 'error', 'message': 'Campo senha_user ausente nos dados validados.'}
-        
-        self.hashed_password_bytes = bcrypt.hashpw(
-            self.senha_plana.encode('utf-8'), 
-            bcrypt.gensalt()
-        )
-        self.user_data['senha_user'] = self.hashed_password_bytes.decode('utf-8')
-        self.resultado_db = self.inserter.inserirNovoUsuario(user_data)
-        return self.resultado_db
-
-
-    def fazer_login(self, email: str, senha_plana: str) -> Optional[Dict[str, Any]]:     
-        dados_usuario = self.selector.selecionar_por_email(email)
-        if not dados_usuario:
-            logging.warning(f"Tentativa de login falhou: Usuário {email} não encontrado.")
-            return None # Usuário não encontrado
-        
-        # O campo 'senha_user' no DB DEVE conter o hash. Se estiver ausente ou vazio, é um erro.
-        hash_string_db = dados_usuario.get('senha_user')
-        
-        # --- PONTO DE INSPEÇÃO (LOG DE INFORMAÇÃO) ---
-        # Este log mostrará o hash exato lido do DB no console.
-        logging.info(f"INSPEÇÃO: Hash de senha lido do DB para {email}: '{hash_string_db}'")
-        # ---------------------------------------------
-        
-        # 1. VERIFICAÇÃO CRÍTICA: Garante que o hash não é None, vazio, ou malformado.
-        if not hash_string_db or not isinstance(hash_string_db, str):
-            # Se o hash não foi encontrado ou não é uma string, loga o erro e falha.
-            logging.error(f"Erro de integridade: Hash de senha ausente ou inválido para o usuário {email}.")
-            return None
-            
+    def create_new_user(self, user_data:dict, endereco_data:dict=None, contato_data:dict =None, extra_data:dict=None):
         try:
-            # 2. Converte o hash (string do DB) e a senha plana (string de entrada) para bytes
-            hash_armazenado = hash_string_db.encode('utf-8')
-            senha_bytes = senha_plana.encode('utf-8')
-
-            # 3. Realiza a verificação
-            # A linha abaixo é onde a exceção "Invalid salt" ocorre se 'hash_armazenado' for inválido.
-            if bcrypt.checkpw(senha_bytes, hash_armazenado): 
-                logging.info(f"Login bem-sucedido para o usuário ID: {dados_usuario['id_user']}.")
-                
-                # Remove o hash da senha antes de retornar os dados do usuário para a Controller
-                dados_usuario.pop('senha_user', None) 
-                return dados_usuario 
-            else:
-                logging.warning(f"Tentativa de login falhou: Senha incorreta para {email}.")
+            # if not ValidarEmail.validar_email(self.session, user_data['email_user']):
+            #     return None
+            if ValidarEmail.validar_email(self.session, user_data['email_user']):
+                print(f'Email já cadastrado\n\n\n/n')
                 return None
-        except ValueError as e:
-            # Este bloco captura o erro "Invalid salt" e o loga.
-            logging.error(f"Erro fatal no bcrypt ao tentar logar {email}. Provável hash malformado no DB. Erro: {e}")
+            
+            self.password_user = user_data.get('senha_user')
+            if not self.password_user:
+                return {'status': 'error', 'message': 'Campo de senha Obrigatorio FDP'}
+            self.password_user_hash = HashPassword.hash_password(self.password_user)
+            user_data['senha_user'] = self.password_user_hash.decode('utf-8')
+            # print(f'AQUI:\n\n\n\n\n\n{user_data['senha_user']}\n\n\n\n')
+
+            self.new_user = Usuario(**user_data)
+            self.session.add(self.new_user)
+            self.session.flush()
+            self.fk_id_user = self.new_user.id_user
+
+
+            #verifica o endereço e contato e insere
+            if endereco_data:
+                self.endereco = Endereco(**AnexarFkUser.anexar_fk_user(endereco_data, self.fk_id_user))
+                self.session.add(self.endereco)
+
+            if contato_data:
+                self.contato = Contato(**AnexarFkUser.anexar_fk_user(contato_data, self.fk_id_user))
+                self.session.add(self.contato)
+
+
+            self.lv_acesso = user_data.get('lv_acesso')
+
+            if self.lv_acesso == 'aluno' and extra_data:
+                self.estudante = Estudante(fk_id_user =self.fk_id_user, **extra_data)
+                self.session.add(self.estudante)
+
+            elif self.lv_acesso == 'colaborador':
+                self.is_recepcionista = extra_data.get('is_recepcionista', True)
+
+                if self.is_recepcionista:
+                    self.session.add(Recepcionista(fk_id_user=self.fk_id_user))
+                else:
+                    self.adm = Administracao(fk_id_user=self.fk_id_user)
+                    self.session.add(self.adm)
+                
+
+            elif self.lv_acesso == 'instrutor' and extra_data:
+                instrutor = Professor(fk_id_user=self.fk_id_user, **extra_data)
+                self.session.add(instrutor)
+
+            self.session.commit()
+            print(f'usuarios inserido com sucesso')
+            # create_type_user = InsertTypeUser.insertTypeUser()
+            
+            return self.new_user
+        except SQLAlchemyError as AlchemyError:
+            self.session.rollback()
+            print(f'Erro ao inserir dados no banco:\n{AlchemyError}')
             return None
         
+        except Exception as err:
+            print(f'Erro ao processar a inserção no banco')
+            return None
+
         
-        # if not dados_usuario:
-        #     logging.warning(f"Tentativa de login falhou: Usuário {email} não encontrado.")
-        #     return None # Usuário não encontrado
+    # def login_user(self, email, password):
+    def login_user(self, user_data:dict)->Usuario|None:
+        try:
+            self.email_user = user_data.get('email_user')
+            self.password_user = user_data.get('senha_user')
+
+            if not ValidarEmail.validar_email(self.session, self.email_user):
+                return None
             
-        # hash_armazenado = dados_usuario['senha_user'].strip().encode('utf-8')
+            # self.byte_password_user = self.password_user.encode('utf-8')
+            self.storege_password = ValidarSenha.validar_senha(self.session, self.email_user)
+            if not self.storege_password:
+                return None
+            is_valid = bcrypt.checkpw(
+                self.password_user.encode('utf-8'), 
+                self.storege_password.encode('utf-8')
+            )
+
+            if is_valid:
+                # Se a senha for válida, busca e retorna o objeto completo do usuário
+                stmt = select(Usuario).where(Usuario.email_user == self.email_user)
+                user = self.session.execute(stmt).scalar_one_or_none()
+                return user
+            else:
+                return None # Senha incorreta
+            
+
+        except SQLAlchemyError as AlchemyError:
+            self.session.rollback()
+            print(f'Erro ao fazer login:\n{AlchemyError}')
+            return None
         
-        # # 2. Verificar a senha (bcrypt)
-        # if bcrypt.checkpw(senha_plana.encode('utf-8'), hash_armazenado):
-        #     logging.info(f"Login bem-sucedido para o usuário ID: {dados_usuario['id_user']}.")
-            
-        #     # Remove o hash da senha antes de retornar os dados do usuário para a Controller
-        #     dados_usuario.pop('senha_user', None) 
-        #     return dados_usuario 
-        # else:
-        #     logging.warning(f"Tentativa de login falhou: Senha incorreta para {email}.")
-        #     return None
-    
-    # def buscar_usuario_por_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        except Exception as err:
+            print(f'Erro ao processar Login {err}')
+            return None
 
-    #     return self.selector.get_user_base_info(user_id)
+    def select_user_id(self, user_id)-> Usuario | None:
+        try:
+            stmt = select(Usuario).where(Usuario.id_user == user_id)
+            user = self.session.execute(stmt).scalar_one_or_none()
+            return user
+        except Exception as e:
+            print(f'Erro ao realizar seleção por ID: {e}')
+            return None
+        
+    def select_all_users(self, studio_id: int | None = None)->list[Usuario]:
+        try:
+            stmt = select(Usuario).order_by(Usuario.name_user)
+            if studio_id is not None:
+                stmt = stmt.where(Usuario.fk_id_estudio == studio_id)
+            users = self.session.execute(stmt).scalars().all()
+            return users
+        except Exception as e:
+            print(f'Erro ao selecionar todos os usuários: {e}')
+            return []
 
 
-
-# class MockInserValues:
-#     def __init__(self, tipoUser: str):
-#         self.pode_inserir = True
-#     def inserirNovoUsuario(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
-#         return {'status': 'success', 'message': 'Usuário inserido (MOCK)'}
-
-# # Mock para SelectValues (simula a leitura do DB)
-# class MockSelectValues:
-#     # Dados do seu usuário de teste, incluindo o HASH
-#     MOCK_USER_DATA = {
-#         'id_user': 10,
-#         'nome': 'Jhoni',
-#         'lv_acesso': 'supremo',
-#         'email': 'teste@gmail.com',
-#         'senha_user': '$2b$12$uFvMRIb/eCCtsJD3e2nPwuEhmtiSDaZhkXVsp286V8j.ky9tlUgg2' 
-#     }
-    
-#     def selecionar_por_email(self, email: str) -> Optional[Dict[str, Any]]:
-#         # Simula a busca: se o email for o de teste, retorna os dados com o hash
-#         if email == "teste@gmail.com":
-#             return self.MOCK_USER_DATA.copy()
-#         # Simula erro de usuário não encontrado
-#         return None
 
 # if __name__ == "__main__":
-    
-#     print("-" * 50)
-#     print("EXECUTANDO TESTE DE LOGIN ISOLADO PARA UserModel")
-#     print("-" * 50)
+#     from datetime import date
+#     from src.database.connPostGreNeon import CreateSessionPostGre
+#     user_data_to_create = {
+#         "name_user": "Soraya",
+#         "nasc_user": date(1995, 10, 20),
+#         "tipo_doc_user": "cpf",
+#         "num_doc_user": "12345678901", # Use um CPF único para cada teste
+#         "lv_acesso": "supremo",
+#         "tipo_email": "pessoal",
+#         "email_user": "emailTeste@gmail.com", # Use um e-mail único para cada teste
+#         "senha_user": "senhaForte123", # A senha em texto plano
+#         "fk_id_estudio": 1
+#     }
 
-#     # Substitui as classes reais pelas mocks no escopo do teste
-#     InserValues = MockInserValues
-#     SelectValues = MockSelectValues
+#     endereco_data_to_create = {
+#         "tipo_endereco": "residencial",
+#         "endereco": "Rua do Teste, 456",
+#         "cep": "01234567"
+#     }
     
-#     TEST_EMAIL_OK = "teste@gmail.com"
-#     TEST_PASSWORD_OK = "962266514"
-#     TEST_PASSWORD_FAIL = "senhaerrada"
-    
-#     user_model_test = UserModel("aluno") 
-    
-#     user_data_success = user_model_test.fazer_login(TEST_EMAIL_OK, TEST_PASSWORD_OK)
-    
-#     if user_data_success:
-#         print(" Resultado do Login OK:")
-#         print(json.dumps(user_data_success, indent=4))
+#     extra_data_to_create = {
+#         "profissao_user": "Testador de Software",
+#         "historico_medico": "Nenhum"
+#     }
+
+#     session_creator = CreateSessionPostGre()
+#     session = session_creator.get_session()
+
+#     if not session:
+#         print(f'Falha ao criar sessão com o banco de dados. Teste abortado.')
 #     else:
-#         print(" FALHA no Teste de Sucesso! A verificação de senha falhou.")
+#         try:
+#             user_model = UserModel(db_session=session) 
+#             print("\n--- Testando login_user ---")
+            
+#             login_data_success = {
+#                 "email_user": "emailTeste@gmail.com",
+#                 "senha_user": "senhaForte123"
+#             }
+#             login_data_fail = {
+#                 "email_user": "teste@exemplo.com",
+#                 "senha_user": "senhaErrada"
+#             }
+#             usuario_logado = user_model.login_user(login_data_success)
+#             if usuario_logado:
+#                 print(f"SUCESSO! Login bem-sucedido para: {usuario_logado.name_user}")
+#             else:
+#                 print("Login com credenciais corretas falhou.")
+
+#             usuario_falho = user_model.login_user(login_data_fail)
+#             if not usuario_falho:
+#                 print("SUCESSO! Login com credenciais erradas foi rejeitado corretamente.")
+#             else:
+#                 print("Login com credenciais erradas foi aceito.")
+        
+#         except Exception as e:
+#             print(f" Um erro inesperado ocorreu durante os testes: {e}")
+#         finally:
+#             session.close()
