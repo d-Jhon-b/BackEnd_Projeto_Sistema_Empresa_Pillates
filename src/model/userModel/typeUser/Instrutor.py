@@ -9,13 +9,12 @@ from src.database.connPostGreNeon import CreateSessionPostGre
 
 class Professor(Base.Base):
     __tablename__ = 'professor'
-    id_estudante = Column(Integer, primary_key=True, nullable=False)
+    id_professor = Column(Integer, primary_key=True, nullable=False)
     fk_id_user = Column(Integer, ForeignKey('usuario.id_user'), nullable= False)
-    profissao_user = Column(String(255), nullable=True)
-    historico_medico = Column(String(255), nullable=False)
+    tipo_especializacao = Column(Enum('cref', 'crefita', name='tipo_especializacao_enum'), nullable=False)
 
     def __repr__(self):
-        return f"<AlunoID(id={self.id_user}, fk_user_id='{self.name_user}')>"
+        return f"<AlunoID(id={self.id_professor}, fk_user_id='{self.fk_id_user}\nprofissçao:{self.tipo_especializacao}')>"
     
 
 # if __name__ == "__main__":

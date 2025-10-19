@@ -20,7 +20,7 @@ class Usuario(Base.Base):
     tipo_email=Column(Enum('pessoal', 'comercial', name='tipo_email_enum'), nullable=False)
     email_user = Column('email_user',String(255), nullable=False, unique=True)
     senha_user = Column('senha_user', String(255), nullable=False)
-    estudio_aplicado = Column(Enum('itaquera', 'são miguel', name="estudio_aplicado_enum"), nullable=False)
+    # estudio_aplicado = Column(Enum('itaquera', 'são miguel', name="estudio_aplicado_enum"), nullable=False)
     fk_id_estudio = Column('fk_id_estudio',Integer, ForeignKey('estudio.id_estudio'), nullable=False)
 
 

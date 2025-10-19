@@ -43,8 +43,9 @@ def upgrade() -> None:
             }
         ]
     )
-
-    hashed_password = '$2b$12$4oN.i1xY1w./e2VTSbZk1uRN1j9Y8G.KzgdJp5LuzhM/yYhJv74/u'
+    #email para uso: emailTeste@gmail.com
+    #senha a user: senhaForte123
+    hashed_password = '$2b$05$AwcnFEHChDo7ccpvK6cui.KtOgPp4VpjsnvFNVbteFOyxg1lKQWfa'
 
     usuario_table = sa.table('usuario',
         sa.column('id_user', sa.Integer),
@@ -115,19 +116,15 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    # op.execute("DELETE FROM adm_plus WHERE fk_id_user IN (1000, 1001)")
-    # op.execute("DELETE FROM contato WHERE fk_id_user IN (1000, 1001)")
-    # op.execute("DELETE FROM usuario WHERE id_user IN (1000, 1001)")
-    # op.execute("DELETE FROM estudio WHERE id_estudio IN (1, 2)")
-    # op.execute("DELETE FROM estudio WHERE id_estudio IN (1, 2)")
+    op.execute("DELETE FROM adm_plus WHERE fk_id_user >= 1")
+    op.execute("DELETE FROM contato WHERE fk_id_user >= 1")
+    op.execute("DELETE FROM estudante WHERE fk_id_user >= 1")
     
-    user_ids_to_delete_query = "SELECT id_user FROM usuario WHERE fk_id_estudio IN (1, 2)"
+    # ADICIONE ESTA LINHA PARA LIMPAR OS ENDEREÇOS
+    op.execute("DELETE FROM endereco WHERE fk_id_user >= 1")
 
+    # 2. Agora que as dependências foram removidas, delete os usuários.
+    op.execute("DELETE FROM usuario WHERE id_user >= 1")
 
-    op.execute(f"DELETE FROM adm_plus WHERE fk_id_user IN ({user_ids_to_delete_query})")
-    op.execute(f"DELETE FROM administracao WHERE fk_id_user IN ({user_ids_to_delete_query})")
-    op.execute(f"DELETE FROM contato WHERE fk_id_user IN ({user_ids_to_delete_query})")
-    op.execute(f"DELETE FROM endereco WHERE fk_id_user IN ({user_ids_to_delete_query})") # <-- LINHA ADICIONADA
-    op.execute("DELETE FROM usuario WHERE fk_id_estudio IN (1, 2)")
-
-    op.execute("DELETE FROM estudio WHERE id_estudio IN (1, 2)")
+    # 3. Por fim, delete os estúdios.
+    op.execute("DELETE FROM estudio WHERE id_estudio >= 1")

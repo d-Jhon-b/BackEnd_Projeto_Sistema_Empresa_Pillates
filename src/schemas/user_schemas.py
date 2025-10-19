@@ -3,7 +3,6 @@ from typing import Optional, List
 from datetime import date
 from enum import Enum
 
-# --- Enums que você já criou ---
 class TipoContatoEnum(str, Enum):
     RESIDENCIAL = 'residencial'
     COMERCIAL = 'comercial'
@@ -20,14 +19,19 @@ class TipoDocumentoEnum(str, Enum):
     CNPJ = 'cnpj'
 
 class TipoEmailEnum(str, Enum):
-    PESSOAL = 'pessoal' # Corrigi o typo 'pesssoal'
+    PESSOAL = 'pessoal' 
     COMERCIAL = 'comercial'
 
 class TipoEnderecoEnum(str, Enum):
     RESIDENCIAL = 'residencial'
     COMERCIAL = 'comercial'
 
-# --- Modelos de Dados ---
+class TipoEspecializacaoProfessorEnum(str, Enum):
+    CREF = 'cref'
+    CREFITA = 'crefita'
+
+
+#Entidades
 class EnderecoSchema(BaseModel):
     tipo_endereco: TipoEnderecoEnum
     endereco: str = Field(..., max_length=255)
@@ -48,19 +52,49 @@ class UserBaseSchema(BaseModel):
     num_doc_user: str = Field(..., max_length=14)
     lv_acesso: NivelAcessoEnum
     tipo_email: TipoEmailEnum
-    email_user: EmailStr # Usar EmailStr do Pydantic para validação automática
-    fk_id_estudio: int # O ID do estúdio ao qual o usuário pertence
+    email_user: EmailStr 
+    fk_id_estudio: int 
 
-# --- Payload da Requisição (O que a API vai receber) ---
-class UserCreatePayload(BaseModel):
+# class UserCreatePayload(BaseModel):
+#     user_data: UserBaseSchema
+#     senha_user: str = Field(..., min_length=8)
+#     endereco_data: Optional[EnderecoSchema] = None
+#     contato_data: Optional[ContatoSchema] = None
+#     extra_data: Optional[ExtraDataAlunoSchema] = None
+
+
+class AlunoCreatePayload(BaseModel):
     user_data: UserBaseSchema
     senha_user: str = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
-    extra_data: Optional[ExtraDataAlunoSchema] = None
+    extra_data: ExtraDataAlunoSchema  # Obrigatório para criar aluno
 
-# --- Modelo de Resposta (O que a API vai devolver) ---
+class InstrutorCreatePayload(BaseModel):
+    user_data: UserBaseSchema
+    senha_user: str = Field(..., min_length=8)
+    endereco_data: Optional[EnderecoSchema] = None
+    contato_data: Optional[ContatoSchema] = None
+    tipo_especializacao: TipoEspecializacaoProfessorEnum # Campo específico do instrutor
+
+class ColaboradorCreatePayload(BaseModel):
+    user_data: UserBaseSchema
+    senha_user: str = Field(..., min_length=8)
+    endereco_data: Optional[EnderecoSchema] = None
+    contato_data: Optional[ContatoSchema] = None
+    is_recepcionista: bool = False # Flag para diferenciar recepcionista de admin geral
+
+
 class UserResponse(UserBaseSchema):
     id_user: int
+    lv_acesso:NivelAcessoEnum
     class Config:
-        orm_mode = True # Permite que o Pydantic leia dados de objetos SQLAlchemy
+        from_attributes = True 
+
+class LoginRequestSchema(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenResponseSchema(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

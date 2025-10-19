@@ -18,48 +18,30 @@ from src.model.utils.HashPassword import HashPassword
 from datetime import date
 from typing import Dict, Union, Optional
 from sqlalchemy import select, func
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import bcrypt
 
 # import logging
 
 class UserModel():
-    def __init__(self,tipoUser:str):
-
-        self.tipoUser = tipoUser
-        self.permissoes = ['supremo', 'colaborador']
-        self.createSession = None
-        self.session = None
-        self.stmt = None
+    def __init__(self, db_session:Session):
+        self.session = db_session
     
     def create_new_user(self, user_data:dict, endereco_data:dict=None, contato_data:dict =None, extra_data:dict=None):
         try:
-            self.createSession = CreateSessionPostGre()
-            self.session = self.createSession.get_session()
-
-            if self.tipoUser not in self.permissoes:
-                print(f'Você não tem permissão de criar um novo usuario')
-                return None
             # if not ValidarEmail.validar_email(self.session, user_data['email_user']):
             #     return None
-
-
             if ValidarEmail.validar_email(self.session, user_data['email_user']):
-                print(f'fasfasfaandaskodnasdkansdkoasndkasndkoad\n\n\n/n')
+                print(f'Email já cadastrado\n\n\n/n')
                 return None
             
-            
-            # if not self.session:
-            #     print(f'erro ao obter sessão')
-            #     return None
-            
-
-            #tratamento da senha para hash- bcript
             self.password_user = user_data.get('senha_user')
             if not self.password_user:
                 return {'status': 'error', 'message': 'Campo de senha Obrigatorio FDP'}
             self.password_user_hash = HashPassword.hash_password(self.password_user)
             user_data['senha_user'] = self.password_user_hash.decode('utf-8')
+            # print(f'AQUI:\n\n\n\n\n\n{user_data['senha_user']}\n\n\n\n')
 
             self.new_user = Usuario(**user_data)
             self.session.add(self.new_user)
@@ -83,13 +65,15 @@ class UserModel():
                 self.estudante = Estudante(fk_id_user =self.fk_id_user, **extra_data)
                 self.session.add(self.estudante)
 
-            if self.lv_acesso == 'colaborador':
+            elif self.lv_acesso == 'colaborador':
                 self.adm = Administracao(fk_id_user=self.fk_id_user)
                 self.session.add(self.adm)
-                if extra_data and extra_data.get('tipo') == 'recepcionista':
-                    self.recep = Recepcionista(fk_id_user = self.fk_id_user)
-                    self.session.add(self.recep)
+                if extra_data and extra_data.get('is_recepcionista', False):
+                    self.session.add(Recepcionista(fk_id_user=self.fk_id_user))
 
+            elif self.lv_acesso == 'instrutor' and extra_data:
+                instrutor = Professor(fk_id_user=self.fk_id_user, **extra_data)
+                self.session.add(instrutor)
 
             self.session.commit()
             print(f'usuarios inserido com sucesso')
@@ -104,32 +88,33 @@ class UserModel():
         except Exception as err:
             print(f'Erro ao processar a inserção no banco')
             return None
-        finally:
-            self.session.close()
+
         
     # def login_user(self, email, password):
-    def login_user(self, user_data:dict):
+    def login_user(self, user_data:dict)->Usuario|None:
         try:
-            self.createSession = CreateSessionPostGre()
-            self.session = self.createSession.get_session()
-
             self.email_user = user_data.get('email_user')
+            self.password_user = user_data.get('senha_user')
+
             if not ValidarEmail.validar_email(self.session, self.email_user):
                 return None
             
-            self.password_user = user_data.get('senha_user')
-            self.byte_password_user = self.password_user.encode('utf-8')
+            # self.byte_password_user = self.password_user.encode('utf-8')
             self.storege_password = ValidarSenha.validar_senha(self.session, self.email_user)
-            self.senha_valida = bcrypt.checkpw(self.byte_password_user, self.storege_password.encode('utf-8'))
-            
-            if self.senha_valida:
-                self.stmt = select(Usuario).where(Usuario.email_user == self.email_user)
-                self.user = self.session.execute(self.stmt).scalar_one_or_none()
-                print(self.user)
-                return self.user
-            else:
-                print('Erro ao fazer login\n\nSenha Incorreta')
+            if not self.storege_password:
                 return None
+            is_valid = bcrypt.checkpw(
+                self.password_user.encode('utf-8'), 
+                self.storege_password.encode('utf-8')
+            )
+
+            if is_valid:
+                # Se a senha for válida, busca e retorna o objeto completo do usuário
+                stmt = select(Usuario).where(Usuario.email_user == self.email_user)
+                user = self.session.execute(stmt).scalar_one_or_none()
+                return user
+            else:
+                return None # Senha incorreta
             
 
         except SQLAlchemyError as AlchemyError:
@@ -140,67 +125,86 @@ class UserModel():
         except Exception as err:
             print(f'Erro ao processar Login')
             return None
-        finally:
-            self.session.close()
 
-    def select_user_id(self, user_id):
+    def select_user_id(self, user_id)-> Usuario | None:
         try:
-            self.createSession =CreateSessionPostGre()
-            self.session = self.createSession
-            self.stmt = select(Usuario).jo
-
-
-        except SQLAlchemyError as AlvchemyErrors:
-            print(f'Erro ao relizar seleção: {AlvchemyErrors}')
+            stmt = select(Usuario).where(Usuario.id_user == user_id)
+            user = self.session.execute(stmt).scalar_one_or_none()
+            return user
+        except Exception as e:
+            print(f'Erro ao realizar seleção por ID: {e}')
             return None
-        except Exception as err:
-            print(f'Erro ao realiza seleção {err}')
-            return None
-        finally:
-            print(f'Fechando sessão....')
-            self.session.close()
         
-    def select_all_users():
-        pass
+    def select_all_users(self, studio_id: int | None = None)->list[Usuario]:
+        try:
+            stmt = select(Usuario).order_by(Usuario.name_user)
+            if studio_id is not None:
+                stmt = stmt.where(Usuario.fk_id_estudio == studio_id)
+            users = self.session.execute(stmt).scalars().all()
+            return users
+        except Exception as e:
+            print(f'Erro ao selecionar todos os usuários: {e}')
+            return []
 
-# from datetime import date
 
-# user_data = {
-#     "name_user": "Jhon da Silva",
-#     "foto_user": None,
-#     "nasc_user": date(1990, 5, 17),
-#     "tipo_doc_user": "cpf",
-#     "num_doc_user": "48675969877",
-#     "lv_acesso": "colaborador",
-#     "tipo_email": "pessoal",
-#     "email_user": "tiocatador@gmail.com",
-#     "senha_user": "962266514",
-#     "estudio_aplicado": "itaquera",
-#     "fk_id_estudio":1
-# }
 
-# endereco_data = {
-#     "tipo_endereco": "residencial",
-#     "endereco": "Rua Exemplo, 123",
-#     "cep": "12345678"
-# }
+# if __name__ == "__main__":
+#     from datetime import date
+#     from src.database.connPostGreNeon import CreateSessionPostGre
+#     user_data_to_create = {
+#         "name_user": "Soraya",
+#         "nasc_user": date(1995, 10, 20),
+#         "tipo_doc_user": "cpf",
+#         "num_doc_user": "12345678901", # Use um CPF único para cada teste
+#         "lv_acesso": "supremo",
+#         "tipo_email": "pessoal",
+#         "email_user": "emailTeste@gmail.com", # Use um e-mail único para cada teste
+#         "senha_user": "senhaForte123", # A senha em texto plano
+#         "fk_id_estudio": 1
+#     }
 
-# contato_data = {
-#     "tipo_contato": "residencial",
-#     "numero_contato": "11999999999"
-# }
+#     endereco_data_to_create = {
+#         "tipo_endereco": "residencial",
+#         "endereco": "Rua do Teste, 456",
+#         "cep": "01234567"
+#     }
+    
+#     extra_data_to_create = {
+#         "profissao_user": "Testador de Software",
+#         "historico_medico": "Nenhum"
+#     }
 
-# extra_data = {
-#     "profissao_user": "Estudante",
-#     "historico_medico": "Nenhum"
-# }
-# user_model = UserModel('supremo')
-# user_model.create_new_user(user_data, endereco_data, contato_data, extra_data)
+#     session_creator = CreateSessionPostGre()
+#     session = session_creator.get_session()
 
-# data = {
-#     "email_user": "tiocatador@gmail.com",
-#     "senha_user":"962266514" 
-# }
-# user_model = UserModel('aluno')
-# user_model.create_new_user(user_data, endereco_data, contato_data, extra_data)
-# print(user_model.login_user(data))
+#     if not session:
+#         print(f'Falha ao criar sessão com o banco de dados. Teste abortado.')
+#     else:
+#         try:
+#             user_model = UserModel(db_session=session) 
+#             print("\n--- Testando login_user ---")
+            
+#             login_data_success = {
+#                 "email_user": "emailTeste@gmail.com",
+#                 "senha_user": "senhaForte123"
+#             }
+#             login_data_fail = {
+#                 "email_user": "teste@exemplo.com",
+#                 "senha_user": "senhaErrada"
+#             }
+#             usuario_logado = user_model.login_user(login_data_success)
+#             if usuario_logado:
+#                 print(f"SUCESSO! Login bem-sucedido para: {usuario_logado.name_user}")
+#             else:
+#                 print("Login com credenciais corretas falhou.")
+
+#             usuario_falho = user_model.login_user(login_data_fail)
+#             if not usuario_falho:
+#                 print("SUCESSO! Login com credenciais erradas foi rejeitado corretamente.")
+#             else:
+#                 print("Login com credenciais erradas foi aceito.")
+        
+#         except Exception as e:
+#             print(f" Um erro inesperado ocorreu durante os testes: {e}")
+#         finally:
+#             session.close()

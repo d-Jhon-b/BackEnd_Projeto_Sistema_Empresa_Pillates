@@ -10,14 +10,7 @@ import logging
 from src.database.envConfig.envJwt import EnvLoaderJwt 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# --- ESQUEMA BEARER GLOBAL (Substitui OAuth2) ---
-# Usamos HTTPBearer para simplificar o modal de autorização no Swagger UI, 
-# pois ele não exige username/password, apenas o campo para o token.
 bearer_scheme = HTTPBearer(scheme_name="Bearer (JWT Personalizado)")
-
-
-# --- JWT MANAGER CLASS ---
 
 class JWTAuthManager:
     """
@@ -88,7 +81,6 @@ auth_manager = JWTAuthManager()
 #   #teste de obtemção do jwt_v1 XD
 # if __name__ == "__main__":
 #     print("-" * 50)
-    
 #     try:
 #         #Dados de usuário fictício
 #         test_user_data = {
