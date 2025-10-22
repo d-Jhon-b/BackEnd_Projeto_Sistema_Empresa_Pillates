@@ -39,7 +39,7 @@ class UserModel():
             
             self.password_user = user_data.get('senha_user')
             if not self.password_user:
-                return {'status': 'error', 'message': 'Campo de senha Obrigatorio FDP'}
+                return {'status': 'error', 'message': 'Campo de senha Obrigatorio'}
             self.password_user_hash = HashPassword.hash_password(self.password_user)
             user_data['senha_user'] = self.password_user_hash.decode('utf-8')
             # print(f'AQUI:\n\n\n\n\n\n{user_data['senha_user']}\n\n\n\n')

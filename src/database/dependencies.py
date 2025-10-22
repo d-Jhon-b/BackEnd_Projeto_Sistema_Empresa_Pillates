@@ -8,6 +8,6 @@ def get_db():
     db_session_creator = CreateSessionPostGre()
     session = db_session_creator.get_session()
     try:
-        yield session # 1. Fornece a sessão para o endpoint
+        yield session 
     finally:
-        session.close() # 3. Fecha a sessão DEPOIS que a resposta foi enviada
+        session.close() 
