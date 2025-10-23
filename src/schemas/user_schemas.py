@@ -68,7 +68,7 @@ class AlunoCreatePayload(BaseModel):
     senha_user: str = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
-    extra_data: ExtraDataAlunoSchema  # Obrigatório para criar aluno
+    extra_data: ExtraDataAlunoSchema  
 
 class InstrutorCreatePayload(BaseModel):
     user_data: UserBaseSchema

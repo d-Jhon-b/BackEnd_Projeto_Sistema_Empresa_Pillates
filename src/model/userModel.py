@@ -18,7 +18,7 @@ from src.model.utils.HashPassword import HashPassword
 
 from datetime import date
 from typing import Dict, Union, Optional
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import bcrypt
@@ -142,7 +142,7 @@ class UserModel():
         
     def select_all_users(self, studio_id: int | None = None)->list[Usuario]:
         try:
-            stmt = select(Usuario).order_by(Usuario.name_user)
+            stmt = select(Usuario).order_by(Usuario.lv_acesso)
             if studio_id is not None:
                 stmt = stmt.where(Usuario.fk_id_estudio == studio_id)
             users = self.session.execute(stmt).scalars().all()
@@ -150,6 +150,28 @@ class UserModel():
         except Exception as e:
             print(f'Erro ao selecionar todos os usuários: {e}')
             return []
+        
+    def delete_user_by_id(self, user_id:int)->Optional[bool]:
+        if user_id is None:
+            print(f'Usuario não definido para a exclusão')
+            return False
+        try:
+            self.stmt = delete(Usuario).where(Usuario.id_user ==user_id)
+            self.res_delete = self.session.execute(self.stmt)
+            if self.res_delete.rowcount > 0:
+                self.session.commit()
+                print(f'Sucesso ao excluir o usuario de ID: {user_id}')
+                return True
+            else:
+                return False
+        except SQLAlchemyError as err:
+            self.session.rollback()
+            print(f'{err}')
+            return False
+        except Exception as err:
+            self.session.rollback()
+            print(f'{err}')
+            return False
 
 
 

@@ -44,7 +44,7 @@ def upgrade() -> None:
     op.create_table(
         'endereco',
         sa.Column('id_endereco', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('tipo_endereco', sa.Enum('residencial', 'comercial', name='tipo_endereco_enum'), nullable=False),
         sa.Column('endereco', sa.String(255), nullable=False),
         sa.Column('cep', sa.String(8), nullable=True)
@@ -60,7 +60,7 @@ def upgrade() -> None:
     op.create_table(
         'contato',
         sa.Column('id_contato', sa.Integer,primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('tipo_contato', sa.Enum('residencial', 'comercial', 'familiar', name='tipo_contato_enum'), nullable=False),
         sa.Column('numero_contato', sa.String(255), nullable=False)
     )
@@ -71,14 +71,14 @@ def upgrade() -> None:
     op.create_table(
         'estudante',
         sa.Column('id_estudante', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('profissao_user', sa.String(255), nullable= True),
         sa.Column('historico_medico', sa.String(255), nullable=False),
     )
     op.create_table(
         'professor',
         sa.Column('id_professor', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('tipo_especializacao', sa.Enum('cref', 'crefita', name='tipo_especializacao_enum'), nullable=False),
         
         
@@ -89,13 +89,13 @@ def upgrade() -> None:
     op.create_table(
         'administracao',
         sa.Column('id_adm', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False)
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False)
 
     )
     op.create_table(
         'recepcionista',
         sa.Column('id_recepcionista', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False)
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False)
     )
     """
     Tabela adicional solicitada pela cliente, para maior conforto da situação atual
@@ -104,7 +104,7 @@ def upgrade() -> None:
     op.create_table(
         'adm_plus',
         sa.Column('id_adm_plus', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False)
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False)
 
     )
 
@@ -176,7 +176,7 @@ def upgrade() -> None:
     op.create_table(
         'adesao_plano',
         sa.Column('id_adesao_plano', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('data_adesao', sa.DateTime, nullable=False),
         sa.Column('data_validade', sa.DateTime, nullable=False)
     )

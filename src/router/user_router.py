@@ -39,3 +39,14 @@ def get_user_by_id_endpoint(
     current_user: dict = Depends(auth_manager)
 ):
     return user_controller.get_user_by_id(user_id, current_user, db_session=db)
+
+@router.delete("/{user_id}", 
+    status_code=status.HTTP_204_NO_CONTENT, 
+    summary="Excluir um usuário por ID (Requer Admin)"
+)
+def delete_user_by_id_endpoint(
+    user_id:int,
+    db:Session =Depends(get_db),
+    current_user:dict=Depends(auth_manager)
+):
+    return user_controller.delete_user_by_id_controller(current_user, user_id, db_session=db)

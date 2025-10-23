@@ -15,3 +15,4 @@ def create_colaborador_endpoint(
     current_user: dict = Depends(auth_manager)
 ):
     return user_controller.create_colaborador(payload, current_user, db_session=db)
+
