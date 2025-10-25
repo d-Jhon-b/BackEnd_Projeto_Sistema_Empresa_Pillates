@@ -8,10 +8,3 @@ from src.utils.authUtils import auth_manager
 router = APIRouter(prefix="/alunos", tags=["Alunos"])
 user_controller = UserController()
 
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_aluno_endpoint(
-    payload: AlunoCreatePayload,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(auth_manager)
-):
-    return user_controller.create_aluno(payload, current_user, db_session=db)

@@ -50,3 +50,4 @@ def delete_user_by_id_endpoint(
     current_user:dict=Depends(auth_manager)
 ):
     return user_controller.delete_user_by_id_controller(current_user, user_id, db_session=db)
+
