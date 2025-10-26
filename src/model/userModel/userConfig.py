@@ -27,7 +27,10 @@ class Usuario(Base.Base):
     # estudio = relationship("Estudio", back_populates="usuarios")
 
     def __repr__(self):
-        return f"<UsuarioModel(id={self.id_user}, name='{self.name_user}', email='{self.email_user}')>"
+        return f"""{self.id_user}\n{self.name_user}\n{self.foto_user}\n{self.nasc_user}\n{self.tipo_doc_user}
+        {self.num_doc_user}\n{self.lv_acesso}\n{self.tipo_email}\n{self.email_user}\n{self.senha_user}
+        {self.fk_id_estudio}
+        """
     
     
 # if __name__ == "__main__":

@@ -14,8 +14,8 @@ class Estudante(Base.Base):
     profissao_user = Column(String(255), nullable=True)
     historico_medico = Column(String(255), nullable=False)
 
-    def __repr__(self):
-        return f"<AlunoID(id={self.id_estudante}, fk_user_id='{self.fk_id_user}\nprofissão:{self.profissao_user}\nhistorico:{self.historico_medico}')>"
+    # def __repr__(self):
+    #     return f"<AlunoID(id={self.id_estudante}, fk_user_id='{self.fk_id_user}\nprofissão:{self.profissao_user}\nhistorico:{self.historico_medico}')>"
     
 
 # if __name__ == "__main__":

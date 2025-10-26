@@ -22,5 +22,4 @@ def login_endpoint(
     payload: LoginRequestSchema,
     db: Session = Depends(get_db)
 ):
-    """Authenticates the user and returns a JWT."""
     return user_controller.login_for_access_token(payload, db_session=db)

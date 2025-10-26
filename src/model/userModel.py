@@ -49,8 +49,6 @@ class UserModel():
             self.session.flush()
             self.fk_id_user = self.new_user.id_user
 
-
-            #verifica o endereço e contato e insere
             if endereco_data:
                 self.endereco = Endereco(**AnexarFkUser.anexar_fk_user(endereco_data, self.fk_id_user))
                 self.session.add(self.endereco)
@@ -95,7 +93,6 @@ class UserModel():
             return None
 
         
-    # def login_user(self, email, password):
     def login_user(self, user_data:dict)->Usuario|None:
         try:
             self.email_user = user_data.get('email_user')
@@ -103,8 +100,6 @@ class UserModel():
 
             if not ValidarEmail.validar_email(self.session, self.email_user):
                 return None
-            
-            # self.byte_password_user = self.password_user.encode('utf-8')
             self.storege_password = ValidarSenha.validar_senha(self.session, self.email_user)
             if not self.storege_password:
                 return None
@@ -114,12 +109,11 @@ class UserModel():
             )
 
             if is_valid:
-                # Se a senha for válida, busca e retorna o objeto completo do usuário
                 stmt = select(Usuario).where(Usuario.email_user == self.email_user)
                 user = self.session.execute(stmt).scalar_one_or_none()
                 return user
             else:
-                return None # Senha incorreta
+                return None
             
 
         except SQLAlchemyError as AlchemyError:
