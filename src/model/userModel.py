@@ -19,7 +19,7 @@ from src.model.utils.HashPassword import HashPassword
 from datetime import date
 from typing import Dict, Union, Optional
 from sqlalchemy import select, func, delete
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 import bcrypt
 
@@ -49,8 +49,6 @@ class UserModel():
             self.session.flush()
             self.fk_id_user = self.new_user.id_user
 
-
-            #verifica o endereço e contato e insere
             if endereco_data:
                 self.endereco = Endereco(**AnexarFkUser.anexar_fk_user(endereco_data, self.fk_id_user))
                 self.session.add(self.endereco)
@@ -95,16 +93,14 @@ class UserModel():
             return None
 
         
-    # def login_user(self, email, password):
     def login_user(self, user_data:dict)->Usuario|None:
+
         try:
             self.email_user = user_data.get('email_user')
             self.password_user = user_data.get('senha_user')
 
             if not ValidarEmail.validar_email(self.session, self.email_user):
                 return None
-            
-            # self.byte_password_user = self.password_user.encode('utf-8')
             self.storege_password = ValidarSenha.validar_senha(self.session, self.email_user)
             if not self.storege_password:
                 return None
@@ -114,12 +110,11 @@ class UserModel():
             )
 
             if is_valid:
-                # Se a senha for válida, busca e retorna o objeto completo do usuário
                 stmt = select(Usuario).where(Usuario.email_user == self.email_user)
                 user = self.session.execute(stmt).scalar_one_or_none()
                 return user
             else:
-                return None # Senha incorreta
+                return None
             
 
         except SQLAlchemyError as AlchemyError:
@@ -133,8 +128,19 @@ class UserModel():
 
     def select_user_id(self, user_id)-> Usuario | None:
         try:
-            stmt = select(Usuario).where(Usuario.id_user == user_id)
-            user = self.session.execute(stmt).scalar_one_or_none()
+            stmt = (
+                select(Usuario)
+                .where(Usuario.id_user == user_id)
+                .options(
+                    joinedload(Usuario.endereco),
+                    joinedload(Usuario.contatos),
+                    joinedload(Usuario.estudante),
+                    joinedload(Usuario.professor),    
+                    joinedload(Usuario.administracao), 
+                    joinedload(Usuario.recepcionista)
+                )
+            )
+            user = self.session.execute(stmt).unique().scalar_one_or_none()
             return user
         except Exception as e:
             print(f'Erro ao realizar seleção por ID: {e}')
@@ -142,10 +148,21 @@ class UserModel():
         
     def select_all_users(self, studio_id: int | None = None)->list[Usuario]:
         try:
-            stmt = select(Usuario).order_by(Usuario.lv_acesso)
+            stmt = (
+                select(Usuario)
+                .order_by(Usuario.lv_acesso)
+                .options(
+                    joinedload(Usuario.endereco),
+                    joinedload(Usuario.contatos),
+                    joinedload(Usuario.estudante),
+                    joinedload(Usuario.professor),
+                    joinedload(Usuario.administracao),
+                    joinedload(Usuario.recepcionista)
+                )
+            )            
             if studio_id is not None:
                 stmt = stmt.where(Usuario.fk_id_estudio == studio_id)
-            users = self.session.execute(stmt).scalars().all()
+            users = self.session.execute(stmt).scalars().unique().all()
             return users
         except Exception as e:
             print(f'Erro ao selecionar todos os usuários: {e}')
@@ -173,65 +190,18 @@ class UserModel():
             print(f'{err}')
             return False
 
+# session_create = CreateSessionPostGre()
+# db_session = session_create.get_session()
 
+# try:
+#     aluno_test = UserModel(db_session=db_session)
+#     aluno_select_all = aluno_test.select_all_users(studio_id=1)
+#     for a in aluno_select_all:
+#         print(a) 
+#     # aluno_select_one = aluno_test.select_user_id(user_id=1)
+#     # print(aluno_select_one)
 
-# if __name__ == "__main__":
-#     from datetime import date
-#     from src.database.connPostGreNeon import CreateSessionPostGre
-#     user_data_to_create = {
-#         "name_user": "Soraya",
-#         "nasc_user": date(1995, 10, 20),
-#         "tipo_doc_user": "cpf",
-#         "num_doc_user": "12345678901", # Use um CPF único para cada teste
-#         "lv_acesso": "supremo",
-#         "tipo_email": "pessoal",
-#         "email_user": "emailTeste@gmail.com", # Use um e-mail único para cada teste
-#         "senha_user": "senhaForte123", # A senha em texto plano
-#         "fk_id_estudio": 1
-#     }
-
-#     endereco_data_to_create = {
-#         "tipo_endereco": "residencial",
-#         "endereco": "Rua do Teste, 456",
-#         "cep": "01234567"
-#     }
-    
-#     extra_data_to_create = {
-#         "profissao_user": "Testador de Software",
-#         "historico_medico": "Nenhum"
-#     }
-
-#     session_creator = CreateSessionPostGre()
-#     session = session_creator.get_session()
-
-#     if not session:
-#         print(f'Falha ao criar sessão com o banco de dados. Teste abortado.')
-#     else:
-#         try:
-#             user_model = UserModel(db_session=session) 
-#             print("\n--- Testando login_user ---")
-            
-#             login_data_success = {
-#                 "email_user": "emailTeste@gmail.com",
-#                 "senha_user": "senhaForte123"
-#             }
-#             login_data_fail = {
-#                 "email_user": "teste@exemplo.com",
-#                 "senha_user": "senhaErrada"
-#             }
-#             usuario_logado = user_model.login_user(login_data_success)
-#             if usuario_logado:
-#                 print(f"SUCESSO! Login bem-sucedido para: {usuario_logado.name_user}")
-#             else:
-#                 print("Login com credenciais corretas falhou.")
-
-#             usuario_falho = user_model.login_user(login_data_fail)
-#             if not usuario_falho:
-#                 print("SUCESSO! Login com credenciais erradas foi rejeitado corretamente.")
-#             else:
-#                 print("Login com credenciais erradas foi aceito.")
-        
-#         except Exception as e:
-#             print(f" Um erro inesperado ocorreu durante os testes: {e}")
-#         finally:
-#             session.close()
+# except Exception as err:
+#     print(f"\nErro fatal ao iniciar a sessão ou rodar testes: {err}")
+# finally:
+#     db_session.close()

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List
 from datetime import date
 from enum import Enum
-
+#---------------------------Enuns paraa uso
 class TipoContatoEnum(str, Enum):
     RESIDENCIAL = 'residencial'
     COMERCIAL = 'comercial'
@@ -75,7 +75,7 @@ class InstrutorCreatePayload(BaseModel):
     senha_user: str = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
-    tipo_especializacao: TipoEspecializacaoProfessorEnum # Campo específico do instrutor
+    tipo_especializacao: TipoEspecializacaoProfessorEnum 
     numero_de_registro:str=Field(..., max_length=50)
     formacao:str=Field(...,max_length=255)
     data_contratacao:date
@@ -86,15 +86,67 @@ class ColaboradorCreatePayload(BaseModel):
     senha_user: str = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
-    is_recepcionista: bool = False # Flag para diferenciar recepcionista de admin geral
+    is_recepcionista: bool = False
+
+
+#------------Response
+
+
+class EnderecoResponse(EnderecoSchema):
+    id_endereco: int
+    class Config:
+        from_attributes = True
+
+class ContatoResponse(ContatoSchema):
+    id_contato: int
+    class Config:
+        from_attributes = True
+
+class EstudanteResponse(ExtraDataAlunoSchema):
+    id_estudante: int
+    class Config:
+        from_attributes = True
+
+class ProfessorResponse(BaseModel): 
+    id_professor: int 
+    tipo_especializacao: TipoEspecializacaoProfessorEnum
+    numero_de_registro: str
+    formacao: str
+    data_contratacao: date
+    class Config:
+        from_attributes = True
+
+class AdministracaoResponse(BaseModel): 
+    id_adm: int
+    class Config:
+        from_attributes = True
+
+class RecepcionistaResponse(BaseModel): 
+    id_recepcionista: int
+    class Config:
+        from_attributes = True
+
 
 
 class UserResponse(UserBaseSchema):
     id_user: int
-    lv_acesso:NivelAcessoEnum
-    class Config:
-        from_attributes = True 
+    lv_acesso: NivelAcessoEnum
+    foto_user: Optional[str]
+    
+    endereco: List[EnderecoResponse] = [] 
 
+    estudante: Optional[EstudanteResponse] = None
+    professor: Optional[ProfessorResponse] = None        
+    administracao: Optional[AdministracaoResponse] = None
+    recepcionista: Optional[RecepcionistaResponse] = None 
+
+    contatos: List[ContatoResponse] = []
+    
+    class Config:
+        from_attributes = True
+
+
+# -------------- Authentication request schemas XD
 class LoginRequestSchema(BaseModel):
     email: EmailStr
     password: str
