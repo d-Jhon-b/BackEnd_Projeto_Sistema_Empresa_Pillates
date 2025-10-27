@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Dict, Optional, Union
-# from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import Column, select,ForeignKey,String, Integer, CheckConstraint, UniqueConstraint, Date, Enum
 from src.database.Base import DeclarativeBase as Base
 
@@ -13,6 +13,10 @@ class Estudante(Base.Base):
     fk_id_user = Column(Integer, ForeignKey('usuario.id_user'), nullable= False)
     profissao_user = Column(String(255), nullable=True)
     historico_medico = Column(String(255), nullable=False)
+    usuario = relationship(
+        "Usuario", 
+        back_populates="estudante",
+    )
 
     # def __repr__(self):
     #     return f"<AlunoID(id={self.id_estudante}, fk_user_id='{self.fk_id_user}\nprofissão:{self.profissao_user}\nhistorico:{self.historico_medico}')>"

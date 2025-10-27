@@ -4,7 +4,7 @@ from src.model.userModel.typeUser.aluno import Estudante
 from datetime import date
 from typing import Dict, Union, Optional, List
 from sqlalchemy import select, func, delete
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
@@ -18,13 +18,20 @@ class AlunoModel:
 
     def select_all_students(self, studio_id:int |None = None)->list[Usuario]:
         try:
-            stmt = select(Usuario)
-            stmt = stmt.join(Estudante)
+            stmt = (
+                select(Usuario)
+                .join(Estudante) 
+                .options(
+                    joinedload(Usuario.endereco),
+                    joinedload(Usuario.contatos),
+                    joinedload(Usuario.estudante) 
+                )
+            )
             if studio_id is not None:
                 stmt = stmt.where(Usuario.fk_id_estudio == studio_id)
 
             resutls = self.session.execute(stmt)
-            student_list = resutls.scalars().all()
+            student_list = resutls.scalars().unique().all()
             return student_list
         except SQLAlchemyError as err:
             logging.error(f'erro ao selecionar todos os alunos:\n{err}')
@@ -33,13 +40,19 @@ class AlunoModel:
 
     def select_student_by_id(self, user_id:int |None = None):
         try:
-            stmt = select(Usuario)
-            stmt = stmt.join(Estudante)
-
+            stmt = (
+            select(Usuario)
+            .join(Estudante)
+            .options(
+                joinedload(Usuario.endereco),
+                joinedload(Usuario.contatos),
+                joinedload(Usuario.estudante)
+            )
+            )
             if user_id is not None:
                 stmt = stmt.where(Usuario.id_user == user_id)
-            results = self.session.execute(stmt)
-            student_value = results.scalar_one_or_none()
+            results = self.session.execute(stmt).unique().scalar_one_or_none()
+            student_value = results
             return student_value
         except SQLAlchemyError as err:
             logging.error(f'erro ao buscar aluno:\n{err}')
@@ -47,16 +60,17 @@ class AlunoModel:
 
 
 # session_create = CreateSessionPostGre()
-# get_db = session_create.get_session()
+# db_session = session_create.get_session()
 
 # try:
-#     alunoTest = AlunoModel(db_session=get_db)
-#     # aluno_select = alunoTest.select_all_students(1)
-#     # for a in aluno_select:
-#     #     print(a)
+#     aluno_test = AlunoModel(db_session=db_session)
+#     # aluno_select_all = aluno_test.select_all_students(studio_id=1)
+#     # for a in aluno_select_all:
+#     #     print(a) 
+#     aluno_select_one = aluno_test.select_student_by_id(user_id=1)
+#     print(aluno_select_one)
 
-#     aluno_select_id = alunoTest.select_student_by_id(1)
-#     print(aluno_select_id)
 # except Exception as err:
-#     print(err)
-#     get_db.close()
+#     print(f"\nErro fatal ao iniciar a sessão ou rodar testes: {err}")
+# finally:
+#     db_session.close()

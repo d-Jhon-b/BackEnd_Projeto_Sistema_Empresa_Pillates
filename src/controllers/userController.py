@@ -37,7 +37,10 @@ class UserController:
         return UserResponse.model_validate(user)
     
     def get_all_users(self, studio_id: int | None, current_user: dict, db_session: Session):
+        
         UserValidation._check_admin_permission(current_user)
+        # user_estudio_id = current_user.get("fk_id_estudio")
+        # user_acesso = current_user.get("lv_acesso")
 
         user_model = UserModel(db_session=db_session)
         users_from_db = user_model.select_all_users(studio_id=studio_id)

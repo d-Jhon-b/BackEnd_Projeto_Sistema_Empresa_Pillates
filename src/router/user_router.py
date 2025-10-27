@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -13,7 +13,7 @@ from fastapi import HTTPException
 
 router = APIRouter(
     prefix="/users",
-    tags=["Users - Consultas"] # Uma tag diferente para organizar na documentação
+    tags=["Users - Consultas"] 
 )
 
 user_controller = UserController()
@@ -25,7 +25,12 @@ user_controller = UserController()
     summary="Listar todos os usuários por estudio(Requer Autenticação de admin)"
 )
 def get_all_users_endpoint(
-    studio_id: Optional[int] = None, 
+    # studio_id: Optional[int] = None, 
+    studio_id: Optional[int] = Query(None, 
+    description="""
+    -ID do estúdio para filtrar os usuários.(obrigatorio)
+    """
+    ), 
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)
 ):
@@ -55,10 +60,11 @@ def get_current_user_me(
     summary="Obter um usuário por ID (Requer Autenticação de admin)"
 )
 def get_user_by_id_endpoint(
-    user_id: int, # FastAPI valida que o ID é um inteiro
+    user_id: int, 
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)
 ):
+    my_user_id = current_user.get("fk_id_estudio")
     return user_controller.get_user_by_id(user_id, current_user, db_session=db)
 
 

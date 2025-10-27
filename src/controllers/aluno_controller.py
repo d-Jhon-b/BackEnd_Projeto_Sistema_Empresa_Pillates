@@ -32,8 +32,7 @@ class AlunoController:
         users_from_db = user_model.select_all_students(studio_id=studio_id)
         return [UserResponse.model_validate(user) for user in users_from_db]
     
-    def select_user_by_id(self, user_id: int, current_user: dict, db_session: Session):
-
+    def select_aluno_by_id(self, user_id: int, current_user: dict, db_session: Session):
         UserValidation.check_self_or_admin_permission(current_user, user_id)
 
         user_model = AlunoModel(db_session=db_session)

@@ -1,6 +1,8 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from src.model.UserModel import UserModel
+# from src.model.UserModel import UserModel
+
+from src.model.InstrutorModel import ProfessorModel
 from src.utils.authUtils import auth_manager
 from src.schemas.user_schemas import UserResponse, LoginRequestSchema, NivelAcessoEnum, AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload
 from src.controllers.validations.permissionValidation import UserValidation
@@ -28,4 +30,23 @@ class InstrutorController:
 
         return Operations._execute_creation(db_session, user_data_dict, endereco_data_dict, contato_data_dict, extra_data_dict)
 
+    def select_all_instructor_controller(self, studio_id: int | None, current_user: dict, db_session: Session):
+        UserValidation._check_admin_permission(current_user)
+
+        user_model = ProfessorModel(db_session=db_session)
+        users_from_db = user_model.select_all_instructor(studio_id=studio_id)
+        return [UserResponse.model_validate(user) for user in users_from_db]
     
+    def select_instructor_by_id(self, user_id: int, current_user: dict, db_session: Session):
+
+        UserValidation.check_self_or_admin_permission(current_user, user_id)
+
+        user_model = ProfessorModel(db_session=db_session)
+        user = user_model.select_instructor_by_id(user_id=user_id) 
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado."
+            )
+        return UserResponse.model_validate(user)
