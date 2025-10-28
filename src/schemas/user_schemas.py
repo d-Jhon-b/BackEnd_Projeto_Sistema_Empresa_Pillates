@@ -9,8 +9,8 @@ class TipoContatoEnum(str, Enum):
     FAMILIAR = 'familiar'
 
 class NivelAcessoEnum(str, Enum):
-    SUPREMO = 'supremo'
     COLABORADOR = 'colaborador'
+    SUPREMO = 'supremo'
     INSTRUTOR = 'instrutor'
     ALUNO = 'aluno'
 
