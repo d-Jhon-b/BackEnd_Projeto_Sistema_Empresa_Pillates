@@ -31,6 +31,7 @@ class JWTAuthManager:
         self.algorithm = jwt_config["JWT_ALGORITHM"]
         self.expire_minutes = jwt_config["JWT_ACCESS_TOKEN_EXPIRE_MINUTES"]
 
+    
 
     def create_access_token(self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """Gera um token JWT com base nos dados do usuário."""
@@ -51,17 +52,14 @@ class JWTAuthManager:
     def decode_access_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Decodifica e valida o token JWT."""
         try:
-            # Decodifica com os atributos da classe
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except JWTError:
             return None
 
-    # Parâmetro 'credentials' é agora um objeto HTTPAuthorizationCredentials
-    # Depende do nosso novo esquema bearer_scheme
+
     def __call__(self, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> Dict[str, Any]:
         """ Recebe as credenciais HTTP (esquema e token) via HTTPBearer."""
-        # Extrai a string do token ('<token>' de 'Bearer <token>')
         token = credentials.credentials 
         
         payload = self.decode_access_token(token)
@@ -77,41 +75,3 @@ class JWTAuthManager:
 
 # Instância global do gerenciador de autenticação para ser usada em toda a aplicação.
 auth_manager = JWTAuthManager()
-
-#   #teste de obtemção do jwt_v1 XD
-# if __name__ == "__main__":
-#     print("-" * 50)
-#     try:
-#         #Dados de usuário fictício
-#         test_user_data = {
-#             "id_user": 999,
-#             "lv_acesso": "SUPREMO"
-#         }
-
-#         #  Criar o token
-#         test_token = auth_manager.create_access_token(test_user_data)
-#         print(f"Token criado (mascarado): {test_token[:15]}...{test_token[-15:]}")
-
-#         # Decodificar o token
-#         decoded_payload = auth_manager.decode_access_token(test_token)
-        
-#         # VALIDATION
-#         if decoded_payload and decoded_payload.get("id_user") == test_user_data["id_user"]:
-#             print("\nSUCESSO: Token criado e decodificado com sucesso!")
-#             # Tenta decodificar um token inválido (apenas para teste de erro)
-#             print("\nTestando token inválido...")
-#             if auth_manager.decode_access_token(test_token + "INVALIDO") is None:
-#                  print("SUCESSO: Token inválido rejeitado corretamente.")
-#             else:
-#                  print("FALHA: Token inválido aceito!")
-#         else:
-#             print("FALHA: O payload decodificado não corresponde aos dados originais.")
-
-#     except RuntimeError as e:
-#         print(f"\nERRO FATAL: Falha ao inicializar o gerenciador (configuração do .env). Detalhes: {e}")
-#     except Exception as e:
-#         print(f"\nERRO DESCONHECIDO DURANTE O TESTE: {e}")
-#     finally:
-#         raise
-
-

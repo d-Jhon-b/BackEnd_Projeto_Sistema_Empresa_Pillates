@@ -94,7 +94,6 @@ class UserModel():
 
         
     def login_user(self, user_data:dict)->Usuario|None:
-
         try:
             self.email_user = user_data.get('email_user')
             self.password_user = user_data.get('senha_user')
@@ -189,6 +188,42 @@ class UserModel():
             self.session.rollback()
             print(f'{err}')
             return False
+
+
+    def select_user_by_email(self, email: str) -> Usuario | None:
+            """
+            Busca um usuário completo pelo e-mail.
+            (Mais eficiente que o ValidarSenha, pois já traz o usuário todo).
+            """
+            try:
+                stmt = select(Usuario).where(Usuario.email_user == email)
+                user = self.session.execute(stmt).scalar_one_or_none()
+                return user
+            except Exception as e:
+                print(f'Erro ao selecionar usuário por e-mail: {e}')
+                self.session.rollback()
+                return None
+
+    def update_user_password(self, user_id: int, hashed_password_str: str) -> bool:
+        """
+        Atualiza a senha do usuário no banco.
+        Espera receber a senha já como string (hash decodificado).
+        """
+        try:
+            user = self.session.query(Usuario).filter(Usuario.id_user == user_id).first()
+            
+            if not user:
+                print(f"Usuário {user_id} não encontrado para atualizar senha.")
+                return False
+                
+            user.senha_user = hashed_password_str
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            print(f'Erro ao atualizar senha do usuário {user_id}: {e}')
+            return False
+
 
 # session_create = CreateSessionPostGre()
 # db_session = session_create.get_session()

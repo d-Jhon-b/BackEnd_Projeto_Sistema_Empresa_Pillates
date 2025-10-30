@@ -65,14 +65,14 @@ class UserBaseSchema(BaseModel):
 
 class AlunoCreatePayload(BaseModel):
     user_data: UserBaseSchema
-    senha_user: str = Field(..., min_length=8)
+    senha_user: Optional[str] = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     extra_data: ExtraDataAlunoSchema  
 
 class InstrutorCreatePayload(BaseModel):
     user_data: UserBaseSchema
-    senha_user: str = Field(..., min_length=8)
+    senha_user:  Optional[str] = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     tipo_especializacao: TipoEspecializacaoProfessorEnum 
@@ -83,7 +83,7 @@ class InstrutorCreatePayload(BaseModel):
 
 class ColaboradorCreatePayload(BaseModel):
     user_data: UserBaseSchema
-    senha_user: str = Field(..., min_length=8)
+    senha_user:  Optional[str] = Field(..., min_length=8)
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     is_recepcionista: bool = False
@@ -154,3 +154,13 @@ class LoginRequestSchema(BaseModel):
 class TokenResponseSchema(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+
+#---redefinir senha
+class ForgotPasswordSchema(BaseModel):
+    email: EmailStr
+
+class ResetPasswordSchema(BaseModel):
+    token: str
+    new_password: str
