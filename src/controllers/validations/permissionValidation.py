@@ -11,8 +11,8 @@ class UserValidation():
         creator_level = current_user.get("lv_acesso")
         if NivelAcessoEnum.SUPREMO.value not in allowed_levels:
              allowed_levels.append(NivelAcessoEnum.SUPREMO.value)
-             
         if creator_level not in allowed_levels:
+            print("não atutorizado")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Você não tem permissão para esta ação."
