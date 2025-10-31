@@ -65,14 +65,16 @@ class UserBaseSchema(BaseModel):
 
 class AlunoCreatePayload(BaseModel):
     user_data: UserBaseSchema
-    senha_user: Optional[str] = Field(..., min_length=8)
+    # senha_user: Optional[str] = Field(None, min_length=8)
+    senha_user: Optional[str] = None
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     extra_data: ExtraDataAlunoSchema  
 
 class InstrutorCreatePayload(BaseModel):
     user_data: UserBaseSchema
-    senha_user:  Optional[str] = Field(..., min_length=8)
+    # senha_user:  Optional[str] = Field(None, min_length=8)
+    senha_user: Optional[str] = None #valor opcional para colocar, mas recebe None
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     tipo_especializacao: TipoEspecializacaoProfessorEnum 
@@ -83,7 +85,8 @@ class InstrutorCreatePayload(BaseModel):
 
 class ColaboradorCreatePayload(BaseModel):
     user_data: UserBaseSchema
-    senha_user:  Optional[str] = Field(..., min_length=8)
+    # senha_user:  Optional[str] = Field(None, min_length=8)
+    senha_user: Optional[str] = None
     endereco_data: Optional[EnderecoSchema] = None
     contato_data: Optional[ContatoSchema] = None
     is_recepcionista: bool = False
@@ -164,3 +167,6 @@ class ForgotPasswordSchema(BaseModel):
 class ResetPasswordSchema(BaseModel):
     token: str
     new_password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr

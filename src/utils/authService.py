@@ -1,19 +1,12 @@
-# src/services/authService.py
-
 from fastapi import HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import timedelta
 import logging
 
-# Importa o UserModel que você acabou de editar
 from src.model.UserModel import UserModel 
-# Importa os schemas que criamos anteriormente
 from src.schemas.user_schemas import LoginRequestSchema, ForgotPasswordSchema, ResetPasswordSchema
-# Importa seu gerenciador de token
 from src.utils.authUtils import auth_manager 
-# Importa sua classe de HASH
 from src.model.utils.HashPassword import HashPassword 
-# Importa o serviço de e-mail (dos Passos 2 e 3)
 from src.services.emailService import EmailService 
 from pydantic import EmailStr
 
@@ -26,10 +19,6 @@ class AuthService:
         self.email_service = EmailService() 
 
     def login_for_access_token(self, payload: LoginRequestSchema):
-        """
-        [LÓGICA MOVIDA DO USERCONTROLLER]
-        Chama o método login_user (otimizado) do UserModel.
-        """
         user_data_dict = {'email_user': payload.email, 'senha_user': payload.password}
         
         user = self.user_model.login_user(user_data=user_data_dict)
@@ -50,17 +39,13 @@ class AuthService:
         payload: ForgotPasswordSchema, 
         background_tasks: BackgroundTasks
     ):
-        """
-        [LÓGICA NOVA]
-        Usa o método 'select_user_by_email' que você adicionou.
-        """
         user = self.user_model.select_user_by_email(email=payload.email)
         
         if not user:
             logging.warning(f"Tentativa de redefinição p/ e-mail não cadastrado: {payload.email}")
             return {"message": "Se um usuário com este e-mail existir, um link será enviado."}
 
-        #Cria o token de reset
+        #token de reset
         expires_delta = timedelta(minutes=15)
         reset_data = {"sub": user.email_user, "scope": "password_reset"}
         reset_token = auth_manager.create_access_token(data=reset_data, expires_delta=expires_delta)
@@ -76,10 +61,6 @@ class AuthService:
         return {"message": "Se um usuário com este e-mail existir, um link será enviado."}
 
     def reset_password(self, payload: ResetPasswordSchema):
-        """
-        [LÓGICA NOVA]
-        Usa HashPassword e o novo 'update_user_password'.
-        """
         token_payload = auth_manager.decode_access_token(payload.token)
         if not token_payload:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token inválido ou expirado.")
@@ -97,7 +78,7 @@ class AuthService:
         # Cria o novo hash 
         hash_bytes = HashPassword.hash_password(payload.new_password)
         hash_str = hash_bytes.decode('utf-8')
-        #Atualiza no banco (usa o novo método do Passo 5)
+        #Atualiza no banco 
         success = self.user_model.update_user_password(
             user_id=user.id_user,
             hashed_password_str=hash_str

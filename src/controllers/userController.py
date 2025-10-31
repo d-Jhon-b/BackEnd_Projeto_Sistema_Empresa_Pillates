@@ -8,18 +8,6 @@ from src.controllers.validations.permissionValidation import UserValidation
 from src.controllers.operations.operations import Operations
 
 class UserController:
-    # def login_for_access_token(self, payload: LoginRequestSchema, db_session: Session):
-    #     user_data_dict = {'email_user': payload.email, 'senha_user': payload.password}
-    #     user_model = UserModel(db_session=db_session)
-    #     user = user_model.login_user(user_data=user_data_dict)
-
-    #     if not user:
-    #         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email ou senha incorretos.")
-
-    #     token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso}
-    #     access_token = auth_manager.create_access_token(data=token_data)
-    #     return {"access_token": access_token, "token_type": "bearer"}       
-
     
     def get_user_by_id(self, user_id: int, current_user: dict, db_session: Session):
         UserValidation.check_self_or_admin_permission(current_user, user_id)

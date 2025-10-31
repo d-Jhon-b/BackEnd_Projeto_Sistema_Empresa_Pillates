@@ -15,7 +15,13 @@ class ColaboradoreController:
         UserValidation._check_admin_permission(current_user)
 
         user_data_dict = payload.user_data.model_dump()
-        user_data_dict['senha_user'] = payload.senha_user
+
+        if payload.senha_user: #verifica se o valor da senha existe
+            password_to_use = payload.senha_user #se sim, passa o valor para a criação da conta
+        else:
+            password_to_use = payload.user_data.num_doc_user #se não, passa o valor do documento para a criação da conta
+
+        user_data_dict['senha_user'] = password_to_use
         user_data_dict['lv_acesso'] = NivelAcessoEnum.COLABORADOR
         
         endereco_data_dict = payload.endereco_data.model_dump() if payload.endereco_data else None

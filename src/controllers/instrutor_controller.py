@@ -16,7 +16,15 @@ class InstrutorController:
         UserValidation._check_admin_permission(current_user)
 
         user_data_dict = payload.user_data.model_dump()
-        user_data_dict['senha_user'] = payload.senha_user
+
+        if payload.senha_user:
+            password_to_use = payload.senha_user
+        else:
+            password_to_use = payload.user_data.num_doc_user
+
+
+
+        user_data_dict['senha_user'] = password_to_use
         user_data_dict['lv_acesso'] = NivelAcessoEnum.INSTRUTOR
         
         endereco_data_dict = payload.endereco_data.model_dump() if payload.endereco_data else None
