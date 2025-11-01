@@ -20,7 +20,8 @@ class EmailService:
         if EmailService._fm is None:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Serviço de e-mail não configurado.")
 
-        reset_link = f"http://seu-frontend.com/reset-password?token={token}"
+        #Rota para a aplicação da nova senha + token de validação, tempo máximo = 15 minutos
+        reset_link = f"http://localhost:5173/forgot-password?token={token}"
 
         html_content = f"""
         <p>Olá, {username},</p>

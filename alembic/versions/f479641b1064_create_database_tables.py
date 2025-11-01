@@ -133,7 +133,6 @@ def upgrade() -> None:
         sa.Column('endereco_estudio', sa.String(255),nullable=False, unique=True),
         sa.Column('cep_estudio', sa.String(8), nullable=False),
         sa.Column('mongo_registros_estudio', sa.String(255), nullable=False)
-
     )
 
     #tabelas de aula
