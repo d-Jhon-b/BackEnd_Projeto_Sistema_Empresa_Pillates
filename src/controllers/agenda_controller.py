@@ -26,7 +26,16 @@ class AgendaController:
         
         return await agenda_repository.create(aula_data)
 
+
+
+
+
     async def get_cronograma(self, start_date: date, end_date: date, agenda_repository: AgendaAulaRepository) -> List[AgendaAulaResponseSchema]:
         start_dt = datetime.combine(start_date, datetime.min.time())
         end_dt = datetime.combine(end_date, datetime.max.time())
         return await agenda_repository.find_by_period(start_dt, end_dt)
+    
+    async def create_new_cronograma(self, start_date: date, end_date: date, agenda_repository: AgendaAulaRepository) -> List[AgendaAulaResponseSchema]:
+        start_dt = datetime.combine(start_date, datetime.min.time())
+        end_dt = datetime.combine(end_date, datetime.max.time())
+        pass

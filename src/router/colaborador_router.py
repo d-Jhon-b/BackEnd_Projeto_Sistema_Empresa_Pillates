@@ -1,8 +1,8 @@
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, status, Depends, Query, Path
 from sqlalchemy.orm import Session
 
 from typing import Any, Dict, List, Optional
-from src.schemas.user_schemas import ColaboradorCreatePayload, UserResponse
+from src.schemas.user_schemas import ColaboradorCreatePayload, UserResponse, ColaboradorUpdatePayload
 # from src.controllers.userController import UserController
 
 from src.controllers.colaboradores_controller import ColaboradoreController
@@ -53,3 +53,24 @@ def select_all_colaboradores_endpoint(
     current_user: dict = Depends(auth_manager)
 ):
     return colaborador_controller.select_all_colaboradores_controller(studio_id=studio_id, current_user=current_user, db_session=db)
+
+
+
+@router.patch("/colaboradores/{user_id}", 
+    response_model=UserResponse, 
+    status_code=status.HTTP_200_OK, 
+    summary="Atualizar dados de um COLABORADOR/RECEPCIONISTA (Requer Próprio Acesso ou Admin)"
+)
+def update_colaborador_endpoint(
+    update_data: ColaboradorUpdatePayload, # Payload Focado
+    user_id: int = Path(..., description="ID do Colaborador."),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):
+    
+    return colaborador_controller.update_colaborador_data(
+        user_id=user_id,
+        update_data=update_data,
+        current_user=current_user,
+        db_session=db
+    )

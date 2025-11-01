@@ -31,7 +31,7 @@ class TipoEspecializacaoProfessorEnum(str, Enum):
     CREFITA = 'crefita'
 
 
-#Entidades
+#-------Schemas para conteudo
 class EnderecoSchema(BaseModel):
     tipo_endereco: TipoEnderecoEnum
     endereco: str = Field(..., max_length=255)
@@ -62,7 +62,7 @@ class UserBaseSchema(BaseModel):
 #     contato_data: Optional[ContatoSchema] = None
 #     extra_data: Optional[ExtraDataAlunoSchema] = None
 
-
+#--------------Aplicação do conteudo de resposta
 class AlunoCreatePayload(BaseModel):
     user_data: UserBaseSchema
     # senha_user: Optional[str] = Field(None, min_length=8)
@@ -92,9 +92,7 @@ class ColaboradorCreatePayload(BaseModel):
     is_recepcionista: bool = False
 
 
-#------------Response
-
-
+#------------Conteudo de resposta
 class EnderecoResponse(EnderecoSchema):
     id_endereco: int
     class Config:
@@ -170,3 +168,75 @@ class ResetPasswordSchema(BaseModel):
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+
+
+#---update 
+class EnderecoUpdateSchema(BaseModel):
+    # ID é essencial para a lógica 1:N de UPDATE/DELETE
+    id_endereco: Optional[int] = None 
+    tipo_endereco: Optional[TipoEnderecoEnum] = None
+    endereco: Optional[str] = Field(None, max_length=255)
+    cep: Optional[str] = Field(None, max_length=8)
+
+class ContatoUpdateSchema(BaseModel):
+    # ID é essencial para a lógica 1:N de UPDATE/DELETE
+    id_contato: Optional[int] = None 
+    tipo_contato: Optional[TipoContatoEnum] = None
+    numero_contato: Optional[str] = Field(None, max_length=255)
+
+class ExtraDataAlunoUpdateSchema(BaseModel):
+    profissao_user: Optional[str] = None
+    historico_medico: Optional[str] = None
+
+class ExtraDataInstrutorUpdateSchema(BaseModel):
+    tipo_especializacao: Optional[TipoEspecializacaoProfessorEnum] = None
+    numero_de_registro: Optional[str] = Field(None, max_length=50)
+    formacao: Optional[str] = Field(None, max_length=255)
+    data_contratacao: Optional[date] = None
+
+# --- Schemas de Payloads Especializados (Substituem o genérico) ---
+
+# 1. Payload de Atualização do ALUNO
+class AlunoUpdatePayload(BaseModel):
+    # Campos da Tabela Usuario
+    name_user: Optional[str] = Field(None, max_length=100)
+    email_user: Optional[EmailStr] = None 
+    senha_user: Optional[str] = Field(None, min_length=8)
+    # ... outros campos principais que podem ser alterados
+
+    # Relacionamentos
+    endereco: Optional[List[EnderecoUpdateSchema]] = None
+    contatos: Optional[List[ContatoUpdateSchema]] = None
+    
+    # Dados Extras
+    extra_aluno: Optional[ExtraDataAlunoUpdateSchema] = None
+
+# 2. Payload de Atualização do INSTRUTOR
+class InstrutorUpdatePayload(BaseModel):
+    # Campos da Tabela Usuario
+    name_user: Optional[str] = Field(None, max_length=100)
+    email_user: Optional[EmailStr] = None 
+    senha_user: Optional[str] = Field(None, min_length=8)
+    # ... outros campos principais que podem ser alterados
+
+    # Relacionamentos
+    endereco: Optional[List[EnderecoUpdateSchema]] = None
+    contatos: Optional[List[ContatoUpdateSchema]] = None
+    
+    # Dados Extras
+    extra_instrutor: Optional[ExtraDataInstrutorUpdateSchema] = None
+
+
+
+class ColaboradorUpdatePayload(BaseModel):
+    """Payload específico para atualizar dados de Colaboradores (inclui Recepcionista/Admin)."""
+    
+    # Campos da Tabela Usuario
+    name_user: Optional[str] = Field(None, max_length=100)
+    email_user: Optional[EmailStr] = None 
+    senha_user: Optional[str] = Field(None, min_length=8)
+
+    endereco: Optional[List[EnderecoUpdateSchema]] = None
+    contatos: Optional[List[ContatoUpdateSchema]] = None
+    
+    is_recepcionista: Optional[bool] = None

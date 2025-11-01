@@ -18,7 +18,7 @@ class MongoConnectionManager:
             raise RuntimeError(f"Falha ao carregar as variáveis de ambiente do MongoDB: {e}") 
         
         MONGO_URI = config.mongo_uri
-        cls.DB_NAME = config.mongo_db_name # Usa o nome do DB validado pelo Pydantic
+        cls.DB_NAME = config.mongo_db_name 
 
         try:
             cls.client = AsyncIOMotorClient(MONGO_URI)
@@ -26,8 +26,11 @@ class MongoConnectionManager:
             print(f"MongoConnectionManager: Cliente MongoDB Atlas ativo (DB: {cls.DB_NAME}).")
         except Exception as e:
             cls.client = None
+            import traceback
+            traceback.print_exc()
             print(f"ERRO FATAL ao conectar ao MongoDB Atlas: {e}")
             raise Exception(f"Falha na conexão com MongoDB: {e}") 
+        
 
     @classmethod
     async def close(cls):

@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import Dict, Optional, Any, List
 # from src.model.UserModel import UserModel
 from src.model.ColaboradorModel import ColaboradorModel
-
+from src.model.UserModel import UserModel
 from src.utils.authUtils import auth_manager
-from src.schemas.user_schemas import UserResponse, LoginRequestSchema, NivelAcessoEnum, AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload
+from src.schemas.user_schemas import (UserResponse, LoginRequestSchema, NivelAcessoEnum, 
+AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload, ColaboradorUpdatePayload)
 from src.controllers.validations.permissionValidation import UserValidation
 
 from src.controllers.operations.operations import Operations
@@ -51,3 +52,33 @@ class ColaboradoreController:
             )
 
         return UserResponse.model_validate(user)
+    
+
+    def update_colaborador_data(self, user_id: int, update_data: ColaboradorUpdatePayload, current_user: dict, db_session: Session) -> UserResponse:
+        UserValidation.check_self_or_admin_permission(current_user, user_id)
+        user_model = UserModel(db_session=db_session)
+
+        raw_data = update_data.model_dump(exclude_unset=True, exclude_none=True)
+        
+        endereco_data = raw_data.pop('endereco', None)
+        contatos_data = raw_data.pop('contatos', None)
+        
+        # O campo 'is_recepcionista' está no payload de nível superior
+        is_recepcionista_value = raw_data.pop('is_recepcionista', None) 
+
+        colaborador_extra_data = None
+        if is_recepcionista_value is not None:
+             colaborador_extra_data = {'is_recepcionista': is_recepcionista_value}
+        
+        updated_user = user_model.update_user_data(
+            user_id=user_id,
+            user_data_to_update=raw_data, 
+            endereco_data_to_update=endereco_data,
+            contato_data_to_update=contatos_data,
+            extra_data_to_update=colaborador_extra_data
+        )
+
+        if not updated_user:
+             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Colaborador não encontrado ou erro na atualização.")
+             
+        return UserResponse.model_validate(updated_user)

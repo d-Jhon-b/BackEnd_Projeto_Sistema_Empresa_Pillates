@@ -2,7 +2,13 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from src.model.UserModel import UserModel
 from src.utils.authUtils import auth_manager
-from src.schemas.user_schemas import UserResponse, LoginRequestSchema, NivelAcessoEnum, AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload
+from src.schemas.user_schemas import (UserResponse, 
+LoginRequestSchema, 
+NivelAcessoEnum, 
+AlunoCreatePayload, 
+InstrutorCreatePayload, 
+ColaboradorCreatePayload,
+)
 from src.controllers.validations.permissionValidation import UserValidation
 
 from src.controllers.operations.operations import Operations
@@ -34,9 +40,6 @@ class UserController:
         users_from_db = user_model.select_all_users(studio_id=studio_id)
         return [UserResponse.model_validate(user) for user in users_from_db]
 
-        
-
-
     def delete_user_by_id_controller(self, current_user:dict , user_id:int, db_session:Session):
         UserValidation._check_admin_permission(current_user)
 
@@ -49,6 +52,5 @@ class UserController:
                 detail="Usuário não encontrado."
             )
         print(f'Usuário excluído com sucesso.')
-        return 
+        return {"message": {"Usuario Apagado deste maravilhoso sistema.... nunca mais vai existir"}}
     
-        

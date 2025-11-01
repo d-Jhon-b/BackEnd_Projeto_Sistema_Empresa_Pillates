@@ -21,7 +21,7 @@ class EmailService:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Serviço de e-mail não configurado.")
 
         #Rota para a aplicação da nova senha + token de validação, tempo máximo = 15 minutos
-        reset_link = f"http://localhost:5173/forgot-password?token={token}"
+        reset_link = f"http://localhost:5173/new-password?token={token}"
 
         html_content = f"""
         <p>Olá, {username},</p>
