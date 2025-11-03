@@ -1,12 +1,9 @@
-# src/schemas/estudio_schemas.py
 from pydantic import BaseModel, Field
 from typing import Optional, Any
 from src.schemas.agenda_schemas import PyObjectId # Se precisar do PyObjectId
 
-# --- 1. SCHEMAS DE CRIAÇÃO E ALTERAÇÃO ---
 
 class EstudioBaseSchema(BaseModel):
-    """ Schema base para criar ou atualizar um Estúdio. """
     endereco_estudio: str = Field(..., alias="endereco", max_length=255)
     cep_estudio: str = Field(..., alias="cep", min_length=8, max_length=8)
     # Este campo no PostgreSQL não parece ter utilidade direta na API de criação, mas vamos mantê-lo se for um requisito de validação
@@ -35,7 +32,6 @@ class EstudioUpdateSchema(BaseModel):
 
     model_config = { 'populate_by_name': True }
 
-# --- 2. SCHEMAS DE RESPOSTA ---
 
 class EstudioResponseSchema(EstudioBaseSchema):
     """ Retorna o documento completo com o ID do PostgreSQL. """

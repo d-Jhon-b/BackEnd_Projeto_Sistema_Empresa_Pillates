@@ -1,9 +1,11 @@
-# src/model/EstudioModel.py
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, insert, update, delete
 from typing import Optional, List
 from src.model.estudioModel.estudioConfig import Estudio # Seu modelo base
 from src.schemas.estudio_schemas import EstudioCreateSchema, EstudioUpdateSchema
+
+from src.database.connPostGreNeon import CreateSessionPostGre
 
 class EstudioModel:
     """ Repositório/Model para operações CRUD no PostgreSQL (Estudio). """
@@ -73,6 +75,28 @@ class EstudioModel:
             print(f"Erro ao atualizar Estúdio (ID: {estudio_id}): {e}")
             raise e
 
+    def delete_estudio(self, estudio_id:int):
+        if estudio_id is None:
+            print('Estudio não definido para exclusão')
+            return None 
+        try:
+            self.stmt = delete(Estudio).where(Estudio.id_estudio == estudio_id)
+            self.res_delete = self.session.execute(self.stmt)
+            if self.res_delete.rowcount>0:
+                self.session.commit()
+                print(f'Sucesso ao excluir o Estudio de ID: {estudio_id}')
+                return True
+            else:
+                return False
+            
+        except SQLAlchemyError as err:
+            print(f'Erro ao realizar operação {err}')
+            self.session.rollback()
+            return False
+        
+
+
+
     def check_exists_by_id(self, estudio_id: int) -> bool:
         """ Verifica se um estúdio existe pelo seu ID (otimizado). """
         try:
@@ -82,3 +106,16 @@ class EstudioModel:
         except Exception as e:
             print(f"Erro ao verificar Estúdio (ID: {estudio_id}): {e}")
             return False
+        
+
+
+# create_session = CreateSessionPostGre()
+# session =create_session.get_session()
+
+# estudio_model= EstudioModel(session)
+# try: 
+#     estudio_id=int(2)
+#     res = estudio_model.delete_estudio(estudio_id=estudio_id)
+#     print(res)
+# except Exception as err:
+#     print(err)

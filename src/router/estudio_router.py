@@ -9,7 +9,7 @@ from src.utils.authUtils import auth_manager # Importe sua função de autentica
 
 router = APIRouter(
     prefix="/estudios",
-    tags=["Gestão de Estúdios (PostgreSQL)"]
+    tags=["Gestão de Estúdios"]
 )
 
 estudio_controller = EstudioController() 
@@ -80,3 +80,15 @@ def update_estudio_route(
         current_user=current_user, 
         db_session=db_session
     )
+
+
+@router.delete("/{id_estudio}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Excluir estudio por ID(Requer Autorização de Admin)"        
+)
+def delete_estudio_router(
+    estudio_id: int,
+    db: Session = Depends(get_db),
+    current_user:dict=Depends(auth_manager)
+):
+    return estudio_controller.delete_estudio_controller(estudio_id=estudio_id,current_user=current_user, db_session=db)

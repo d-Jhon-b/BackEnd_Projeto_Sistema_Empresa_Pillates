@@ -33,7 +33,7 @@ def get_excecao_controller_dependency() -> ExcecaoController:
     status_code=status.HTTP_201_CREATED,
     summary="Registra um dia de folga/indisponibilidade."
 )
-async def create_excecao_route(
+async def create_excecao_router(
     excecao_data: ExcecaoCreateSchema,
     db_session: Session = Depends(get_db), 
     current_user: Dict[str, Any] = Depends(auth_manager),
@@ -51,7 +51,7 @@ async def create_excecao_route(
     response_model=List[ExcecaoResponseSchema],
     summary="Lista as exceções ATIVAS (dias de folga) por período e estúdio."
 )
-async def get_excecoes_route(
+async def get_excecoes_router(
     start_date: date = Query(..., description="Data de início do período (YYYY-MM-DD)."),
     end_date: date = Query(..., description="Data de fim do período (YYYY-MM-DD)."),
     estudio_id: Optional[int] = Query(None, description="ID do estúdio para filtrar."),

@@ -1,12 +1,9 @@
-# src/schemas/agenda_schemas.py (VERSÃO FINAL)
 from pydantic import BaseModel, Field
 from typing import Optional, List, Any, Callable
 from datetime import datetime
 from bson import ObjectId
 from pydantic_core import core_schema as cs 
-# Nota: Você pode precisar adicionar 'from typing_extensions import Annotated' se a versão for muito rigorosa, mas vamos tentar o Pydantic padrão primeiro.
 
-# CLASSE AUXILIAR PYOBJECTID (Definitiva Pydantic v2.12+)
 class PyObjectId(ObjectId):
     """ Customiza a manipulação do ObjectId para Pydantic v2. """
     
@@ -15,9 +12,9 @@ class PyObjectId(ObjectId):
         
         validation_schema = cs.chain_schema(
             [
-                # 1. Tenta converter str/bytes/ObjectId -> ObjectId
+                # Tenta converter str/bytes/ObjectId -> ObjectId
                 cs.no_info_plain_validator_function(cls.validate), 
-                # 2. Garante que o resultado final é um ObjectId
+                # Garante que o resultado final é um ObjectId
                 cs.is_instance_schema(ObjectId) 
             ]
         )
@@ -30,7 +27,6 @@ class PyObjectId(ObjectId):
         
     @classmethod
     def validate(cls, v: Any) -> ObjectId:
-        """ Valida a entrada e retorna o ObjectId. """
         if isinstance(v, ObjectId):
             return v
         if isinstance(v, (str, bytes)):
@@ -39,16 +35,9 @@ class PyObjectId(ObjectId):
                     raise ValueError("ID inválido do MongoDB (ObjectId)")
                 return ObjectId(v)
             except Exception as e:
-                # Captura erros de conversão como string vazia
                 raise ValueError(f"Não foi possível converter para ObjectId: {v}") from e
         
         raise TypeError(f"ObjectId deve ser string, bytes ou ObjectId, não {type(v)}")
-
-
-
-
-
-
 
 
 class AgendaAulaCreateSchema(BaseModel):

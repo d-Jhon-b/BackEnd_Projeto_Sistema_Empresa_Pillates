@@ -1,14 +1,8 @@
-# src/schemas/excecao_schemas.py
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Callable
 from datetime import date, datetime
 from bson import ObjectId
-
-# Importamos PyObjectId do seu arquivo agenda_schemas.py
-from .agenda_schemas import PyObjectId 
-
-
-# --- 1. SCHEMAS DE CRIAÇÃO E ALTERAÇÃO ---
+from src.schemas.agenda_schemas import PyObjectId 
 
 class ExcecaoBaseSchema(BaseModel):
     """
@@ -16,9 +10,7 @@ class ExcecaoBaseSchema(BaseModel):
     Representa um dia que o estúdio está INDISPONÍVEL.
     """
     
-    # O dia que a exceção ocorrerá (apenas a data, sem hora)
     data_excecao: date = Field(..., alias="dataExcecao") 
-    
     # ID do estúdio afetado (PostgreSQL ID)
     fk_id_estudio: int = Field(..., alias="EstudioID")
     
@@ -27,7 +19,7 @@ class ExcecaoBaseSchema(BaseModel):
     
     # Status: 1 = Indisponível (Fechado), 0 = Disponível (Revertido/Reaberto)
     status_indisponibilidade: int = Field(
-        1, # Padrão: 1 (Indisponível), pois o POST serve para registrar uma folga
+        1, 
         alias="statusIndisponibilidade", 
         ge=0, 
         le=1
@@ -50,16 +42,11 @@ class ExcecaoCreateSchema(ExcecaoBaseSchema):
     pass
     
 class ExcecaoUpdateSchema(BaseModel):
-    """ 
-    Usado para o PATCH (Atualização) 
-    Permite atualizar a descrição ou reverter o status (de 1 para 0, reabrindo o dia).
-    """
     descricao: Optional[str] = Field(None, alias="motivoExcecao", max_length=200)
     status_indisponibilidade: Optional[int] = Field(None, alias="statusIndisponibilidade", ge=0, le=1)
 
     model_config = { 'populate_by_name': True }
 
-# --- 2. SCHEMAS DE RESPOSTA ---
 
 class ExcecaoResponseSchema(ExcecaoBaseSchema):
     """ Retorna o documento completo com o ID do MongoDB. """
