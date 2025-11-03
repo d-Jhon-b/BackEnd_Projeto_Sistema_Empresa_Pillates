@@ -20,7 +20,6 @@ class MongoParamBuilder():
         self.config_data = self.env_loader.get_config()
         
         try:
-            # Passa o dict original (chaves MAIÚSCULAS), Pydantic usa o alias
             self.config = MongoConfig(**self.config_data) 
         except ValidationError as err:
             raise ValueError(f'Variáveis de ambiente do MongoDB faltando:\n{err}')

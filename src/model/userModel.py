@@ -22,7 +22,7 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 import bcrypt
-
+import traceback
 # import logging
 
 class UserModel():
@@ -191,24 +191,19 @@ class UserModel():
 
 
     def select_user_by_email(self, email: str) -> Usuario | None:
-            """
-            Busca um usuário completo pelo e-mail.
-            (Mais eficiente que o ValidarSenha, pois já traz o usuário todo).
-            """
             try:
                 stmt = select(Usuario).where(Usuario.email_user == email)
-                user = self.session.execute(stmt).scalar_one_or_none()
+                user = self.session.execute(stmt).unique().scalar_one_or_none()
                 return user
             except Exception as e:
                 print(f'Erro ao selecionar usuário por e-mail: {e}')
                 self.session.rollback()
                 return None
 
+
+
+
     def update_user_password(self, user_id: int, hashed_password_str: str) -> bool:
-        """
-        Atualiza a senha do usuário no banco.
-        Espera receber a senha já como string (hash decodificado).
-        """
         try:
             user = self.session.query(Usuario).filter(Usuario.id_user == user_id).first()
             
@@ -223,6 +218,131 @@ class UserModel():
             self.session.rollback()
             print(f'Erro ao atualizar senha do usuário {user_id}: {e}')
             return False
+        
+    def update_user_data(
+        self, 
+        user_id: int, 
+        user_data_to_update: dict, 
+        endereco_data_to_update: Optional[list] = None, 
+        contato_data_to_update: Optional[list] = None, 
+        extra_data_to_update: Optional[dict] = None 
+    ) -> Optional[Usuario]:
+        try:
+            existing_user = self.session.execute(
+                select(Usuario)
+                .where(Usuario.id_user == user_id)
+                .options(
+                    joinedload(Usuario.endereco), 
+                    joinedload(Usuario.contatos),
+                    joinedload(Usuario.estudante),
+                    joinedload(Usuario.professor),
+                    joinedload(Usuario.administracao),
+                    joinedload(Usuario.recepcionista)
+                )
+            ).unique().scalar_one_or_none()
+            
+            if not existing_user: return None
+
+            if user_data_to_update:
+                if 'senha_user' in user_data_to_update:
+                    password_user = user_data_to_update.pop('senha_user')
+                    hashed_password = HashPassword.hash_password(password_user)
+                    existing_user.senha_user = hashed_password.decode('utf-8')
+                for chave, valor in user_data_to_update.items():
+                    setattr(existing_user, chave, valor) 
+            
+
+            def handle_one_to_many_update(
+                existing_children, 
+                incoming_data_list, 
+                ChildORM, 
+                id_field, 
+                fk_field
+            ):
+                """Gerencia a lógica de UPDATE/INSERT/DELETE para listas aninhadas (1:N)."""
+                if incoming_data_list is None:
+                    return 
+                
+                existing_map = {getattr(c, id_field): c for c in existing_children}
+                incoming_ids = set()
+                
+                for data_dict in incoming_data_list:
+                    child_id = data_dict.get(id_field)
+
+                    if child_id:
+                        incoming_ids.add(child_id)
+                        child_to_update = existing_map.get(child_id)
+                        if child_to_update:
+                            for key, value in data_dict.items():
+                                if key != id_field: 
+                                    setattr(child_to_update, key, value)
+                    else: 
+                        data_dict[fk_field] = user_id
+                        self.session.add(ChildORM(**data_dict))
+                        
+                ids_to_delete = existing_map.keys() - incoming_ids
+                if ids_to_delete:
+                    delete_stmt = delete(ChildORM).where(getattr(ChildORM, id_field).in_(ids_to_delete))
+                    self.session.execute(delete_stmt)
+
+            if endereco_data_to_update:
+                handle_one_to_many_update(
+                    existing_user.endereco,
+                    endereco_data_to_update,
+                    Endereco, 
+                    'id_endereco',
+                    'fk_id_user'
+                )
+
+            if contato_data_to_update:
+                handle_one_to_many_update(
+                    existing_user.contatos,
+                    contato_data_to_update,
+                    Contato, 
+                    'id_contato',
+                    'fk_id_user'
+                )
+
+            if extra_data_to_update:
+                user_level = existing_user.lv_acesso
+                user_id = existing_user.id_user                 
+                def update_one_to_one(existing_rel, update_dict, ORM_Class, fk_field):
+                    if existing_rel:
+                        for key, value in update_dict.items():
+                            setattr(existing_rel, key, value)
+                    else:
+                        update_dict[fk_field] = user_id
+                        self.session.add(ORM_Class(**update_dict))
+
+                if user_level == 'aluno':
+                    update_one_to_one(existing_user.estudante, extra_data_to_update, Estudante, 'fk_id_user')
+
+                elif user_level == 'instrutor':
+                    update_one_to_one(existing_user.professor, extra_data_to_update, Professor, 'fk_id_user')
+                
+                elif user_level == 'colaborador':
+                    is_recepcionista_update = extra_data_to_update.get('is_recepcionista')
+
+                    if is_recepcionista_update is not None:
+                        if existing_user.recepcionista and is_recepcionista_update == False:
+                            self.session.delete(existing_user.recepcionista)
+                            self.session.add(Administracao(fk_id_user=user_id))
+                        
+                        elif existing_user.administracao and is_recepcionista_update == True:
+                            self.session.delete(existing_user.administracao)
+                            self.session.add(Recepcionista(fk_id_user=user_id))
+            
+            self.session.commit()
+            self.session.refresh(existing_user)
+            return existing_user
+
+        except SQLAlchemyError as AlchemyError:
+            self.session.rollback()
+            print(f'Erro de SQLAlchemy ao atualizar usuário no banco:\n{AlchemyError}')
+            traceback.print_exc()
+            return None
+        
+
 
 
 # session_create = CreateSessionPostGre()

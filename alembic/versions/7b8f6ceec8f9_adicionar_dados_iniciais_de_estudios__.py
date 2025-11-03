@@ -112,6 +112,12 @@ def upgrade() -> None:
             {'fk_id_user': 1001}
         ]
     )
+    op.execute(
+        "SELECT setval('estudio_id_estudio_seq', (SELECT MAX(id_estudio) FROM estudio))"
+    )
+    op.execute(
+        "SELECT setval('usuario_id_user_seq', (SELECT MAX(id_user) FROM usuario))"
+    )
 
 
 def downgrade() -> None:

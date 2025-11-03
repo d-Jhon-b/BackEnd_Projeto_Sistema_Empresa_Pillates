@@ -11,8 +11,7 @@ class ExcecaoRepository:
     async def insert_excecao(self, data: Dict[str, Any]) -> ObjectId:
         """ Insere uma nova exceção de cronograma (dia de folga/fechamento). """
         
-        # 1. Converte o objeto 'date' para 'datetime' para salvar no MongoDB
-        # Isso garante que a data seja salva consistentemente à meia-noite (início do dia)
+        # Converte o objeto 'date' para 'datetime' para salvar no MongoDB
         if "dataExcecao" in data and isinstance(data["dataExcecao"], date):
             data["dataExcecao"] = datetime.combine(data["dataExcecao"], datetime.min.time())
             
@@ -45,21 +44,19 @@ class ExcecaoRepository:
     async def update_excecao(self, excecao_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """ Atualiza campos de uma exceção, usado para mudar descrição ou reverter status. """
         
-        # Prepara os dados para o MongoDB
         update_set = {}
         for key, value in update_data.items():
             if value is not None:
                 update_set[key] = value
 
         if not update_set:
-            return None # Não há nada para atualizar
+            return None 
 
         object_id = ObjectId(excecao_id)
         
         result = await self.collection.find_one_and_update(
             {"_id": object_id},
             {"$set": update_set},
-            # Garante que o documento retornado seja o que foi ATUALIZADO
             return_document=True 
         )
         return result

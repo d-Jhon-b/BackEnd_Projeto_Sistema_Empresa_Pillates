@@ -1,6 +1,6 @@
-from fastapi import APIRouter, status, Depends, Query
+from fastapi import APIRouter, status, Depends, Query, Path
 from sqlalchemy.orm import Session
-from src.schemas.user_schemas import AlunoCreatePayload, UserResponse
+from src.schemas.user_schemas import AlunoCreatePayload, UserResponse, AlunoUpdatePayload
 # from src.controllers.userController import UserController
 from fastapi import HTTPException
 
@@ -48,6 +48,26 @@ def get_all_alunos_endpoint(
 ):
     return aluno_controller.select_all_aluno_controller(
         studio_id=studio_id,
+        current_user=current_user,
+        db_session=db
+    )
+
+
+
+@router.patch("/alunos/{user_id}", 
+    response_model=UserResponse, 
+    status_code=status.HTTP_200_OK, 
+    summary="Atualizar dados de um ALUNO (Requer Próprio Acesso ou Admin)"
+)
+def update_aluno_endpoint(
+    update_data: AlunoUpdatePayload, 
+    user_id: int = Path(..., description="ID do Aluno."),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):    
+    return aluno_controller.update_aluno_data(
+        user_id=user_id,
+        update_data=update_data,
         current_user=current_user,
         db_session=db
     )

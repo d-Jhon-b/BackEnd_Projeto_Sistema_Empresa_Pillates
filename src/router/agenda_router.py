@@ -46,3 +46,26 @@ async def get_cronograma_endpoint(
         end_date=end_date,
         agenda_repository=agenda_repo
     )
+
+
+
+@router.post("/createCronograma", response_model=List[AgendaAulaResponseSchema], summary="Criar novo Cronograma de Aulas mensal")
+async def get_cronograma_endpoint( 
+    start_date: date = Query(..., description="Data de início (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="Data de fim (YYYY-MM-DD)"),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository),
+    current_user: dict = Depends(mock_current_user) 
+):
+    return await agenda_controller.create_new_cronograma(start_date=start_date,
+        end_date=end_date,
+        agenda_repository=agenda_repo)
+
+
+
+
+@router.get("/cronograma", response_model=List[AgendaAulaResponseSchema], summary="Buscar Cronograma de Aulas por Período")
+async def get_cronograma_endpoint( 
+):
+    return await agenda_controller.get_cronograma(
+    )
+

@@ -15,7 +15,6 @@ class AuthService:
     def __init__(self, db_session: Session):
         self.db_session = db_session
         self.user_model = UserModel(db_session)
-        # (Assumindo que o EmailService foi criado nos passos anteriores)
         self.email_service = EmailService() 
 
     def login_for_access_token(self, payload: LoginRequestSchema):
@@ -50,7 +49,7 @@ class AuthService:
         reset_data = {"sub": user.email_user, "scope": "password_reset"}
         reset_token = auth_manager.create_access_token(data=reset_data, expires_delta=expires_delta)
 
-        #Envia o e-mail (usa o EmailService do Passo 3)
+        #Envia o e-mail
         background_tasks.add_task(
             self.email_service.send_password_reset_email,
             email_to=user.email_user,

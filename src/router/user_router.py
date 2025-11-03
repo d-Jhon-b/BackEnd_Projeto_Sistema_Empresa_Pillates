@@ -9,8 +9,6 @@ from src.database.dependencies import get_db
 from src.utils.authUtils import auth_manager
 from fastapi import HTTPException
 
-
-
 router = APIRouter(
     prefix="/users",
     tags=["Users - Consultas"] 
@@ -64,7 +62,7 @@ def get_user_by_id_endpoint(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)
 ):
-    my_user_id = current_user.get("fk_id_estudio")
+    # my_user_id = current_user.get("fk_id_estudio")
     return user_controller.get_user_by_id(user_id, current_user, db_session=db)
 
 
@@ -78,5 +76,6 @@ def delete_user_by_id_endpoint(
     current_user:dict=Depends(auth_manager)
 ):
     return user_controller.delete_user_by_id_controller(current_user, user_id, db_session=db)
+
 
 

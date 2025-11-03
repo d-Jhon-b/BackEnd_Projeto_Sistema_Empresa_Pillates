@@ -2,11 +2,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Union
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
-# 1. Importa HTTPBearer e HTTPAuthorizationCredentials em vez de OAuth2PasswordBearer
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import logging
-
-# 2. Importa a classe carregadora de ambiente que você criou
 from src.database.envConfig.envJwt import EnvLoaderJwt 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,7 +23,7 @@ class JWTAuthManager:
             logging.error(f"Falha ao carregar configurações JWT do .env: {e}")
             raise RuntimeError(f"A API não pode iniciar sem as configurações JWT corretas: {e}")
 
-        # 2Atribui as constantes como atributos da classe
+        # Atribui as constantes como atributos da classe
         self.secret_key = jwt_config["JWT_SECRET_KEY"]
         self.algorithm = jwt_config["JWT_ALGORITHM"]
         self.expire_minutes = jwt_config["JWT_ACCESS_TOKEN_EXPIRE_MINUTES"]
