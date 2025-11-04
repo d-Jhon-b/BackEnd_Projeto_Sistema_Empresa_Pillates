@@ -80,8 +80,6 @@ def upgrade() -> None:
         sa.Column('id_professor', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('tipo_especializacao', sa.Enum('cref', 'crefita', name='tipo_especializacao_enum'), nullable=False),
-        
-        
         sa.Column('numero_de_registro', sa.String(50), nullable=False),
         sa.Column('formacao', sa.String(255), nullable=True),  
         sa.Column('data_contratacao', sa.Date, nullable=False)
@@ -144,12 +142,17 @@ def upgrade() -> None:
         sa.Column('desc_aula', sa.String(255), nullable=True),
         sa.Column('fk_id_estudio', sa.Integer, sa.ForeignKey('estudio.id_estudio'), nullable=False),
         sa.Column('fk_id_professor', sa.Integer, sa.ForeignKey('professor.id_professor'), nullable=False),
+        sa.Column('fk_id_professor_substituto', sa.Integer, sa.ForeignKey('professor.id_professor'), nullable=True),
+        
+        # Impedir que o professor titular e o substituto sejam a mesma pessoa
+        sa.CheckConstraint('fk_id_professor != fk_id_professor_substituto', name='chk_titular_substituto_diferentes')
     )
     #tabela de ligação entre aula e o estudante
     op.create_table(
         'estudante_aula',
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),
-        sa.Column('fk_id_aula', sa.Integer, sa.ForeignKey('aula.id_aula'),nullable=False)
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False, primary_key=True),
+        sa.Column('fk_id_aula', sa.Integer, sa.ForeignKey('aula.id_aula'),nullable=False, primary_key=True),
+        sa.Column('tipo_de_aula', sa.Enum('normal', 'experimental', 'reposicao',name="enum_tipo_de_aula"), nullable=False)
 
     )
 
@@ -212,6 +215,17 @@ def upgrade() -> None:
         sa.Column('status_pagamento', sa.Enum('pago', 'pendente', 'atrasado', name='enum_status_pagamento'), nullable=False),
         sa.Column('descricao_pagamento', sa.String(255), nullable=False)
     )
+    op.create_table(
+        'solicitacoes',
+        sa.Column('id_solicitacao', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=True),
+        sa.Column('fk_id_estudio', sa.Integer, sa.ForeignKey('estudio.id_estudio'), nullable=False),
+        sa.Column('tipo_de_solicitacao', sa.Enum('aula', 'plano','pagamento','outros', name='enum_solicitacao'), nullable=False),
+        sa.Column('menssagem', sa.Text, nullable=True),
+        sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, default="em espera"),
+        sa.Column('data_criacao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
+        sa.Column('data_resposta', sa.DateTime, nullable=True)
+    )   
 
 
 def downgrade() -> None:
@@ -243,8 +257,10 @@ def downgrade() -> None:
     op.drop_table('registro_do_aluno')
     
     # 3. DROP DAS TABELAS DE ENTIDADE DE NEGÓCIO
-    
+    # Remover constraint de check da tabela 'aula'
+    op.drop_constraint('chk_titular_substituto_diferentes', 'aula', type_='check')
     # Aula depende de Estudio e Professor
+    op.drop_table('solicitacoes')
     op.drop_table('aula')
     op.drop_table('estudio')
 
@@ -281,7 +297,11 @@ def downgrade() -> None:
     
     # 8. DROP DOS TIPOS ENUM (CRUCIAL NO POSTGRESQL)
 
+    op.execute('DROP TYPE enum_tipo_de_aula;')
+    op.execute('DROP TYPE enum_solicitacao;')
+    op.execute('DROP TYPE enum_status_solicitacao;')
     op.execute('DROP TYPE enum_status_pagamento;')
+
     op.execute('DROP TYPE enum_metodo_pagamento;')
     op.execute('DROP TYPE enum_status_contrato;')
     # op.execute('DROP TYPE enum_num_aulas_semana;')

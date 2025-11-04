@@ -31,17 +31,17 @@ class Planos(Base.Base):
         return f"<Estudio(id={self.id_plano}, tipo de plano='{self.tipo_plano}')>"
 
 
-if __name__ == "__main__":
-    create_session = CreateSessionPostGre()
-    db = create_session.get_session()
-    # db:Session = Depends(get_db())
-    try:
-        stmt = select(Planos)
+# if __name__ == "__main__":
+#     create_session = CreateSessionPostGre()
+#     db = create_session.get_session()
+#     # db:Session = Depends(get_db())
+#     try:
+#         stmt = select(Planos)
 
-        print("Executando a query no banco de dados Neon...")
-        result = db.execute(stmt)
-        todos_planos = result.scalars().all()
-        for planos in todos_planos:
-            print(planos)
-    except SQLAlchemyError as err:
-        print(err)
+#         print("Executando a query no banco de dados Neon...")
+#         result = db.execute(stmt)
+#         todos_planos = result.scalars().all()
+#         for planos in todos_planos:
+#             print(planos)
+#     except SQLAlchemyError as err:
+#         print(err)

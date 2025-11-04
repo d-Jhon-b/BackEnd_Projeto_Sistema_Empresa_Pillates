@@ -61,6 +61,15 @@ class AlunoModel:
 
 # session_create = CreateSessionPostGre()
 # db_session = session_create.get_session()
+# try:
+#     aluno_teste = AlunoModel(db_session=db_session)
+#     # aluno_select_all = aluno_teste.select_all_students(studio_id=1)
+#     # for a in aluno_select_all:
+#     #     print(a) 
+#     aluno_select_one = aluno_teste.select_student_by_id(user_id=1004)
+#     print(aluno_select_one)
+# except SQLAlchemyError as err:
+#     print(err)
 
 # try:
 #     aluno_test = AlunoModel(db_session=db_session)

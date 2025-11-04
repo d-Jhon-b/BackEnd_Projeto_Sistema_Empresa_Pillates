@@ -7,7 +7,8 @@ from src.router import (
     user_router, 
     agenda_router,
     estudio_router,
-    excecao_router
+    excecao_router,
+    aula_router
 )
 from src.database.connMongo import MongoConnectionManager 
 from contextlib import asynccontextmanager
@@ -60,6 +61,7 @@ app.include_router(colaborador_router.router)
 app.include_router(user_router.router)
 app.include_router(estudio_router.router)
 app.include_router(excecao_router.router)
+app.include_router(aula_router.router)
 
 @app.get("/", tags=["Root"])
 def read_root():

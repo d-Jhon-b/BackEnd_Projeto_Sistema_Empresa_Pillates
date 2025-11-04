@@ -31,20 +31,20 @@ class PostGreParamBuilder():
             }
         return data_env
     
-    # def buidl_url_env(self)->Optional[str]:
-    #     self.url_postGre_local = (
-    #         f"postgresql://{self.config.user}:"
-    #         f"{self.config.password}@{self.config.host}:"
-    #         f"{self.config.port}/{self.config.database}"
-    #     )
-    #     return str(self.url_postGre_local)
-    
     def build_url_env(self)->Optional[str]:
-        self.url_postGre_neon = self.config.url_neon
+        self.url_postGre_local = (
+            f"postgresql://{self.config.user}:"
+            f"{self.config.password}@{self.config.host}:"
+            f"{self.config.port}/{self.config.database}"
+        )
+        return str(self.url_postGre_local)
+    
+    # def build_url_env(self)->Optional[str]:
+    #     self.url_postGre_neon = self.config.url_neon
 
-        return str(self.url_postGre_neon)
+    #     return str(self.url_postGre_neon)
     
 
-# postGreTest = PostGreParamBuilder()
-# data = postGreTest.build_url_env()
-# print(data)
+postGreTest = PostGreParamBuilder()
+data = postGreTest.build_url_env()
+print(data)

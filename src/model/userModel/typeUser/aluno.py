@@ -1,11 +1,13 @@
 from pydantic import BaseModel, EmailStr
 from typing import Dict, Optional, Union
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import declarative_base, relationship, Mapped
 from sqlalchemy import Column, select,ForeignKey,String, Integer, CheckConstraint, UniqueConstraint, Date, Enum
+from sqlalchemy.ext.associationproxy import association_proxy
+
 from src.database.Base import DeclarativeBase as Base
 
 from src.database.connPostGreNeon import CreateSessionPostGre
-
+from src.model.aulaModel.aulaConfig import Estudante_Aula
 
 class Estudante(Base.Base):
     __tablename__ = 'estudante'
@@ -18,8 +20,16 @@ class Estudante(Base.Base):
         back_populates="estudante",
     )
 
-    # def __repr__(self):
-    #     return f"<AlunoID(id={self.id_estudante}, fk_user_id='{self.fk_id_user}\nprofissão:{self.profissao_user}\nhistorico:{self.historico_medico}')>"
+    aulas_associacao: Mapped[list["Estudante_Aula"]] = relationship(
+        "Estudante_Aula",
+        back_populates="estudante", 
+        cascade="all, delete-orphan",
+    )
+    
+    aulas = association_proxy("aulas_associacao", "aula")
+
+    def __repr__(self):
+        return f"<AlunoID(id={self.id_estudante}, fk_user_id='{self.fk_id_user}\nprofissão:{self.profissao_user}\nhistorico:{self.historico_medico}')>"
     
 
 # if __name__ == "__main__":
@@ -27,14 +37,10 @@ class Estudante(Base.Base):
 #         createSession = CreateSessionPostGre()
 #         session = createSession.get_session()
 
-#         if not session:
-#             print(f'erro ao criar sessão para acesso')
-#         else:
-
-#             comand = select(Estudante)
-#             res = session.execute(comand)
-#             todos_res = res.scalars().all()
-#             print(todos_res)
+#         comand = select(Estudante)
+#         res = session.execute(comand)
+#         todos_res = res.scalars().all()
+#         print(todos_res)
 #     except Exception as err:
 #         print(err)
 #     finally:
