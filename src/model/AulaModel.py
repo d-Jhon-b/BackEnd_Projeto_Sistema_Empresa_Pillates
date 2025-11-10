@@ -5,12 +5,16 @@ from typing import List, Optional, Dict, Any
 
 # Importar classes ORM
 from src.model.aulaModel.aulaConfig import Aula, Estudante_Aula
-
+from src.database.connPostGreNeon import CreateSessionPostGre
 
 class AulaModel:
     def __init__(self, db_session: Session):
         self.session = db_session
 
+    # def select_my_aulas(self, user_id)->Optional [Aula]:
+    #     stmt = (
+    #         select(Aula).where(Aula.fk)
+    #     )
     def select_aula_by_id(self, aula_id: int) -> Optional[Aula]:
         """Seleciona uma aula pelo ID, carregando estudantes (N:N)."""
         # Carregando a associação N:N (estudantes_associacao)
@@ -19,7 +23,7 @@ class AulaModel:
             .where(Aula.id_aula == aula_id)
             .options(joinedload(Aula.estudantes_associacao)) 
         )
-        return self.session.execute(stmt).scalar_one_or_none()
+        return self.session.execute(stmt).unique().scalar_one_or_none()
 
     def select_all_aulas(self, studio_id: Optional[int] = None) -> List[Aula]:
         """Lista todas as aulas, opcionalmente filtrando por estúdio."""
@@ -99,3 +103,47 @@ class AulaModel:
         except SQLAlchemyError:
             self.session.rollback()
             raise
+
+
+
+# from datetime import datetime
+# from src.model.userModel.typeUser.aluno import Estudante
+# from src.model.UserModel import UserModel
+# create_session=CreateSessionPostGre()
+# session = create_session.get_session()
+# aula_model=AulaModel(db_session=session)
+
+# MOCK_FK_PROFESSOR = 1 
+# MOCK_FK_ESTUDIO = 1
+# TITULO_DA_AULA = f"Teste de Inserção {datetime.now().strftime('%Y%m%d%H%M%S')}"
+# MOCK_DATA_AULA = datetime(2026, 12, 25, 10, 0, 0) # Exemplo de data futura
+# MOCK_DESC = "Aula criada via teste de integracao do Model."
+
+# aula_data_sql = {
+#     "fk_id_professor": MOCK_FK_PROFESSOR,
+#     "fk_id_estudio": MOCK_FK_ESTUDIO,
+#     "data_aula": MOCK_DATA_AULA,
+#     "titulo_aula": TITULO_DA_AULA,
+#     "desc_aula": MOCK_DESC
+# }
+
+# estudantes_ids = [2, 3] 
+
+# try:
+#     print(f"\n--- Iniciando Teste de Inserção SQL Real ---")
+#     print(f"Dados: {aula_data_sql}")
+    
+#     new_aula_orm = aula_model.insert_new_aula(
+#         aula_data=aula_data_sql,
+#         estudantes_ids=estudantes_ids
+#     )
+
+#     print(f"ID da Aula: {new_aula_orm.id_aula}")
+#     print(f"Título: {new_aula_orm.titulo_aula}")
+#     print(f"Matrículas: {[ea.fk_id_estudante for ea in new_aula_orm.estudantes_associacao]}")
+
+# except SQLAlchemyError as e:
+#     print(f"Detalhes: {e}")
+# except Exception as e:
+#     print(f"Erro Inesperado: {e}")
+    

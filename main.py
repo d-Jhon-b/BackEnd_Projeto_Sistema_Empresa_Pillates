@@ -1,4 +1,3 @@
-# src/main.py
 from fastapi import FastAPI
 from src.router import (
     auth_router, aluno_router, 
@@ -62,10 +61,13 @@ app.include_router(user_router.router)
 app.include_router(estudio_router.router)
 app.include_router(excecao_router.router)
 app.include_router(aula_router.router)
+app.include_router(agenda_router.router)
+
+
+
 
 @app.get("/", tags=["Root"])
 def read_root():
     return {"message": "Bem-vindo à API do Sistema de Pilates!"}
 
-# app.include_router(agenda_router.router)
 # app.include_router(financas_router.router)

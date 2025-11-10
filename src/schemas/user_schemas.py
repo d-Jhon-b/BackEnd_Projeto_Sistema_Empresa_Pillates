@@ -53,7 +53,7 @@ class UserBaseSchema(BaseModel):
     lv_acesso: NivelAcessoEnum
     tipo_email: TipoEmailEnum
     email_user: EmailStr 
-    fk_id_estudio: int 
+    fk_id_estudio: Optional[int] = None
 
 # class UserCreatePayload(BaseModel):
 #     user_data: UserBaseSchema
@@ -142,6 +142,7 @@ class UserResponse(UserBaseSchema):
     recepcionista: Optional[RecepcionistaResponse] = None 
 
     contatos: List[ContatoResponse] = []
+    # fk_id_estudio: int
     
     class Config:
         from_attributes = True
@@ -194,44 +195,36 @@ class ExtraDataInstrutorUpdateSchema(BaseModel):
     formacao: Optional[str] = Field(None, max_length=255)
     data_contratacao: Optional[date] = None
 
-# --- Schemas de Payloads Especializados (Substituem o genérico) ---
+# --- Schemas de Payloads Especializados ---
 
-# 1. Payload de Atualização do ALUNO
 class AlunoUpdatePayload(BaseModel):
-    # Campos da Tabela Usuario
+    fk_id_estudio: Optional[int] = None
     name_user: Optional[str] = Field(None, max_length=100)
     email_user: Optional[EmailStr] = None 
     senha_user: Optional[str] = Field(None, min_length=8)
-    # ... outros campos principais que podem ser alterados
 
-    # Relacionamentos
     endereco: Optional[List[EnderecoUpdateSchema]] = None
     contatos: Optional[List[ContatoUpdateSchema]] = None
     
     # Dados Extras
     extra_aluno: Optional[ExtraDataAlunoUpdateSchema] = None
 
-# 2. Payload de Atualização do INSTRUTOR
 class InstrutorUpdatePayload(BaseModel):
+    fk_id_estudio: Optional[int] = None
     # Campos da Tabela Usuario
     name_user: Optional[str] = Field(None, max_length=100)
     email_user: Optional[EmailStr] = None 
     senha_user: Optional[str] = Field(None, min_length=8)
-    # ... outros campos principais que podem ser alterados
 
-    # Relacionamentos
     endereco: Optional[List[EnderecoUpdateSchema]] = None
     contatos: Optional[List[ContatoUpdateSchema]] = None
     
-    # Dados Extras
     extra_instrutor: Optional[ExtraDataInstrutorUpdateSchema] = None
 
 
 
 class ColaboradorUpdatePayload(BaseModel):
-    """Payload específico para atualizar dados de Colaboradores (inclui Recepcionista/Admin)."""
-    
-    # Campos da Tabela Usuario
+    fk_id_estudio: Optional[int] = None
     name_user: Optional[str] = Field(None, max_length=100)
     email_user: Optional[EmailStr] = None 
     senha_user: Optional[str] = Field(None, min_length=8)

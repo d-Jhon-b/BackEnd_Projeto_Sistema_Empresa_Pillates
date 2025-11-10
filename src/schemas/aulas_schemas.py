@@ -35,7 +35,8 @@ class AulaCreate(BaseModel):
     fk_id_estudio: int 
     fk_id_professor: int
     fk_id_professor_substituto: Optional[int] = None
-    
+    disciplina: Optional[str] = None # Adicione este campo! 
+    duracao_minutos: Optional[int] = Field(..., ge=5) 
     estudantes_a_matricular: Optional[List[int]] = None 
 
 class AulaUpdate(BaseModel):
@@ -47,7 +48,7 @@ class AulaUpdate(BaseModel):
     fk_id_estudio: Optional[int] = None
     fk_id_professor: Optional[int] = None
     fk_id_professor_substituto: Optional[int] = None
-
+    
 # --- Schema para matricula em uma aula
 
 class MatriculaCreate(BaseModel):

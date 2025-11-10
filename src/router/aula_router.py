@@ -7,6 +7,9 @@ from src.controllers.aula_controller import AulaController
 from src.database.dependencies import get_db
 from src.utils.authUtils import auth_manager
 
+from src.model.AgendaModel import AgendaAulaRepository 
+from src.router.agenda_router import get_agenda_aula_repository 
+
 router = APIRouter(
     prefix="/aulas",
     tags=["Aulas - CRUD"] 
@@ -42,17 +45,22 @@ def get_all_aulas_endpoint(
 
 # --- POST (INSERT) ---
 @router.post(
-    "/",
-    status_code=status.HTTP_201_CREATED,
-    response_model=AulaResponse,
-    summary="Criar uma nova aula (Requer permissão de Admin/Colaborador)"
+  "/",
+  status_code=status.HTTP_201_CREATED,
+  response_model=AulaResponse,
+  summary="Criar uma nova aula (SQL) e agendar no cronograma (MongoDB)"
 )
-def create_aula_endpoint(
-    aula_data: AulaCreate, 
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(auth_manager)
+async def create_aula_endpoint( # Tornar assíncrono para operações MongoDB
+  aula_data: AulaCreate, 
+  db: Session = Depends(get_db),
+    # Injeta o Repositório do MongoDB
+  agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository), 
+  current_user: dict = Depends(auth_manager)
 ):
-    return aula_controller.create_new_aula(aula_data, current_user, db_session=db)
+    return await aula_controller.create_new_aula(aula_data, current_user, db_session=db, agenda_repo=agenda_repo)
+
+
+
 
 @router.patch( # MUDANÇA: Substituímos o @router.put por @router.patch
     "/{aula_id}",
