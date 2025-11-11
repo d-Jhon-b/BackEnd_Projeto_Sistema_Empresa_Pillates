@@ -18,7 +18,6 @@ class Planos(Base.Base):
     qtde_aulas_totais =Column(Integer, nullable=False)
 
 
-    #não podemos aplicar as constrains como atributos soltos na tabela
     #usar o __table_args__ referencia que são argumentos "adicionais" da tabela
     __table_args__=(
 

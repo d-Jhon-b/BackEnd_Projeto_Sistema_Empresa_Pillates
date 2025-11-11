@@ -39,7 +39,7 @@ class AgendaController:
         aulas_ids_do_estudante = aula_model.select_my_aulas(user_id) # Adapte o retorno deste método!
 
         if not aulas_ids_do_estudante:
-            return [] # Nenhuma aula para este estudante
+            return [] 
             
         start_dt = datetime.combine(start_date, datetime.min.time())
         end_dt = datetime.combine(end_date, datetime.max.time())

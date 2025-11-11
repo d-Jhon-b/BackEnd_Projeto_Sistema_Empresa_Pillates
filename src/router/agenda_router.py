@@ -1,4 +1,3 @@
-# src/router/agenda_router.py
 from fastapi import APIRouter, Depends, Query, status, HTTPException
 from sqlalchemy.orm import Session
 from motor.motor_asyncio import AsyncIOMotorCollection
