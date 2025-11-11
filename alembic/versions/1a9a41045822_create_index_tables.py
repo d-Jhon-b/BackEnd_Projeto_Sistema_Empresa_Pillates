@@ -73,7 +73,12 @@ def upgrade() -> None:
     op.create_index(op.f('ix_pagamento_fk_id_contrato'), 'pagamento', ['fk_id_contrato'], unique=False)
     op.create_index(op.f('ix_pagamento_fk_id_estudante'), 'pagamento', ['fk_id_estudante'], unique=False)
     op.create_index(op.f('ix_pagamento_fk_id_venda_extra'), 'pagamento', ['fk_id_venda_extra'], unique=False)
-
+    
+    op.create_index(op.f('ix_solicitacoes_fk_id_user'), 'solicitacoes', ['fk_id_user'], unique=False)
+    op.create_index(op.f('ix_solicitacoes_fk_id_estudio'), 'solicitacoes', ['fk_id_estudio'], unique=False)
+    
+    # Opcional, mas útil para o fluxo de trabalho:
+    op.create_index(op.f('ix_solicitacoes_status'), 'solicitacoes', ['status_solicitacao'], unique=False)
 
 
 

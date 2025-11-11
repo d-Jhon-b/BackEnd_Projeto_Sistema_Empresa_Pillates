@@ -73,7 +73,7 @@ def upgrade() -> None:
     op.bulk_insert(usuario_table,
         [
             {
-                'id_user': 1000,
+                'id_user': 1,
                 'name_user': 'Soraya',
                 'tipo_doc_user': 'cpf',
                 'num_doc_user': '00000000000', 
@@ -85,7 +85,7 @@ def upgrade() -> None:
                 'fk_id_estudio': 1 
             },
             {
-                'id_user': 1001,
+                'id_user': 2,
                 'name_user': 'adm_plus_2',
                 'tipo_doc_user': 'cpf',
                 'num_doc_user': '11111111111', 
@@ -101,15 +101,15 @@ def upgrade() -> None:
 
     op.bulk_insert(contato_table,
         [
-            {'fk_id_user': 1000, 'tipo_contato': 'comercial', 'numero_contato': '11970225137'},
-            {'fk_id_user': 1001, 'tipo_contato': 'comercial', 'numero_contato': '11999999999'} # Valor temporário
+            {'fk_id_user': 1, 'tipo_contato': 'comercial', 'numero_contato': '11970225137'},
+            {'fk_id_user': 2, 'tipo_contato': 'comercial', 'numero_contato': '11999999999'} # Valor temporário
         ]
     )
 
     op.bulk_insert(adm_plus_table,
         [
-            {'fk_id_user': 1000},
-            {'fk_id_user': 1001}
+            {'fk_id_user': 1},
+            {'fk_id_user': 2}
         ]
     )
     op.execute(

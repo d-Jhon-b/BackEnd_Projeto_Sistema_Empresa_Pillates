@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorCollection
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
-from typing import List
+from typing import List, Dict, Any
 from datetime import datetime
 
 class AgendaAulaRepository: 
@@ -20,3 +20,15 @@ class AgendaAulaRepository:
         async for doc in self.collection.find(query):
             aulas_list.append(AgendaAulaResponseSchema.model_validate(doc)) 
         return aulas_list
+    
+    async def find_by_aula_ids_and_period(self, aula_ids: List[int], start_dt: datetime, end_dt: datetime) -> List[Dict[str, Any]]:
+        """ Busca agendamentos no período que correspondem aos IDs de Aula SQL fornecidos. """
+        query = {
+            "fk_id_aula": {"$in": aula_ids},
+            "dataAgendaAula": {"$gte": start_dt, "$lte": end_dt}
+        }
+        aulas_list = []
+        async for doc in self.collection.find(query):
+            aulas_list.append(AgendaAulaResponseSchema.model_validate(doc))
+        return aulas_list
+    

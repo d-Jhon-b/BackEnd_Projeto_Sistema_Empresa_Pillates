@@ -71,4 +71,14 @@ class Usuario(Base.Base):
         {self.fk_id_estudio}
         """
     
-    
+
+
+
+# try:
+#     createSession = CreateSessionPostGre()
+#     session = createSession.get_session()
+
+#     if not session:
+#         print(f'erro ao criar sessão para acesso')
+#     else:
+        

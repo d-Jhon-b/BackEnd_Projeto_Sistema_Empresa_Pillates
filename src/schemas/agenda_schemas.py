@@ -41,6 +41,7 @@ class PyObjectId(ObjectId):
 
 
 class AgendaAulaCreateSchema(BaseModel):
+    fk_id_aula: int = Field(..., alias="AulaID") 
     fk_id_professor: int = Field(..., alias="professorResponsavel")
     fk_id_estudio: int = Field(..., alias="EstudioID")
     disciplina: str = Field(..., max_length=100)
@@ -55,7 +56,6 @@ class AgendaAulaCreateSchema(BaseModel):
 # Schema de Resposta (Ajustado para serialização explícita)
 class AgendaAulaResponseSchema(AgendaAulaCreateSchema):
     id: PyObjectId = Field(alias="_id", default=None)
-    
     model_config = {
         'from_attributes': True, 
         # Serializador explícito: Converte qualquer ObjectId encontrado para str no JSON.

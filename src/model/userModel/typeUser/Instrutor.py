@@ -20,6 +20,8 @@ class Professor(Base.Base):
         "Usuario", 
         back_populates="professor",
     )
+
+
     def __repr__(self):
         return f"\n\n\n<Professor(id={self.id_professor},\n\nformação:{self.formacao}\n\nfk_user_id='{self.fk_id_user}\n\n\ntipo_especializacao:{self.tipo_especializacao}'\n\n\n data de contratação:{self.data_contratacao})>"
     

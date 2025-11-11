@@ -1,5 +1,3 @@
-# src/router/auth_router.py
-
 from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from src.schemas.user_schemas import LoginRequestSchema, TokenResponseSchema, ForgotPasswordSchema, ResetPasswordSchema

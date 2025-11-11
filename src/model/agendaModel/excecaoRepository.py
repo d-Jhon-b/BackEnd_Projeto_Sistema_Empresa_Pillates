@@ -1,4 +1,3 @@
-# src/models/agendaModel/excecaoRepository.py
 from motor.motor_asyncio import AsyncIOMotorCollection
 from datetime import date, datetime
 from typing import List, Dict, Any, Optional

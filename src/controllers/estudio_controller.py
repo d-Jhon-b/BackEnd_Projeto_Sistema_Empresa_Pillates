@@ -1,4 +1,3 @@
-# src/controllers/estudioController.py
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
