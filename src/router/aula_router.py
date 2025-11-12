@@ -87,7 +87,6 @@ async def delete_aula_by_id_endpoint( # Tornar a função async
     agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository), # Injetar o repo do Mongo
     current_user: dict = Depends(auth_manager)
 ):
-    # Passar o agenda_repo para o controller
     return await aula_controller.delete_aula_by_id_controller(aula_id, current_user, db_session=db, agenda_repo=agenda_repo)
 
 

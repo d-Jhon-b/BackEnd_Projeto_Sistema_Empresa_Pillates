@@ -88,13 +88,37 @@ class AulaModel:
         """Deleta uma aula pelo ID."""
         try:
             # O ORM cascade deve cuidar das matrículas em Estudante_Aula
-            result = self.session.execute(delete(Aula).where(Aula.id_aula == aula_id))
+            # result = self.session.execute(delete(Aula).where(Aula.id_aula == aula_id))
+            # self.session.commit()
+            # return result.rowcount > 0
+
+            """
+            delete = Deletar registro
+            (Estudante_Aula) = Com base na tabela Estudante_Aula (Schema encontrado em src.model.aulaModel.Aula_config na classe Estudante_Aula)
+            where = Onde 
+            (Estudante_Aula.fk_id_aula == aula_id)= Na tabela Estudante_Aula tenha o fk_id_aula == aula_id enviado para o método como parametro  
+            """
+            delete_matriculas_stmt = delete(Estudante_Aula).where(Estudante_Aula.fk_id_aula == aula_id)
+            
+            """
+            Execute= função do SQLAlchemy para aplicar uma alteração no banco (PostGre) 
+            """
+            self.session.execute(delete_matriculas_stmt)
+
+            """Delete a aula com base no (Schema da aula) """            
+            delete_aula_stmt = delete(Aula).where(Aula.id_aula == aula_id)
+            result = self.session.execute(delete_aula_stmt)            
             self.session.commit()
+            """
+            Faz um contador para verificar que o número de linhas escontrados seja superios a 0, o que significa que houve um exclusão
+            """
             return result.rowcount > 0
         except SQLAlchemyError:
             self.session.rollback()
             raise
     
+
+
     # --- Métodos para Matrícula (N:N) ---
     
     def enroll_student(self, aula_id: int, matricula_data: Dict[str, Any]) -> Estudante_Aula:

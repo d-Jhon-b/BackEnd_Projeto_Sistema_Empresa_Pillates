@@ -113,16 +113,12 @@ class AulaController:
 
     async def update_aula(self, aula_id: int, update_data: AulaUpdate, current_user: dict, db_session: Session, agenda_repo: AgendaAulaRepository) -> AulaResponse:
         UserValidation._check_admin_permission(current_user)
-
-        aula_model = AulaModel(db_session=db_session)
-        
+        aula_model = AulaModel(db_session=db_session)        
         update_dict = update_data.model_dump(exclude_none=True)
-        
         updated_aula = await run_in_threadpool(aula_model.update_aula_data, aula_id, update_dict)
         
         if not updated_aula:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Aula não encontrada para atualização.")
-
         try:
             await agenda_repo.update_by_aula_id(aula_id, update_dict)
         except Exception as e:
@@ -167,6 +163,7 @@ class AulaController:
                 aula_id=aula_id, 
                 participant_id=estudante_id
             )
+
             if not update_mongo:
                 print(f"ALERTA: Estudante matriculado no SQL, mas falha ao encontrar/atualizar aula {aula_id} no MongoDB.") 
             return {"message": f"Estudante {estudante_id} matriculado na aula {aula_id} (SQL e MongoDB)."}

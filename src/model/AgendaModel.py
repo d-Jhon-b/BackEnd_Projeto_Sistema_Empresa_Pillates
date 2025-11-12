@@ -37,7 +37,7 @@ class AgendaAulaRepository:
     async def find_by_aula_ids_and_period(self, aula_ids: List[int], start_dt: datetime, end_dt: datetime) -> List[Dict[str, Any]]:
         """ Busca agendamentos no período que correspondem aos IDs de Aula SQL fornecidos. """
         query = {
-            "fk_id_aula": {"$in": aula_ids},
+            "AulaID": {"$in": aula_ids},
             "dataAgendaAula": {"$gte": start_dt, "$lte": end_dt}
         }
         aulas_list = []
@@ -47,7 +47,7 @@ class AgendaAulaRepository:
     
     async def delete_by_aula_id(self, aula_id: int) -> bool:
         """ Deleta o agendamento no MongoDB usando o fk_id_aula (ID do SQL). """
-        result = await self.collection.delete_one({"fk_id_aula": aula_id})
+        result = await self.collection.delete_one({"AulaID": aula_id})
         return result.deleted_count > 0
     
 
@@ -57,19 +57,31 @@ class AgendaAulaRepository:
         Retorna o documento atualizado ou None.
         """
         mongo_fields = {}
-        
-        if 'disciplina' in data_to_update:
-            mongo_fields['disciplina'] = data_to_update['disciplina']
+
+        if 'titulo_aula' in data_to_update:
+            mongo_fields['disciplina'] = data_to_update['titulo_aula']
+
         if 'duracao_minutos' in data_to_update:
             mongo_fields['duracao_minutos'] = data_to_update['duracao_minutos']
-        
-        if not mongo_fields:
-            return None 
 
+
+        if 'data_aula' in data_to_update:
+            mongo_fields['dataAgendaAula'] = data_to_update['data_aula']
+        if 'desc_aula' in data_to_update:
+            mongo_fields['descAgendaAula'] = data_to_update['desc_aula']
+        if 'fk_id_professor' in data_to_update:
+            mongo_fields['professorResponsavel'] = data_to_update['fk_id_professor']
+
+        if 'fk_id_estudio' in data_to_update:
+            mongo_fields['EstudioID'] = data_to_update['fk_id_estudio']
+
+
+        if not mongo_fields:    
+            return None 
         update_operation = {"$set": mongo_fields}
         
         result = await self.collection.find_one_and_update(
-            {"fk_id_aula": aula_id},
+            {"AulaID": aula_id},
             update_operation,
             return_document=True 
         )
@@ -80,9 +92,9 @@ class AgendaAulaRepository:
         
         # Use $push para adicionar o ID se ele não existir
         update_result = await self.collection.find_one_and_update(
-            {"fk_id_aula": aula_id},
-            {"$addToSet": {"participantes_ids": participant_id}}, # $addToSet garante que não haverá duplicatas
+            {"AulaID": aula_id},
+            {"$addToSet": {"participantes": participant_id}}, # $addToSet garante que não haverá duplicatas
             return_document=True # Retorna o documento atualizado
         )
-        print('funcionou')
+        # print('funcionou')
         return update_result
