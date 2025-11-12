@@ -1,11 +1,17 @@
+# Importar classes ORM
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, insert, delete, update
 from sqlalchemy.exc import SQLAlchemyError
+
+#importa classes do pydantic 
 from typing import List, Optional, Dict, Any
 
-# Importar classes ORM
+#importando classes das tabelas de config
 from src.model.aulaModel.aulaConfig import Aula, Estudante_Aula
 from src.database.connPostGreNeon import CreateSessionPostGre
+
+from src.model.aulaModel.validations.num_estudantes import NumAlunosValidation
+
 
 class AulaModel:
     def __init__(self, db_session: Session):
@@ -17,7 +23,6 @@ class AulaModel:
     #     )
     def select_aula_by_id(self, aula_id: int) -> Optional[Aula]:
         """Seleciona uma aula pelo ID, carregando estudantes (N:N)."""
-        # Carregando a associação N:N (estudantes_associacao)
         stmt = (
             select(Aula)
             .where(Aula.id_aula == aula_id)
@@ -95,16 +100,31 @@ class AulaModel:
     def enroll_student(self, aula_id: int, matricula_data: Dict[str, Any]) -> Estudante_Aula:
         """Matricula um estudante em uma aula (recebe dict)."""
         try:
+            result_validation = NumAlunosValidation.num_max_alunos(self.session, aula_id=aula_id)
+            if not result_validation:
+                raise ValueError(f"A aula {aula_id} já atingiu o número máximo de alunos (3).")
+
             enrollment = Estudante_Aula(fk_id_aula=aula_id, **matricula_data)
             self.session.add(enrollment)
             self.session.commit()
             self.session.refresh(enrollment)
             return enrollment
-        except SQLAlchemyError:
+        except SQLAlchemyError as err:
+            print(f'Erro ao aplicar aluno na aula {err}')
             self.session.rollback()
             raise
 
-
+    def select_my_aulas(self, user_id: int, is_instructor: bool = False) -> List[int]:
+        if is_instructor:
+            stmt = select(Aula.id_aula).where(
+                (Aula.fk_id_professor == user_id) | (Aula.fk_id_professor_substituto == user_id)
+            )
+        else:
+            stmt = select(Estudante_Aula.fk_id_aula).where(
+                Estudante_Aula.fk_id_estudante == user_id
+            )
+            
+        return self.session.execute(stmt).scalars().all()
 
 # from datetime import datetime
 # from src.model.userModel.typeUser.aluno import Estudante

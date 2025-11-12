@@ -59,11 +59,11 @@ async def get_excecoes_router(
     current_user: Dict[str, Any] = Depends(auth_manager),
     controller: ExcecaoController = Depends(get_excecao_controller_dependency)
 ):
-    if start_date >= end_date:
-         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A data de início deve ser anterior à data de fim."
-        )
+    # if start_date >= end_date:
+    #      raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="A data de início deve ser anterior à data de fim."
+    #     )
     # my_user_id = current_user.get("id_user")
     return await controller.get_excecoes_by_period(
         start_date=start_date, 

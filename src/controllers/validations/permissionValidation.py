@@ -17,6 +17,17 @@ class UserValidation():
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Você não tem permissão para esta ação."
             )
+        
+    @staticmethod
+    def _check_all_permission(current_user:dict):
+        allowed_levels=[
+            NivelAcessoEnum.SUPREMO.value,
+            NivelAcessoEnum.COLABORADOR.value,
+            NivelAcessoEnum.INSTRUTOR.value,
+            NivelAcessoEnum.ALUNO.value,
+        ]
+        UserValidation._check_permission(current_user, allowed_levels)
+
     @staticmethod
     def _check_admin_permission( current_user: dict):
         allowed_levels = [

@@ -6,9 +6,53 @@ from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaRespons
 from datetime import date, datetime
 from typing import List, Dict, Any
 from src.model.AulaModel import AulaModel
+from starlette.concurrency import run_in_threadpool # Adicionar esta importação
 
 class AgendaController:
+
+
+    async def get_cronograma(self, start_date: date, end_date: date, agenda_repository: AgendaAulaRepository) -> List[AgendaAulaResponseSchema]:
+        start_dt = datetime.combine(start_date, datetime.min.time())
+        end_dt = datetime.combine(end_date, datetime.max.time())
+        return await agenda_repository.find_by_period(start_dt, end_dt)
     
+    # async def create_new_cronograma(self, start_date: date, end_date: date, agenda_repository: AgendaAulaRepository) -> List[AgendaAulaResponseSchema]:
+    #     start_dt = datetime.combine(start_date, datetime.min.time())
+    #     end_dt = datetime.combine(end_date, datetime.max.time())
+    #     pass
+
+    async def get_my_aulas_by_period(
+        self, 
+        start_date: date, 
+        end_date: date, 
+        current_user: Dict[str, Any], 
+        db_session_sql: Session, 
+        agenda_repository: AgendaAulaRepository
+    ) -> List[AgendaAulaResponseSchema]:
+        user_id = current_user.get("id_user")
+        user_level = current_user.get("lv_acesso")
+        aula_model = AulaModel(db_session=db_session_sql)
+
+        is_instructor = user_level in ["instrutor", "colaborador", "supremo"]
+        
+        aulas_ids = await run_in_threadpool(
+            aula_model.select_my_aulas, 
+            user_id, 
+            is_instructor # Passa o parâmetro booleano
+        ) 
+
+        if not aulas_ids:
+            return [] 
+            
+        start_dt = datetime.combine(start_date, datetime.min.time())
+        end_dt = datetime.combine(end_date, datetime.max.time())
+
+        return await agenda_repository.find_by_aula_ids_and_period(aulas_ids, start_dt, end_dt)
+    
+
+
+
+        
     # async def create_new_aula(
     #     self, 
     #     aula_data: AgendaAulaCreateSchema, 
@@ -26,33 +70,23 @@ class AgendaController:
         
     #     return await agenda_repository.create(aula_data)
 
-    async def get_my_aulas_by_period(
-        self, 
-        start_date: date, 
-        end_date: date, 
-        current_user: Dict[str, Any], 
-        db_session_sql: Session, 
-        agenda_repository: AgendaAulaRepository
-    ) -> List[AgendaAulaResponseSchema]:
-        user_id = current_user.get("id_user")
-        aula_model = AulaModel(db_session=db_session_sql)
-        aulas_ids_do_estudante = aula_model.select_my_aulas(user_id) # Adapte o retorno deste método!
+    # async def get_my_aulas_by_period(
+    #     self, 
+    #     start_date: date, 
+    #     end_date: date, 
+    #     current_user: Dict[str, Any], 
+    #     db_session_sql: Session, 
+    #     agenda_repository: AgendaAulaRepository
+    # ) -> List[AgendaAulaResponseSchema]:
+    #     user_id = current_user.get("id_user")
+    #     aula_model = AulaModel(db_session=db_session_sql)
+    #     aulas_ids_do_estudante = aula_model.select_my_aulas(user_id) # Adapte o retorno deste método!
 
-        if not aulas_ids_do_estudante:
-            return [] 
+    #     if not aulas_ids_do_estudante:
+    #         return [] 
             
-        start_dt = datetime.combine(start_date, datetime.min.time())
-        end_dt = datetime.combine(end_date, datetime.max.time())
+    #     start_dt = datetime.combine(start_date, datetime.min.time())
+    #     end_dt = datetime.combine(end_date, datetime.max.time())
         
-        # 3. Buscar agendamentos no MongoDB usando os IDs de Aula do SQL
-        return await agenda_repository.find_by_aula_ids_and_period(aulas_ids_do_estudante, start_dt, end_dt)
-
-    async def get_cronograma(self, start_date: date, end_date: date, agenda_repository: AgendaAulaRepository) -> List[AgendaAulaResponseSchema]:
-        start_dt = datetime.combine(start_date, datetime.min.time())
-        end_dt = datetime.combine(end_date, datetime.max.time())
-        return await agenda_repository.find_by_period(start_dt, end_dt)
-    
-    async def create_new_cronograma(self, start_date: date, end_date: date, agenda_repository: AgendaAulaRepository) -> List[AgendaAulaResponseSchema]:
-        start_dt = datetime.combine(start_date, datetime.min.time())
-        end_dt = datetime.combine(end_date, datetime.max.time())
-        pass
+    #     # 3. Buscar agendamentos no MongoDB usando os IDs de Aula do SQL
+    #     return await agenda_repository.find_by_aula_ids_and_period(aulas_ids_do_estudante, start_dt, end_dt)
