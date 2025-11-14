@@ -26,11 +26,27 @@ def create_mongo_collection_dependency(collection_name: str) -> Callable[[], Gen
             db = client.get_database(MongoConnectionManager.DB_NAME)
             yield db[collection_name] 
 
-        except Exception:
+        # except Exception:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+        #         detail=f"Erro ao acessar coleção MongoDB: {collection_name}"
+        #     )
+
+
+        except HTTPException as http_e:
+            raise http_e
+            
+        except Exception as e:
+            # print(f"ERRO CRÍTICO na INICIALIZAÇÃO do MongoDB Dependency ({collection_name}): {e}") 
+            import traceback
+            traceback.print_exc() 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                detail=f"Erro ao acessar coleção MongoDB: {collection_name}"
+                detail=f"Erro ao acessar coleção MongoDB: {collection_name}. Causa: Falha na Conexão/Inicialização: {type(e).__name__}"
             )
+            
+        finally:
+            pass
     return get_mongo_collection
 
 # Injetor para a coleção 'AgendaAulas'

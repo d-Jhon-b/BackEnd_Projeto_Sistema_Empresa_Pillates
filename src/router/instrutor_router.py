@@ -34,7 +34,12 @@ def get_instructor_by_id_endpoint(
 def get_all_instructor_endpoint(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager),
-    studio_id: Optional[int] = None 
+    studio_id: Optional[int] = Query(None,
+    description="""
+    - ID do estúdio para filtrar os colaboradores. 
+    - Se omitido, o sistema usará o ID do estúdio do usuário logado.
+    """
+    ) 
 ):
     return instrutor_controller.select_all_instructor_controller(
         studio_id=studio_id,

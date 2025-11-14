@@ -6,9 +6,12 @@ from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, Matr
 from src.controllers.aula_controller import AulaController
 from src.database.dependencies import get_db
 from src.utils.authUtils import auth_manager
+from src.controllers.excecao_controller import ExcecaoController
 
 from src.model.AgendaModel import AgendaAulaRepository 
 from src.router.agenda_router import get_agenda_aula_repository 
+from src.router.excecao_router import get_excecao_controller_dependency
+
 
 router = APIRouter(
     prefix="/aulas",
@@ -35,68 +38,96 @@ def get_aula_by_id_endpoint(
     summary="Listar todas as aulas do estúdio (Requer Autenticação)"
 )
 def get_all_aulas_endpoint(
-    # studio_id é opcional no Query, mas o controller o preencherá automaticamente
-    # com o fk_id_estudio do usuário, a menos que seja SUPREMO.
     studio_id: Optional[int] = Query(None, description="Opcional: ID do estúdio. Ignorado se não for SUPREMO."), 
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)
 ):
     return aula_controller.get_all_aulas(studio_id, current_user, db_session=db)
 
-# --- POST (INSERT) ---
+# --- Insert ---
 @router.post(
   "/",
   status_code=status.HTTP_201_CREATED,
   response_model=AulaResponse,
   summary="Criar uma nova aula (SQL) e agendar no cronograma (MongoDB)"
 )
-async def create_aula_endpoint( # Tornar assíncrono para operações MongoDB
+async def create_aula_endpoint( 
   aula_data: AulaCreate, 
   db: Session = Depends(get_db),
-    # Injeta o Repositório do MongoDB
   agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository), 
+  excecao_controller: ExcecaoController = Depends(get_excecao_controller_dependency),
   current_user: dict = Depends(auth_manager)
 ):
-    return await aula_controller.create_new_aula(aula_data, current_user, db_session=db, agenda_repo=agenda_repo)
+    return await aula_controller.create_new_aula(aula_data, current_user, db_session=db, agenda_repo=agenda_repo,excecao_repo=excecao_controller.excecao_repo)
 
 
-
-
-@router.patch( # MUDANÇA: Substituímos o @router.put por @router.patch
+@router.patch( 
     "/{aula_id}",
     response_model=AulaResponse,
-    summary="Atualizar dados de uma aula parcialmente (Requer permissão de Admin/Colaborador)"
+    summary="Atualizar dados de uma aula parcialmente (SQL e MongoDB) - Requer permissão de Admin/Colaborador"
 )
-def patch_aula_endpoint( # Renomeado para melhor clareza (opcional)
+async def patch_aula_endpoint(
     aula_id: int,
-    update_data: AulaUpdate, # Continua usando o schema com campos opcionais
+    update_data: AulaUpdate, 
     db: Session = Depends(get_db),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository), # Injetar o repo do Mongo
     current_user: dict = Depends(auth_manager)
 ):
-    # Chama o mesmo método no Controller
-    return aula_controller.update_aula(aula_id, update_data, current_user, db_session=db)
+    return await aula_controller.update_aula(aula_id, update_data, current_user, db_session=db, agenda_repo=agenda_repo)
+
 
 @router.delete(
     "/{aula_id}",
     status_code=status.HTTP_200_OK, 
-    summary="Excluir uma aula por ID (Requer Autenticação de Admin)"
+    summary="Excluir uma aula por ID (SQL e MongoDB) - Requer Autenticação de Admin"
 )
-def delete_aula_by_id_endpoint(
+async def delete_aula_by_id_endpoint( # Tornar a função async
     aula_id: int,
     db: Session = Depends(get_db),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository), # Injetar o repo do Mongo
     current_user: dict = Depends(auth_manager)
 ):
-    return aula_controller.delete_aula_by_id_controller(aula_id, current_user, db_session=db)
+    return await aula_controller.delete_aula_by_id_controller(aula_id, current_user, db_session=db, agenda_repo=agenda_repo)
+
 
 @router.post(
     "/{aula_id}/matricular",
     status_code=status.HTTP_201_CREATED,
     summary="Matricular um estudante em uma aula (Requer permissão de Admin/Colaborador)"
 )
-def enroll_student_endpoint(
+async def enroll_student_endpoint(
     aula_id: int,
     matricula_data: MatriculaCreate,
     db: Session = Depends(get_db),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository),
     current_user: dict = Depends(auth_manager)
 ):
-    return aula_controller.enroll_student_in_aula(aula_id, matricula_data, current_user, db_session=db)
+    return await aula_controller.enroll_student_in_aula(aula_id, matricula_data, current_user, db_session=db, agenda_repo=agenda_repo)
+
+
+
+# @router.patch( # MUDANÇA: Substituímos o @router.put por @router.patch
+#     "/{aula_id}",
+#     response_model=AulaResponse,
+#     summary="Atualizar dados de uma aula parcialmente (Requer permissão de Admin/Colaborador)"
+# )
+# def patch_aula_endpoint( # Renomeado para melhor clareza (opcional)
+#     aula_id: int,
+#     update_data: AulaUpdate, # Continua usando o schema com campos opcionais
+#     db: Session = Depends(get_db),
+#     current_user: dict = Depends(auth_manager)
+# ):
+#     # Chama o mesmo método no Controller
+#     return aula_controller.update_aula(aula_id, update_data, current_user, db_session=db)
+
+# @router.delete(
+#     "/{aula_id}",
+#     status_code=status.HTTP_200_OK, 
+#     summary="Excluir uma aula por ID (Requer Autenticação de Admin)"
+# )
+# def delete_aula_by_id_endpoint(
+#     aula_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: dict = Depends(auth_manager)
+# ):
+#     return aula_controller.delete_aula_by_id_controller(aula_id, current_user, db_session=db)

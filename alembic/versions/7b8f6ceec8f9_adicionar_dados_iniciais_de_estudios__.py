@@ -66,6 +66,14 @@ def upgrade() -> None:
         sa.column('numero_contato', sa.String)
     )
 
+    endereco_table = sa.table('endereco',
+        sa.column('fk_id_user', sa.Integer),                          
+        sa.column('tipo_endereco', sa.String),                         
+        sa.column('endereco', sa.String),                          
+        sa.column('cep', sa.String)                          
+    )
+
+
     adm_plus_table = sa.table('adm_plus',
         sa.column('fk_id_user', sa.Integer)
     )
@@ -99,13 +107,19 @@ def upgrade() -> None:
         ]
     )
 
+    op.bulk_insert(endereco_table,
+        [
+            {'fk_id_user': 1, 'tipo_endereco': 'comercial', 'endereco': 'R. adm1', 'cep': '03570450'},
+            {'fk_id_user': 2, 'tipo_endereco': 'comercial', 'endereco': 'R. adm2', 'cep': '03570450'} # Valor temporário
+        ]
+    )
     op.bulk_insert(contato_table,
         [
             {'fk_id_user': 1, 'tipo_contato': 'comercial', 'numero_contato': '11970225137'},
             {'fk_id_user': 2, 'tipo_contato': 'comercial', 'numero_contato': '11999999999'} # Valor temporário
         ]
     )
-
+    
     op.bulk_insert(adm_plus_table,
         [
             {'fk_id_user': 1},
@@ -122,9 +136,14 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.execute("DELETE FROM adm_plus WHERE fk_id_user >= 1")
     op.execute("DELETE FROM contato WHERE fk_id_user >= 1")
+    op.execute('DELETE FROM estudante_aula WHERE fk_id_estudante >=1')
     op.execute("DELETE FROM estudante WHERE fk_id_user >= 1")
+
+    op.execute("DELETE FROM solicitacoes WHERE fk_id_user >= 1")
+    
+    op.execute("DELETE FROM adm_plus WHERE fk_id_user >= 1")
+    op.execute('DELETE FROM aula WHERE fk_id_professor>=1')
     op.execute('DELETE FROM professor WHERE FK_ID_USER >=1')
     op.execute('DELETE FROM ADMINISTRACAO WHERE FK_ID_USER >=1')
     op.execute('DELETE FROM recepcionista WHERE FK_ID_USER >=1')

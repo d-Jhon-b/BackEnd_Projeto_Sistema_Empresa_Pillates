@@ -25,7 +25,7 @@ class Aula(Base.Base):
 
     estudantes_associacao: Mapped[list["Estudante_Aula"]] = relationship(
         "Estudante_Aula",
-        back_populates="aula", # Corresponde à variável 'aula' em Estudante_Aula
+        back_populates="aula", 
         cascade="all, delete-orphan"
     )
 

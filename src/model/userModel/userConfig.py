@@ -9,7 +9,7 @@ from src.model.userModel.valuesUser.enderecoUser import Endereco
 from src.model.userModel.valuesUser.contatoUser import Contato 
 from src.model.userModel.typeUser.aluno import Estudante
 from src.model.userModel.typeUser.Instrutor import Professor
-from src.model.userModel.typeUser.colaborador import Administracao, Recepcionista
+from src.model.userModel.typeUser.colaborador import Administracao, Recepcionista, Adm_plus
 
 
 class Usuario(Base.Base):
@@ -59,6 +59,11 @@ class Usuario(Base.Base):
         cascade="all, delete-orphan",
     )
     recepcionista:Mapped[Recepcionista] = relationship(
+        back_populates="usuario",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    adm_plus:Mapped[Adm_plus] = relationship(
         back_populates="usuario",
         uselist=False,
         cascade="all, delete-orphan",

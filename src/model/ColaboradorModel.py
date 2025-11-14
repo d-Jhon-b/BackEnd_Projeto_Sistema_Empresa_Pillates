@@ -1,5 +1,5 @@
 from src.model.userModel.userConfig import Usuario
-from src.model.userModel.typeUser.colaborador import Administracao, Recepcionista
+from src.model.userModel.typeUser.colaborador import Administracao, Recepcionista, Adm_plus
 
 from datetime import date
 from typing import Dict, Union, Optional, List
@@ -23,12 +23,14 @@ class ColaboradorModel:
                 select(Usuario)
                 .outerjoin(Administracao, Usuario.id_user == Administracao.fk_id_user)
                 .outerjoin(Recepcionista, Usuario.id_user == Recepcionista.fk_id_user)
-                .where(or_(Administracao.fk_id_user.is_not(None), Recepcionista.fk_id_user.is_not(None))) 
+                .outerjoin(Adm_plus, Usuario.id_user == Adm_plus.fk_id_user)
+                .where(or_(Administracao.fk_id_user.is_not(None), Recepcionista.fk_id_user.is_not(None),Adm_plus.fk_id_user.is_not(None))) 
                 .options(
                     joinedload(Usuario.endereco),
                     joinedload(Usuario.contatos),
                     joinedload(Usuario.administracao), 
-                    joinedload(Usuario.recepcionista)  
+                    joinedload(Usuario.recepcionista),
+                    joinedload(Usuario.adm_plus)  
                 )
             )
             
@@ -50,12 +52,14 @@ class ColaboradorModel:
                 .where(Usuario.id_user == user_id)
                 .outerjoin(Administracao, Usuario.id_user == Administracao.fk_id_user)
                 .outerjoin(Recepcionista, Usuario.id_user == Recepcionista.fk_id_user)
-                .where(or_(Administracao.fk_id_user.is_not(None), Recepcionista.fk_id_user.is_not(None)))
+                .outerjoin(Adm_plus, Usuario.id_user == Adm_plus.fk_id_user)
+                .where(or_(Administracao.fk_id_user.is_not(None), Recepcionista.fk_id_user.is_not(None), Adm_plus.fk_id_user.is_not(None)))
                 .options(
                     joinedload(Usuario.endereco),
                     joinedload(Usuario.contatos),
+                    joinedload(Usuario.adm_plus),
                     joinedload(Usuario.administracao),
-                    joinedload(Usuario.recepcionista)
+                    joinedload(Usuario.recepcionista),
                 )
             )
             
@@ -65,3 +69,18 @@ class ColaboradorModel:
         except SQLAlchemyError as err:
             logging.error(f'Erro ao buscar colaborador por ID:\n{err}')
             return None
+        
+
+# create_session = CreateSessionPostGre()
+# session = create_session.get_session()
+
+# try:
+#     Colabmodel = ColaboradorModel(session)
+#     # select_colab = Colabmodel.select_colaborador_by_id(3)
+#     # print(select_colab)
+#     select_colab2 = Colabmodel.select_all_colaboradores(1)
+    
+#     for i in select_colab2:
+#         print(i)
+# except SQLAlchemyError as err:
+#     print(err)

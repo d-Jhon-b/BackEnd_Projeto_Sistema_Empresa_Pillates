@@ -97,7 +97,7 @@ class UserModel():
         try:
             self.email_user = user_data.get('email_user')
             self.password_user = user_data.get('senha_user')
-
+                
             if not ValidarEmail.validar_email(self.session, self.email_user):
                 return None
             self.storege_password = ValidarSenha.validar_senha(self.session, self.email_user)
