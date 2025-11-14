@@ -105,7 +105,7 @@ class AulaModel:
             """
             self.session.execute(delete_matriculas_stmt)
 
-            """Delete a aula com base no (Schema da aula) """            
+            """Delete a aula com base no (Schema da aula) com base no id_de_aula """            
             delete_aula_stmt = delete(Aula).where(Aula.id_aula == aula_id)
             result = self.session.execute(delete_aula_stmt)            
             self.session.commit()

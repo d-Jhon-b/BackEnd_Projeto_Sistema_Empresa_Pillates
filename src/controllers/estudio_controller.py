@@ -6,7 +6,6 @@ from src.schemas.estudio_schemas import EstudioCreateSchema, EstudioResponseSche
 from typing import List, Optional, Dict, Any
 from src.controllers.validations.permissionValidation import UserValidation
 
-# NOTE: Assumindo que você tem classes de validação e operações de utilidade
 # from src.controllers.validations.permissionValidation import UserValidation 
 from src.controllers.operations.operations import Operations 
 

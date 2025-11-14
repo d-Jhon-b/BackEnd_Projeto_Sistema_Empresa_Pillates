@@ -18,6 +18,9 @@ class StatusSolcitacaoEnum(str, Enum):
     ATENDIDA='atendida'
     RECUSADA='recusada'
 
+class SolicitacaoCreatePayload(BaseModel):
+    menssagem: Optional[str] = None
+    tipo_de_solicitacao: TipoDeSolicitacaoEnum
 
 class SolicitacoesBase(BaseModel):
     fk_id_user: int #Optional[int]
@@ -35,16 +38,23 @@ class SolicitacaoCreate(SolicitacoesBase):
     
 class SolicitacaoUpdate(BaseModel):
     status_solicitacao: StatusSolcitacaoEnum =Field(...)
-    data_resposta: datetime=Field(default_factory=datetime.now)
+    # data_resposta: datetime=Field(default_factory=datetime.now)
+# class SolicitacaoUpdatePayload(SolicitacaoUpdate):
+    
 
-class Solicitacao(SolicitacoesBase):
+
+class SolicitacaoResponseSchema(SolicitacoesBase):
     # Schema completo para retorno (inclui status e data)
     id_solicitacao: int # Chave primária
     tipo_de_solicitacao: TipoDeSolicitacaoEnum
     status_solicitacao: StatusSolcitacaoEnum
     data_criacao: datetime
+    data_resposta: Optional[datetime]
 
-    
+
+
+
+
 # soli_update = SolicitacaoUpdate(status_solicitacao=StatusSolcitacaoEnum.RECUSADA)
 # print(f"\nTeste SolicitacaoUpdate:")
 # print(soli_update.model_dump())

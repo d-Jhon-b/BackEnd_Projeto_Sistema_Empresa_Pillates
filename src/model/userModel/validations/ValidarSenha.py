@@ -23,6 +23,9 @@ class ValidarSenha():
         stmt = select(Usuario.senha_user).where(Usuario.email_user == email) 
         storege_password = session.execute(stmt).scalar_one_or_none()
         return storege_password
+    
+
+    
         # print(res)
         # if res:
         #     # print('teste')
