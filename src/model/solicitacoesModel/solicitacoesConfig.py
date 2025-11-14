@@ -20,4 +20,9 @@ class Solicitacoes(Base.Base):
     #     "Usuario",
     #     back_populates="solicitacoes"
     # )
+
+    def __repr__(self):
+        return f"""
+        id:{self.id_solicitacao}\nestudio_id:{self.fk_id_estudio}\nuser_id:{self.fk_id_user}\nmenssagem:{self.menssagem}\nstatus:{self.status_solicitacao}
+        """
     

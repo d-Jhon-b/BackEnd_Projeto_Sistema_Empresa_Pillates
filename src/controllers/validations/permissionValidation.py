@@ -32,7 +32,8 @@ class UserValidation():
     @staticmethod
     def _check_admin_permission( current_user: dict):
         allowed_levels = [
-            NivelAcessoEnum.COLABORADOR.value
+            NivelAcessoEnum.SUPREMO.value,
+            NivelAcessoEnum.COLABORADOR.value,
         ]
         UserValidation._check_permission(current_user, allowed_levels)
     @staticmethod

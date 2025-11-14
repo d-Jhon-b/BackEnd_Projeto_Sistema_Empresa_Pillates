@@ -45,6 +45,6 @@ class PostGreParamBuilder():
     #     return str(self.url_postGre_neon)
     
 
-postGreTest = PostGreParamBuilder()
-data = postGreTest.build_url_env()
-print(data)
+# postGreTest = PostGreParamBuilder()
+# data = postGreTest.build_url_env()
+# print(data)
