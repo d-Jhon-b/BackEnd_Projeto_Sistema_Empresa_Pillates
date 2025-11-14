@@ -9,6 +9,7 @@ class UserValidation():
     @staticmethod
     def _check_permission( current_user: dict, allowed_levels: list):
         creator_level = current_user.get("lv_acesso")
+        # print(f'{creator_level}\n\n\n\n\n\n')
         if NivelAcessoEnum.SUPREMO.value not in allowed_levels:
              allowed_levels.append(NivelAcessoEnum.SUPREMO.value)
         if creator_level not in allowed_levels:

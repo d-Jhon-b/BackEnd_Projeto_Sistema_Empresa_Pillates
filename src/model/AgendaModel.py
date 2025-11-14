@@ -19,16 +19,15 @@ class AgendaAulaRepository:
             print(f"ERRO MOTOR/MONGO: Falha ao inserir documento: {e}") 
             raise
 
-    # async def create(self, aula: AgendaAulaCreateSchema) -> AgendaAulaResponseSchema:
-    #     aula_data = aula.model_dump(by_alias=True, exclude_none=True)
 
-    #     aula_data.pop('_id', None) 
-    #     result = await self.collection.insert_one(aula_data)
-    #     created_doc = await self.collection.find_one({"_id": result.inserted_id})
-    #     return AgendaAulaResponseSchema.model_validate(created_doc)
-        
-    async def find_by_period(self, start_dt: datetime, end_dt: datetime) -> List[AgendaAulaResponseSchema]:
-        query = {"dataAgendaAula": {"$gte": start_dt, "$lte": end_dt}}
+    async def find_by_period(self, start_dt: datetime, end_dt: datetime, id_estudio: int) -> List[AgendaAulaResponseSchema]:
+        # query = {"dataAgendaAula": {"$gte": start_dt, "$lte": end_dt}}
+        query = {
+            "dataAgendaAula": {"$gte": start_dt, "$lte": end_dt},
+            # ADICIONANDO A CONDIÇÃO DO ID DO ESTÚDIO
+            # Nota: 'EstudioID' é o alias comum para 'fk_id_estudio' no Pydantic/MongoDB
+            "EstudioID": id_estudio 
+        }
         aulas_list = []
         async for doc in self.collection.find(query):
             aulas_list.append(AgendaAulaResponseSchema.model_validate(doc)) 
@@ -98,3 +97,13 @@ class AgendaAulaRepository:
         )
         # print('funcionou')
         return update_result
+    
+
+    
+    # async def create(self, aula: AgendaAulaCreateSchema) -> AgendaAulaResponseSchema:
+    #     aula_data = aula.model_dump(by_alias=True, exclude_none=True)
+
+    #     aula_data.pop('_id', None) 
+    #     result = await self.collection.insert_one(aula_data)
+    #     created_doc = await self.collection.find_one({"_id": result.inserted_id})
+    #     return AgendaAulaResponseSchema.model_validate(created_doc)

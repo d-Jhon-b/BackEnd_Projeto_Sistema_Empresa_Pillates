@@ -28,7 +28,8 @@ class AuthService:
                 detail="Email ou senha incorretos."
             )
 
-        token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso}
+        # token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso} #original
+        token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso, "fk_id_estudio": user.fk_id_estudio}
         access_token = auth_manager.create_access_token(data=token_data)
         
         return {"access_token": access_token, "token_type": "bearer"}

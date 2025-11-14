@@ -36,7 +36,11 @@ class AulaController:
         # Permissão: Qualquer usuário autenticado
         
         user_estudio_id = current_user.get("fk_id_estudio")
-        
+        # for i in current_user.items():
+        #     print(i)
+        # if studio_id != None:
+        #     studio_id = 
+
         if current_user.get("lv_acesso") != NivelAcessoEnum.SUPREMO.value:
             studio_id = user_estudio_id
 
