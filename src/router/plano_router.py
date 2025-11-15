@@ -28,3 +28,4 @@ def cadastrar_plano(plano: PlanoCreate, db: Session = Depends(get_db)):
     if not novo_plano:
         raise HTTPException(status_code=400, detail="Erro ao criar plano")
     return novo_plano
+
