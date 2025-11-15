@@ -34,3 +34,16 @@ class PlanoModel:
         finally:
             session.close()
 
+class PlanoModel:
+    @staticmethod
+    def get_all_planos(db):
+        return db.query(Planos).all()
+
+    @staticmethod
+    def create_plano(db, plano_create):
+        novo_plano = Planos(**plano_create.dict())
+        db.add(novo_plano)
+        db.commit()
+        db.refresh(novo_plano)
+        return novo_plano
+
