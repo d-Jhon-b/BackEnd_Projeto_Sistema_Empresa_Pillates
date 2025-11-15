@@ -6,11 +6,10 @@ class EnvLoaderMongo(EnvLoader):
         super().__init__("mongoDB.env")
     def get_config(self)->dict[str, Optional[str]]:
         self._load()
-        return self._get_all(["MONGO_URI", "MONGO_USER", "MONGO_PASSWORD"])
-# try:
-#     envLoad = EnvLoaderMongo()
-#     envLoader = envLoad.get_config()
-#     print(envLoader)
-
-# except Exception as err:
-#     print('Erro ao carreagar .env',{err})
+        # Incluindo MONGO_DB_NAME e MONGO_CLUSTER_URL na lista de chaves a carregar
+        return self._get_all([
+            "MONGO_URI", 
+            "MONGO_USER", 
+            "MONGO_PASSWORD", 
+            "MONGO_DB_NAME"
+        ])

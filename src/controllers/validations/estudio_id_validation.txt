@@ -1,0 +1,27 @@
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from datetime import date
+from sqlalchemy.exc import SQLAlchemyError
+
+from src.model.EstudioModel import EstudioModel 
+from src.model.UserModel import Usuario
+
+class EstudioIdValidation():
+    def __init__(self, session_db:Session):
+        self.session = session_db
+
+    def _verificar_estudio_id(self, current_user:dict):
+        user_id = current_user.get('id_user')
+        try:
+            
+            return self.fk_id_estudio
+        except SQLAlchemyError as err:
+            self.session.rollback()
+            print(f'{err}')
+            return False
+        except Exception as err:
+            print(f'{err}')
+            return False
+
+
+        

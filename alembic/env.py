@@ -19,16 +19,16 @@ from logging.config import fileConfig
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 #postGreSQL local:
-# param_builder = PostGreParamBuilder()
-# config_data = param_builder.build_data_env()
-# sqlAlchemy_database_url = f"postgresql://{config_data['user']}:{config_data['password']}@{config_data['host']}:{config_data['port']}/{config_data['database']}"
+param_builder = PostGreParamBuilder()
+config_data = param_builder.build_data_env()
+sqlAlchemy_database_url = f"postgresql://{config_data['user']}:{config_data['password']}@{config_data['host']}:{config_data['port']}/{config_data['database']}"
 
 
 #postGreSQL neon(nuvem)
-param_builder = PostGreParamBuilder()
-config_data = param_builder.build_url_env()
-print(config_data)
-sqlAlchemy_database_url = config_data
+# param_builder = PostGreParamBuilder()
+# config_data = param_builder.build_url_env()
+# print(config_data)
+# sqlAlchemy_database_url = config_data
 
 config = context.config
 fileConfig(config.config_file_name)

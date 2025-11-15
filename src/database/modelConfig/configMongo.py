@@ -1,38 +1,25 @@
+# src/database/modelConfig/configMongo.py (MUDE ESTE ARQUIVO)
 from typing import Optional, Union, Dict
-from pydantic import BaseModel
-from pydantic import BaseModel, ValidationError
-
+from pydantic import BaseModel, ValidationError, Field # Importe Field
 from src.database.envConfig.envMongo import EnvLoaderMongo
 
 
 class MongoConfig(BaseModel):
-    mongo_uri:str
-    mongo_user: Optional[str]
-    mongo_password:Optional[str]
+    # Usando Field(alias=...) para mapear as chaves MAIÚSCULAS do .env
+    mongo_uri: str = Field(alias="MONGO_URI") 
+    mongo_user: Optional[str] = Field(alias="MONGO_USER")
+    mongo_password: Optional[str] = Field(alias="MONGO_PASSWORD")
+    mongo_db_name: str = Field(alias="MONGO_DB_NAME") # <--- Mapeamento explícito
 
+    # Remova o bui_data_env, pois ele não é mais necessário e complicava o fluxo.
+    # ... (remova ou comente o bui_data_env)
 
 class MongoParamBuilder():
     def __init__(self):
         self.env_loader = EnvLoaderMongo()
         self.config_data = self.env_loader.get_config()
-        self.config_data_loewr = {chave.lower(): valor for chave, valor in self.config_data.items()}
+        
         try:
-            self.config = MongoConfig(**self.config_data_loewr)
+            self.config = MongoConfig(**self.config_data) 
         except ValidationError as err:
-            raise ValueError(f'Variáveis de ambiente do MongoDB faltando:\{err}')
-
-    def buil_data_env(self) -> dict:
-        data_env = {
-            "host": self.config.mongo_uri,
-            # Se o usuário e a senha existirem vai colocar no dicionário
-            **({'username': self.config.mongo_user} if self.config.mongo_user else {}),
-            **({'password': self.config.mongo_password} if self.config.mongo_password else {})
-        }
-        return data_env
-    
-# try:
-#     mongoBuilder = MongoParamBuilder()
-#     mongoRes = mongoBuilder.buil_data_env()
-#     print(mongoRes)
-# except:
-#     print("erro ao buscar dados")
+            raise ValueError(f'Variáveis de ambiente do MongoDB faltando:\n{err}')

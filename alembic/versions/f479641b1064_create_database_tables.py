@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    #PARTE DE USUARIOS
+    #feito
     op.create_table(
     'usuario',
         sa.Column('id_user', sa.Integer, primary_key=True, nullable=False, autoincrement=True),
@@ -41,6 +41,7 @@ def upgrade() -> None:
         sa.UniqueConstraint('email_user', name='uq_usuario_email_user'),
         sa.UniqueConstraint('num_doc_user', name='uq_usuario_num_doc')
     )
+    #feito
     op.create_table(
         'endereco',
         sa.Column('id_endereco', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -57,6 +58,7 @@ def upgrade() -> None:
     #     sa.Column('endereco_email', sa.String(255), nullable=False),
     #     sa.UniqueConstraint('fk_id_user','endereco_email', name='uq_email_user_email')
     # )
+    #feito
     op.create_table(
         'contato',
         sa.Column('id_contato', sa.Integer,primary_key=True, autoincrement=True, nullable=False),
@@ -67,7 +69,7 @@ def upgrade() -> None:
 
 
     #parte de estudante e professores
-
+    #feito schema src.model.userMOdel.typeUser.aluno.py
     op.create_table(
         'estudante',
         sa.Column('id_estudante', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -75,23 +77,24 @@ def upgrade() -> None:
         sa.Column('profissao_user', sa.String(255), nullable= True),
         sa.Column('historico_medico', sa.String(255), nullable=False),
     )
+    #feito src.model.userModel.typeUser.instrutor.py
     op.create_table(
         'professor',
         sa.Column('id_professor', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
         sa.Column('tipo_especializacao', sa.Enum('cref', 'crefita', name='tipo_especializacao_enum'), nullable=False),
-        
-        
         sa.Column('numero_de_registro', sa.String(50), nullable=False),
         sa.Column('formacao', sa.String(255), nullable=True),  
         sa.Column('data_contratacao', sa.Date, nullable=False)
     )
+    #feito
     op.create_table(
         'administracao',
         sa.Column('id_adm', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
         sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False)
 
     )
+    #feito
     op.create_table(
         'recepcionista',
         sa.Column('id_recepcionista', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -100,7 +103,7 @@ def upgrade() -> None:
     """
     Tabela adicional solicitada pela cliente, para maior conforto da situação atual
     """
-
+    #não aplicado
     op.create_table(
         'adm_plus',
         sa.Column('id_adm_plus', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -113,6 +116,7 @@ def upgrade() -> None:
 
     #tabela dos registro feitos pelo instrutor/professor sobre um aluno.
     #mongo_arquivo é referente ao ObjectID do aluno, nela terá registrado uma array com mais objectIDs referentes aos seus registros
+    
     op.create_table(
         'registro_do_aluno',
         sa.Column('id_resgitro', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -120,6 +124,8 @@ def upgrade() -> None:
         sa.Column('fk_id_professor', sa.Integer, sa.ForeignKey('professor.id_professor'), nullable=False),
         sa.Column('mongo_arquivo_id', sa.String(255), nullable=False)
     )
+
+
     #tabela de ligação entre estudante e professor
     op.create_table('professor_estudante',
     sa.Column('fk_id_estudante', sa.Integer,sa.ForeignKey('estudante.id_estudante'), nullable=False),               
@@ -127,16 +133,17 @@ def upgrade() -> None:
     )
 
     #tabeela estudio
+    #feito
     op.create_table(
         'estudio', 
         sa.Column('id_estudio', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
         sa.Column('endereco_estudio', sa.String(255),nullable=False, unique=True),
         sa.Column('cep_estudio', sa.String(8), nullable=False),
         sa.Column('mongo_registros_estudio', sa.String(255), nullable=False)
-
     )
 
     #tabelas de aula
+    #feito
     op.create_table(
         'aula', 
         sa.Column('id_aula', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -145,16 +152,23 @@ def upgrade() -> None:
         sa.Column('desc_aula', sa.String(255), nullable=True),
         sa.Column('fk_id_estudio', sa.Integer, sa.ForeignKey('estudio.id_estudio'), nullable=False),
         sa.Column('fk_id_professor', sa.Integer, sa.ForeignKey('professor.id_professor'), nullable=False),
+        sa.Column('fk_id_professor_substituto', sa.Integer, sa.ForeignKey('professor.id_professor'), nullable=True),
+        
+        sa.CheckConstraint('fk_id_professor != fk_id_professor_substituto', name='chk_titular_substituto_diferentes')
     )
+
     #tabela de ligação entre aula e o estudante
+    #feito
     op.create_table(
         'estudante_aula',
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),
-        sa.Column('fk_id_aula', sa.Integer, sa.ForeignKey('aula.id_aula'),nullable=False)
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False, primary_key=True),
+        sa.Column('fk_id_aula', sa.Integer, sa.ForeignKey('aula.id_aula'),nullable=False, primary_key=True),
+        sa.Column('tipo_de_aula', sa.Enum('normal', 'experimental', 'reposicao',name="enum_tipo_de_aula"), nullable=False)
 
     )
 
     #tabelas de planos
+    #feito
     op.create_table(
         'planos',
         sa.Column('id_plano', sa.Integer ,primary_key=True, autoincrement=True, nullable=False),
@@ -173,6 +187,7 @@ def upgrade() -> None:
 
     )
     #tabela de adesao de plano
+    #não aplicado
     op.create_table(
         'adesao_plano',
         sa.Column('id_adesao_plano', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -182,7 +197,7 @@ def upgrade() -> None:
     )
 
     #tabela de contrato
-    
+    #não aplicado
     op.create_table(
         'contrato',
         sa.Column('id_contrato', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -192,6 +207,7 @@ def upgrade() -> None:
         sa.Column('data_termino', sa.DateTime, nullable=False),
         sa.Column('status_contrato', sa.Enum('ativo', 'suspenso', 'cancelado', 'expirado', name='enum_status_contrato'), nullable=False)
     )
+    #não aplicado
     op.create_table(
         'venda_extra',
         sa.Column('id_venda_extra',sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -200,6 +216,7 @@ def upgrade() -> None:
         sa.Column('valor_venda_extra', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('data_venda', sa.DateTime, nullable=False),
     )
+    #não aplicado
     op.create_table(
         'pagamento',
         sa.Column('id_pagamento', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
@@ -213,6 +230,18 @@ def upgrade() -> None:
         sa.Column('status_pagamento', sa.Enum('pago', 'pendente', 'atrasado', name='enum_status_pagamento'), nullable=False),
         sa.Column('descricao_pagamento', sa.String(255), nullable=False)
     )
+    #não aplicado
+    op.create_table(
+        'solicitacoes',
+        sa.Column('id_solicitacao', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
+        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=True),
+        sa.Column('fk_id_estudio', sa.Integer, sa.ForeignKey('estudio.id_estudio'), nullable=False),
+        sa.Column('tipo_de_solicitacao', sa.Enum('aula', 'plano','pagamento','outros', name='enum_solicitacao'), nullable=False),
+        sa.Column('menssagem', sa.Text, nullable=True),
+        sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, default="em espera"),
+        sa.Column('data_criacao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
+        sa.Column('data_resposta', sa.DateTime, nullable=True)
+    )   
 
 
 def downgrade() -> None:
@@ -244,8 +273,10 @@ def downgrade() -> None:
     op.drop_table('registro_do_aluno')
     
     # 3. DROP DAS TABELAS DE ENTIDADE DE NEGÓCIO
-    
+    # Remover constraint de check da tabela 'aula'
+    op.drop_constraint('chk_titular_substituto_diferentes', 'aula', type_='check')
     # Aula depende de Estudio e Professor
+    op.drop_table('solicitacoes')
     op.drop_table('aula')
     op.drop_table('estudio')
 
@@ -282,7 +313,11 @@ def downgrade() -> None:
     
     # 8. DROP DOS TIPOS ENUM (CRUCIAL NO POSTGRESQL)
 
+    op.execute('DROP TYPE enum_tipo_de_aula;')
+    op.execute('DROP TYPE enum_solicitacao;')
+    op.execute('DROP TYPE enum_status_solicitacao;')
     op.execute('DROP TYPE enum_status_pagamento;')
+
     op.execute('DROP TYPE enum_metodo_pagamento;')
     op.execute('DROP TYPE enum_status_contrato;')
     # op.execute('DROP TYPE enum_num_aulas_semana;')

@@ -26,12 +26,13 @@ def upgrade() -> None:
     op.add_column('usuario', sa.Column(
         'estudio_aplicado',
         estudio_aplicado_enum,
-        nullable=False,
+        nullable=True,
         server_default='itaquera'
     ))
-    op.add_column('usuario', sa.Column('fk_id_estudio', sa.Integer, server_default='1', nullable=False))
+    op.add_column('usuario', sa.Column('fk_id_estudio', sa.Integer, nullable=True))
+    # op.add_column('usuario', sa.Column('fk_id_estudio', sa.Integer, server_default='1', nullable=True))
 
-    op.create_foreign_key('fk_usuario_estudio_id','usuario','estudio',['fk_id_estudio'],['id_estudio'])
+    op.create_foreign_key('fk_usuario_estudio_id','usuario','estudio',['fk_id_estudio'],['id_estudio'], ondelete='SET NULL')
 
     op.create_index(op.f('ix_usuario_fk_id_estudio'), 'usuario', ['fk_id_estudio'], unique=False)
 

@@ -1,46 +1,75 @@
-from pymongo import MongoClient, errors
-from typing import Optional, Dict, Union
-from src.database.modelConfig.dbModel import dbModel
+# src/database/connMongo.py
+from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import HTTPException, status
+from typing import Optional
+from src.database.modelConfig.configMongo import MongoParamBuilder 
 
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+class MongoConnectionManager:
+    client: Optional[AsyncIOMotorClient] = None
+    DB_NAME: str = "" 
 
-
-from src.database.envConfig.envMongo import EnvLoaderMongo
-from src.database.modelConfig.configMongo import MongoParamBuilder
-
-
-
-class MongoModel(dbModel):
-    def __init__(self):
-        self.env_data = MongoParamBuilder()
-        self.parametros = self.env_data.buil_data_env()
-        self.client = None
-
-    def connect_db(self)->Union[MongoClient, str]:
-        if self.client:
-            print("COonxão com Mongo já está ativa.")
-            return self.client
+    @classmethod
+    async def connect(cls):
         try:
-            self.client = MongoClient(**self.parametros)
-            # self.res = self.client.admin.command('ping')  
-            # return self.res
-            return self.client
-        except (ConnectionFailure, ServerSelectionTimeoutError) as err:
-            return f'Erro ao conectar ao banco de dados:\n {err}'
-        except Exception as err:
-            return f'Erro inesperado na conexão:\n {err}'
+            builder = MongoParamBuilder()
+            config = builder.config
+        except Exception as e:
+            print(f"ERRO DE CONFIGURAÇÃO DO AMBIENTE MONGODB: {e}")
+            raise RuntimeError(f"Falha ao carregar as variáveis de ambiente do MongoDB: {e}") 
+        
+        MONGO_URI = config.mongo_uri
+        cls.DB_NAME = config.mongo_db_name 
 
-    def diconnect_db(self):
-        if self.client and not self.client.close():
-            self.client.close()
-        # return f"Errro"
+        try:
+            cls.client = AsyncIOMotorClient(MONGO_URI)
+            await cls.client.admin.command('ping') 
+            print(f"MongoConnectionManager: Cliente MongoDB Atlas ativo (DB: {cls.DB_NAME}).")
+        except Exception as e:
+            cls.client = None
+            import traceback
+            traceback.print_exc()
+            print(f"ERRO FATAL ao conectar ao MongoDB Atlas: {e}")
+            raise Exception(f"Falha na conexão com MongoDB: {e}") 
+        
+
+    @classmethod
+    async def close(cls):
+        if cls.client:
+            cls.client.close()
+            cls.client = None
+            
+    @classmethod
+    def get_client(cls) -> AsyncIOMotorClient:
+         if not cls.client:
+             raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+                detail="Cliente MongoDB não está ativo. Falha no Startup."
+            )
+         return cls.client
     
 
-# try:
-#     mongoModel = MongoModel()
-#     res = mongoModel.connect_db()
-#     question = res.admin.command('ping')
-
-#     print(question)
-# except errors.ConnectionFailure as err: 
-#     print(f"Erro{err}")
+# if __name__ == "__main__":
+#     import asyncio
+    
+#     async def test_connection():
+#         print("\n--- 🧪 Teste de Conexão Direta ao MongoDB Atlas ---")
+#         try:
+#             # Tenta conectar
+#             await MongoConnectionManager.connect()
+            
+            
+            
+#             print("\n✔️ SUCESSO! A conexão com o MongoDB Atlas foi estabelecida com sucesso.")
+            
+#         except Exception as e:
+#             # Se a conexão falhar, o erro detalhado será impresso pelo método connect()
+#             print("\n❌ FALHA: Não foi possível estabelecer a conexão com o MongoDB Atlas.")
+#             # O detalhe exato do erro deve ter sido impresso acima
+            
+#         finally:
+#             # Garante que a conexão seja fechada após o teste
+#             await MongoConnectionManager.close()
+#             print("Conexão fechada.")
+            
+#     # Executa a função assíncrona
+#     asyncio.run(test_connection())
