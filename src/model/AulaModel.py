@@ -87,7 +87,6 @@ class AulaModel:
     def delete_aula_by_id(self, aula_id: int) -> bool:
         """Deleta uma aula pelo ID."""
         try:
-            # O ORM cascade deve cuidar das matrículas em Estudante_Aula
             # result = self.session.execute(delete(Aula).where(Aula.id_aula == aula_id))
             # self.session.commit()
             # return result.rowcount > 0

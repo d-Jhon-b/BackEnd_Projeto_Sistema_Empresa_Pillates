@@ -8,8 +8,6 @@ from src.schemas.estudio_schemas import EstudioCreateSchema, EstudioUpdateSchema
 from src.database.connPostGreNeon import CreateSessionPostGre
 
 class EstudioModel:
-    """ Repositório/Model para operações CRUD no PostgreSQL (Estudio). """
-
     def __init__(self, db_session: Session):
         self.session = db_session
 
@@ -25,10 +23,16 @@ class EstudioModel:
             self.session.commit()
             self.session.refresh(new_estudio)
             return new_estudio
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            print(f"Erro ao criar Estúdio: {e}")
+            raise e
+        
         except Exception as e:
             self.session.rollback()
             print(f"Erro ao criar Estúdio: {e}")
             raise e
+        
         
     def select_estudio_by_id(self, estudio_id: int) -> Optional[Estudio]:
         """ Busca um estúdio pelo ID. """
