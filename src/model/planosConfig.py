@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from src.database.connPostGreNeon import CreateSessionPostGre
 
-adesoes_usuarios = relationship("AdesaoPlanoConfig", back_populates="plano")
 
 class Planos(Base.Base):
     __tablename__ = 'planos'
