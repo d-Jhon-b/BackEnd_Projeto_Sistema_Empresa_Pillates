@@ -21,7 +21,9 @@ class PlanoModel:
         """
         Adiciona um novo plano ao banco de dados.
         """
-        session = CreateSessionPostGre()
+        create_session = CreateSessionPostGre()
+        session = create_session.get_session()
+
         try:
             novo_plano = Planos(**plano_dados)  # usa unpacking do dicionário
             session.add(novo_plano)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from src.database.connPostGreNeon import CreateSessionPostGre
 
+adesoes_usuarios = relationship("AdesaoPlanoConfig", back_populates="plano")
 
 class Planos(Base.Base):
     __tablename__ = 'planos'
@@ -17,7 +18,9 @@ class Planos(Base.Base):
     valor_plano=Column(Numeric(precision=10, scale=2))
     qtde_aulas_totais =Column(Integer, nullable=False)
 
+    
 
+    #não podemos aplicar as constrains como atributos soltos na tabela
     #usar o __table_args__ referencia que são argumentos "adicionais" da tabela
     __table_args__=(
 
@@ -30,17 +33,17 @@ class Planos(Base.Base):
         return f"<Estudio(id={self.id_plano}, tipo de plano='{self.tipo_plano}')>"
 
 
-# if __name__ == "__main__":
-#     create_session = CreateSessionPostGre()
-#     db = create_session.get_session()
-#     # db:Session = Depends(get_db())
-#     try:
-#         stmt = select(Planos)
+if __name__ == "__main__":
+    create_session = CreateSessionPostGre()
+    db = create_session.get_session()
+    # db:Session = Depends(get_db())
+    try:
+        stmt = select(Planos)
 
-#         print("Executando a query no banco de dados Neon...")
-#         result = db.execute(stmt)
-#         todos_planos = result.scalars().all()
-#         for planos in todos_planos:
-#             print(planos)
-#     except SQLAlchemyError as err:
-#         print(err)
+        print("Executando a query no banco de dados Neon...")
+        result = db.execute(stmt)
+        todos_planos = result.scalars().all()
+        for planos in todos_planos:
+            print(planos)
+    except SQLAlchemyError as err:
+        print(err)
