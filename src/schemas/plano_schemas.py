@@ -52,6 +52,13 @@ class PlanoUpdate(BaseModel):
     ] = None
     qtde_aulas_totais: Optional[int] = None
 
+class PlanoDetalhe(Planos):
+    criado_em: Optional[str] = None 
+    atualizado_em: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
 class PlanoInDBBase(PlanoBase):
     id_plano: int
 
