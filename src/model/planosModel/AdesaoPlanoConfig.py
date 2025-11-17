@@ -3,9 +3,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from src.database.Base import DeclarativeBase as Base
-# from src.model.planosModel.planoConfig import Planos
-
-# from src.model.planosModel.contratoConfig import Contrato
+from src.model.planosModel.planoConfig import Planos
+from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
+from src.model.planosModel.contratoConfig import Contrato
 
 
 class AdesaoPlano(Base.Base):

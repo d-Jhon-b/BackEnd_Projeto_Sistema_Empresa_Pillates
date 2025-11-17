@@ -3,9 +3,20 @@ from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-
+from src.model.userModel.userConfig import Usuario
+from src.model.userModel.typeUser.aluno import Estudante
 from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
+from src.model.planosModel.planoConfig import Planos
+from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
+from src.model.planosModel.contratoConfig import Contrato
 from src.schemas.planos_personalizados_schemas import PlanoPersonalizadoCreate, PlanoPersonalizadoUpdate 
+
+from src.database.connPostGreNeon import CreateSessionPostGre
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from decimal import Decimal
+from datetime import datetime, timedelta
+
+
 
 class PlanosPersonalizadosModel:
     """DAO para operações CRUD na tabela Planos Personalizados."""
@@ -81,3 +92,77 @@ class PlanosPersonalizadosModel:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise Exception(f"Erro inesperado no DB ao deletar Plano Personalizado: {e}")
+        
+
+
+
+# create_session = CreateSessionPostGre()
+# session = create_session.get_session()
+
+# def run_planos_personalizados_tests():    
+#     plano_model = PlanosPersonalizadosModel(session_db=session)
+#     new_plano_id = None
+    
+#     try:        
+#         # Dados para criar um novo plano personalizado
+#         ## # plano_create_data = {
+#         ## #     'nome_plano': 'Plano VIP Mensal',
+#         ## #     'tipo_plano_livre': 'Flex',
+#         ## #     'modalidade_plano_livre': 'Qualquer dia',
+#         ## #     'descricao_plano': 'Acesso livre a todas as aulas por 30 dias.',
+#         ## #     'valor_plano': Decimal('550.00'),
+#         ## #     'qtde_aulas_totais': 999,
+#         ## #     'is_temporario': True,
+#         ## #     'data_validade': datetime.now() + timedelta(days=30)
+#         ## # }
+#         ## 
+#         ## # plano_create_schema = PlanoPersonalizadoCreate(**plano_create_data)
+#         ## # new_plano = plano_model.insert_new_plano(plano_create_schema)
+#         ## # new_plano_id = new_plano.id_plano_personalizado
+        
+        
+#         # Busca o plano recém-criado
+#         # found_plano = plano_model.select_plano_by_id(new_plano_id)
+#         # if found_plano:
+#         #     print(f" Plano encontrado: ID {found_plano.id_plano_personalizado} | Valor: {found_plano.valor_plano}")
+#         # else:
+#         #     print(f"Falha ao encontrar o plano com ID {new_plano_id}.")
+#         #     return
+        
+#         # Dados para atualização parcial (PATCH)
+#         ### plano_update_data = {
+#         ###     'nome_plano': 'Plano VIP Trimestral',
+#         ###     'valor_plano': Decimal('150.00') 
+#         ### }
+#         ##
+#         ### update_schema = PlanoPersonalizadoUpdate(**plano_update_data)
+#         ##
+#         ### # Chamada ao Model para atualizar
+#         ### updated_plano = plano_model.update_plano_data(plano_id=new_plano_id, data_to_update=update_schema)
+#         ##
+#         ### print(f"Plano atualizado com sucesso! Novo nome: {updated_plano.nome_plano} | Novo valor: {updated_plano.valor_plano}")
+
+#         # Deleta o plano
+#         delete_result = plano_model.delete_plano_by_id(new_plano_id)
+        
+#         if delete_result:
+#             print(f"plano com ID {new_plano_id} deletado com sucesso!")
+#         else:
+#             print(f" Falha ao deletar o plano com ID {new_plano_id}.")
+
+#         # Tenta buscar novamente para confirmar a deleção
+#         confirm_deleted = plano_model.select_plano_by_id(new_plano_id)
+#         if confirm_deleted is None:
+#              print(" Confirmação: A busca retornou None após a deleção.")
+#         else:
+#              print("Falha na confirmação da deleção.")
+             
+#     except SQLAlchemyError as e:
+#         print(f'Erro de Banco de Dados durante o teste: {e}')
+#         session.rollback()
+#     except Exception as e:
+#         print(f'Erro geral durante o teste: {e}')
+#     finally:
+#         session.close()
+
+# run_planos_personalizados_tests()

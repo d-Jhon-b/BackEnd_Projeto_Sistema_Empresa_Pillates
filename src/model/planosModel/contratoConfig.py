@@ -30,12 +30,12 @@ class Contrato(Base.Base):
     # adesao_plano = relationship("AdesaoPlano", back_populates="contratos")
     # plano_personalizado = relationship("PlanosPersonalizados", back_populates="contratos")
 
-    estudante = relationship("Estudante", back_populates="contratos") 
+    estudante = relationship("Estudante", back_populates="contratos")
     
     plano = relationship("Planos", back_populates="contratos")
     adesao_plano = relationship("AdesaoPlano", back_populates="contratos")
     plano_personalizado = relationship("PlanosPersonalizados", back_populates="contratos")
-
+    pagamentos = relationship('Pagamento', back_populates='contrato')
     def __repr__(self):
         return f"id_contrato:{self.id_contrato} | id_estudante:{self.fk_id_estudante} | Status:{self.status_contrato}"    
 

@@ -59,8 +59,8 @@ class SolicitacaoController():
             )
 
         try:
+            self.type_request = 'update_request_status'
             ValidarStatus.validar_status(session_db=session_db, id_solcitacao=id_solicitacao)    
-
             solicitacao_model = SolicitacoesModel(session_db=session_db)
             self.updated_solicitacao = solicitacao_model.update_solicitacao(id_solcitacao=id_solicitacao, solicitacao_data=data_request)
             

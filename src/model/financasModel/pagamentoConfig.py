@@ -6,6 +6,12 @@ from sqlalchemy import Column, Numeric, DateTime,select,ForeignKey,String, Integ
 from sqlalchemy.ext.associationproxy import association_proxy
 
 
+# from src.model.financasModel.vendaExtraConfig import VendaExtra
+# from src.model.userModel.typeUser.aluno import Estudante
+# from src.model.planosModel.contratoConfig import Contrato
+
+
+
 class Pagamento(Base.Base):
 
     __tablename__ = 'pagamento' 
@@ -24,7 +30,7 @@ class Pagamento(Base.Base):
     status_pagamento = Column(Enum('pago', 'pendente', 'atrasado', name='enum_status_pagamento'), nullable=False)
     descricao_pagamento = Column(String(255), nullable=False)
 
-    contrato = relationship("ContratoConfig", back_populates="pagamentos") 
+    contrato = relationship("Contrato", back_populates="pagamentos") 
     estudante = relationship("Estudante", back_populates="pagamentos") 
     venda_extra = relationship("VendaExtra", back_populates="pagamento") # Note: assuming VendaExtra tem relacionamento 1:1 ou 1:N com Pagamento
     

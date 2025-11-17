@@ -6,7 +6,7 @@ from sqlalchemy import Column, Numeric, DateTime,select,ForeignKey,String, Integ
 from sqlalchemy.ext.associationproxy import association_proxy
 
 
-from src.model.financasModel.pagamentoConfig import Pagamento
+# from src.model.financasModel.pagamentoConfig import Pagamento
 
 class VendaExtra(Base.Base):
     __tablename__='venda_extra'
@@ -19,7 +19,7 @@ class VendaExtra(Base.Base):
     data_venda = Column(DateTime, nullable=False)
 
     estudante = relationship("Estudante", back_populates="vendas_extras")
-    pagamento: Mapped["Pagamento"] = relationship("Pagamento", back_populates="venda_extra", uselist=False) 
+    pagamento= relationship("Pagamento", back_populates="venda_extra", uselist=False) 
     
     def __repr__(self):
         return f"<VendaExtra(id={self.id_venda_extra}, valor={self.valor_venda_extra}, estudante_id={self.fk_id_estudante})>"

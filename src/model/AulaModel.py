@@ -45,12 +45,10 @@ class AulaModel:
         try:
             new_aula = Aula(**aula_data)
             self.session.add(new_aula)
-            self.session.flush() # Obtém o ID da aula
-
-            # Matrícula inicial, se houver estudantes
+            self.session.flush()
             if estudantes_ids:
                 for estudante_id in estudantes_ids:
-                    # 'normal' é o valor padrão no seu Enum
+                    # 'normal' é o valor padrão do Enum
                     matricula = Estudante_Aula(
                         fk_id_estudante=estudante_id,
                         fk_id_aula=new_aula.id_aula,

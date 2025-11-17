@@ -44,8 +44,7 @@ class SolicitacaoUpdate(BaseModel):
 
 
 class SolicitacaoResponseSchema(SolicitacoesBase):
-    # Schema completo para retorno (inclui status e data)
-    id_solicitacao: int # Chave primária
+    id_solicitacao: int
     tipo_de_solicitacao: TipoDeSolicitacaoEnum
     status_solicitacao: StatusSolcitacaoEnum
     data_criacao: datetime

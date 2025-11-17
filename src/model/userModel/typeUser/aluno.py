@@ -9,12 +9,12 @@ from src.database.Base import DeclarativeBase as Base
 from src.database.connPostGreNeon import CreateSessionPostGre
 from src.model.aulaModel.aulaConfig import Estudante_Aula
 
-# from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
-# from src.model.planosModel.planoConfig import Planos
-# from src.model.planosModel.contratoConfig import Contrato
+from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
+from src.model.planosModel.planoConfig import Planos
+from src.model.planosModel.contratoConfig import Contrato
 
-# from src.model.financasModel.pagamentoConfig import Pagamento
-# from src.model.financasModel.vendaExtraConfig import VendaExtra
+from src.model.financasModel.pagamentoConfig import Pagamento
+from src.model.financasModel.vendaExtraConfig import VendaExtra
 
 class Estudante(Base.Base):
     __tablename__ = 'estudante'
@@ -35,8 +35,6 @@ class Estudante(Base.Base):
     
     aulas = association_proxy("aulas_associacao", "aula")
 
-
-
     contratos= relationship(
         "Contrato",
         back_populates="estudante",
@@ -49,16 +47,16 @@ class Estudante(Base.Base):
         cascade="all, delete-orphan",
     )
     
-    # pagamentos: Mapped[list["Pagamento"]] = relationship(
-    #     "Pagamento",
-    #     back_populates="estudante",
-    #     cascade="all, delete-orphan", # Ajuste o cascade conforme sua regra de negócio, mas 'delete-orphan' é comum
-    # )
-    # vendas_extras: Mapped[list["VendaExtra"]] = relationship(
-    #     "VendaExtra",
-    #     back_populates="estudante",
-    #     cascade="all, delete-orphan", 
-    # )
+    pagamentos: Mapped[list["Pagamento"]] = relationship(
+        "Pagamento",
+        back_populates="estudante",
+        cascade="all, delete-orphan", # Ajuste o cascade conforme sua regra de negócio, mas 'delete-orphan' é comum
+    )
+    vendas_extras: Mapped[list["VendaExtra"]] = relationship(
+        "VendaExtra",
+        back_populates="estudante",
+        cascade="all, delete-orphan", 
+    )
 
     
     def __repr__(self):

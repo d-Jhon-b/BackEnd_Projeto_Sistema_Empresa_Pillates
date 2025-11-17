@@ -1,6 +1,6 @@
 from src.model.userModel.userConfig import Usuario
 from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
-# from src.controllers.validations.statusSolicitacaoValidation import ValidarStatus
+from src.controllers.validations.statusSolicitacaoValidation import ValidarStatus
 from src.schemas.solicitacao_schemas import SolicitacaoCreate, SolicitacaoUpdate, StatusSolcitacaoEnum
 
 from sqlalchemy.orm import relationship, Mapped, Session, joinedload

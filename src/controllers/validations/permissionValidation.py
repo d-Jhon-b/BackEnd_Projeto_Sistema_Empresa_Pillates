@@ -50,6 +50,16 @@ class UserValidation():
             NivelAcessoEnum.ALUNO.value
         ]
         UserValidation._check_permission(current_user, allowed_levels)
+        
+    @staticmethod
+    def _check_aluno_or_admin_permission( current_user: dict):
+        allowed_levels = [
+            NivelAcessoEnum.COLABORADOR.value,
+            NivelAcessoEnum.SUPREMO.value,
+            NivelAcessoEnum.ALUNO.value
+        ]
+        UserValidation._check_permission(current_user, allowed_levels)
+
 
     @staticmethod
     def check_self_or_admin_permission(current_user: dict, target_user_id: int):

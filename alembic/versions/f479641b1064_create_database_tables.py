@@ -268,7 +268,8 @@ def upgrade() -> None:
         sa.Column('fk_id_estudio', sa.Integer, sa.ForeignKey('estudio.id_estudio'), nullable=False),
         sa.Column('tipo_de_solicitacao', sa.Enum('aula', 'plano','pagamento','outros', name='enum_solicitacao'), nullable=False),
         sa.Column('menssagem', sa.Text, nullable=True),
-        sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, default="em espera"),
+        # sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, default="em espera"),
+        sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, server_default=sa.text("'em espera'")),
         sa.Column('data_criacao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
         sa.Column('data_resposta', sa.DateTime, nullable=True)
     )   

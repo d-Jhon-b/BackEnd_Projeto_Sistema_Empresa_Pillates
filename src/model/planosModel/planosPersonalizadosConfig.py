@@ -17,7 +17,7 @@ class PlanosPersonalizados(Base.Base):
     qtde_aulas_totais = Column(Integer, nullable=False)
     is_temporario = Column(Boolean, nullable=False, default=False)
     data_criacao = Column(DateTime, nullable=False, server_default=func.now())
-    data_validade = Column(DateTime, nullable=True) # Opcional, usado se is_temporario=True
+    data_validade = Column(DateTime, nullable=True) 
 
     __table_args__ = (
         CheckConstraint('valor_plano <= 999.99', name='chk_valor_plano_personalizado_max'),
@@ -26,6 +26,7 @@ class PlanosPersonalizados(Base.Base):
     
     # Relação de volta para Contrato
     contratos = relationship("Contrato", back_populates="plano_personalizado")
+    
     adesao_planos = relationship(
         "AdesaoPlano", 
         # PlanosPersonalizados.id_plano_personalizado deve ser igual a fk_id_plano_personalizado na AdesaoPlano

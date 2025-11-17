@@ -8,7 +8,8 @@ from src.router import (
     estudio_router,
     excecao_router,
     aula_router,
-    solicitacao_router
+    solicitacao_router,
+    plano_router
 )
 from src.database.connMongo import MongoConnectionManager 
 from contextlib import asynccontextmanager
@@ -64,6 +65,7 @@ app.include_router(excecao_router.router)
 app.include_router(aula_router.router)
 app.include_router(agenda_router.router)
 app.include_router(solicitacao_router.router)
+app.include_router(plano_router.router)
 
 
 
