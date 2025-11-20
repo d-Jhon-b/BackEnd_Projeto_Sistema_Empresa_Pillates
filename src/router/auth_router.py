@@ -4,7 +4,7 @@ from src.schemas.user_schemas import LoginRequestSchema, TokenResponseSchema, Fo
 # from src.controllers.userController import UserController
 from src.database.dependencies import get_db
 
-from src.utils.authService import AuthService
+from src.services.authService import AuthService
 
 
 router = APIRouter(

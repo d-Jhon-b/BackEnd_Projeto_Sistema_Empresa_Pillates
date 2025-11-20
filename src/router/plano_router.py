@@ -60,6 +60,22 @@ def get_all_planos_padrao_endpoint(
 ):
     return planos_controller.get_all_planos_padrao(session_db=db, current_user=current_user)
 
+@router.get(
+    "/padrao/{plano_id}",
+    response_model=PlanoResponse,
+    summary="Busca um Plano Padrão por ID (Requer Autenticação padrão)"
+)
+def get_plano_padrao_by_id_endpoint(
+    plano_id: int = Path(..., description="ID do Plano Padrão"),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):
+    return planos_controller.get_plano_padrao_by_id(
+        plano_id=plano_id, 
+        session_db=db, 
+        current_user=current_user
+    )
+
 
 @router.patch(
     "/padrao/{plano_id}",

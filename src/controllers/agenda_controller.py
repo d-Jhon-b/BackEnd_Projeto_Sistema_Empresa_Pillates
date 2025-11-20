@@ -41,6 +41,7 @@ class AgendaController:
     ) -> List[AgendaAulaResponseSchema]:
         user_id = current_user.get("id_user")
         user_level = current_user.get("lv_acesso")
+        
         aula_model = AulaModel(db_session=db_session_sql)
 
         is_instructor = user_level in ["instrutor", "colaborador", "supremo"]

@@ -9,7 +9,10 @@ from src.router import (
     excecao_router,
     aula_router,
     solicitacao_router,
-    plano_router
+    plano_router,
+    adesao_plano_router,
+    contrato_router,
+    pagamento_router
 )
 from src.database.connMongo import MongoConnectionManager 
 from contextlib import asynccontextmanager
@@ -64,8 +67,11 @@ app.include_router(estudio_router.router)
 app.include_router(excecao_router.router)
 app.include_router(aula_router.router)
 app.include_router(agenda_router.router)
-app.include_router(solicitacao_router.router)
+# app.include_router(solicitacao_router.router)
 app.include_router(plano_router.router)
+app.include_router(adesao_plano_router.router)
+app.include_router(contrato_router.router)
+app.include_router(pagamento_router.router)
 
 
 

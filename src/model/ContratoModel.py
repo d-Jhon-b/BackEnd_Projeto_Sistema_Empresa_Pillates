@@ -1,14 +1,18 @@
 from src.model.planosModel.contratoConfig import Contrato
 from src.model.UserModel import Usuario
 from src.model.userModel.typeUser.aluno import Estudante
-# from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
-# from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
-# from src.model.planosModel.planoConfig import Planos
+from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
+from src.services.pagamentosService import PagamentoService 
+from src.schemas.contrato_schemas import ContratoCreate, ContratoResponse, StatusContratoEnum
+from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
+from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
+from src.model.planosModel.planoConfig import Planos
 
 
 import logging
 from typing import Dict, Any, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, select, delete, update
 from sqlalchemy.exc import SQLAlchemyError
 
 
@@ -16,103 +20,184 @@ class ContratoModel():
     def __init__(self, session_db: Session):
         self.session = session_db
 
-    def create_contract(self, data_to_insert: Dict[str, Any]) -> Optional[Contrato]:
+    def insert_new_contrato(self, data_to_insert: Dict[str, Any], current_user:Dict[str, Any]) -> Optional[Contrato]:
+        print(current_user)
+        fk_id_adesao_plano = data_to_insert.get('fk_id_adesao_plano')
+        valor_negociado = data_to_insert.get('valor_final_negociado')
+        
         try:
-            new_contrato = Contrato(**data_to_insert)
+            adesao_db: Optional[AdesaoPlano] = self.session.query(AdesaoPlano).options(
+                joinedload(AdesaoPlano.plano_padrao),
+                joinedload(AdesaoPlano.plano_personalizado)
+            ).filter(AdesaoPlano.id_adesao_plano == fk_id_adesao_plano).one_or_none()
+            
+            if not adesao_db: return None 
+
+            valor_base = 0.0
+            if adesao_db.plano_padrao:
+                valor_base = adesao_db.plano_padrao.valor_plano
+            elif adesao_db.plano_personalizado:
+                valor_base = adesao_db.plano_personalizado.valor_plano 
+            
+            data_inicio_contrato = adesao_db.data_adesao 
+            data_termino_contrato = adesao_db.data_validade 
+            
+            valor_final_contrato = valor_negociado if valor_negociado is not None else valor_base
+
+            new_contrato = Contrato(
+                fk_id_estudante=adesao_db.fk_id_estudante, 
+                fk_id_adesao_plano=fk_id_adesao_plano,
+                fk_id_plano=adesao_db.fk_id_plano,
+                fk_id_plano_personalizado=adesao_db.fk_id_plano_personalizado,
+                data_inicio=data_inicio_contrato,
+                data_termino=data_termino_contrato,
+                valor_final=valor_final_contrato,
+                status_contrato='ativo'
+            )
+
             self.session.add(new_contrato)
             self.session.commit()
             self.session.refresh(new_contrato)
-            return new_contrato
+            
+            # pagamento_service = PagamentoService(session_db=self.session)
+            # parcelas = pagamento_service.gerar_pagamentos_contrato(new_contrato, current_user)
+            # return new_contrato, parcelas
+            pagamento_service = PagamentoService(session_db=self.session)
+            parcelas = pagamento_service.gerar_pagamentos_contrato(new_contrato, current_user)
+                        
+            # Retorna o ID e as parcelas
+            return new_contrato.id_contrato, parcelas
             
         except SQLAlchemyError as err:
             logging.error(f"Erro de Banco de Dados ao criar Contrato: {err}")
             self.session.rollback()
             return None
+        except Exception as err:
+            logging.error(f"Erro Inserir novo contrato: {err}")
+            self.session.rollback()
+            return None
         
 
+    def select_contrato_by_id(self, contrato_id: int) -> Optional[Contrato]:
+        """Busca um contrato pelo ID, carregando adesão e planos associados."""
+        try:
+            stmt = (
+                select(Contrato)
+                .where(Contrato.id_contrato == contrato_id)
+                .options(joinedload(Contrato.adesao_plano))
+                .options(joinedload(Contrato.plano))
+                .options(joinedload(Contrato.plano_personalizado))
+            )
+            return self.session.execute(stmt).scalar_one_or_none()
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar Contrato {contrato_id}: {err}")
+            return None
+
+    def select_active_contract_by_estudante(self, fk_id_estudante: int) -> Optional[Contrato]:
+        """Busca o contrato ativo (ou suspenso) de um estudante."""
+        try:
+            stmt = select(Contrato).where(
+                Contrato.fk_id_estudante == fk_id_estudante,
+                Contrato.status_contrato.in_(['ativo', 'suspenso'])
+            )
+            return self.session.execute(stmt).scalar_one_or_none()
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar contrato ativo do estudante {fk_id_estudante}: {err}")
+            return None
+            
+    def update_contrato_data(self, contrato_id: int, data_to_update: Dict[str, Any]) -> Optional[Contrato]:
+        """Atualiza campos específicos de um contrato."""
+        update_dict = {k: v for k, v in data_to_update.items() if v is not None}
+        if not update_dict:
+            return self.session.get(Contrato, contrato_id)
+
+        try:
+            update_stmt = (
+                update(Contrato)
+                .where(Contrato.id_contrato == contrato_id)
+                .values(**update_dict)
+            )
+            
+            result = self.session.execute(update_stmt)
+            if result.rowcount == 0:
+                self.session.rollback()
+                return None
+                
+            self.session.commit()
+            return self.session.get(Contrato, contrato_id)
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao atualizar Contrato {contrato_id}: {err}")
+            self.session.rollback()
+            return None 
 
 
 
 
 
-import logging
-from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from typing import Dict, Any
 
-# Suas importações
-from src.database.connPostGreNeon import CreateSessionPostGre 
-from src.schemas.contrato_schemas import ContratoResponse, StatusContratoEnum 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# import logging
+# from datetime import datetime, timedelta
+# from sqlalchemy.orm import Session
+# from sqlalchemy.exc import SQLAlchemyError
+# from typing import Dict, Any
+# from dateutil.relativedelta import relativedelta
+# # Suas importações
+# from src.database.connPostGreNeon import CreateSessionPostGre 
+# from src.schemas.contrato_schemas import ContratoResponse, StatusContratoEnum 
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-create_session = CreateSessionPostGre()
-session: Session = create_session.get_session()
+# create_session = CreateSessionPostGre()
+# session: Session = create_session.get_session()
 
-contrato_repo = ContratoModel(session_db=session)
-FK_ID_ESTUDANTE = 1 
-FK_ID_ADESAO_PLANO = 8
-DATA_INICIO = datetime.now().replace(microsecond=0)
-DATA_TERMINO_PADRAO = DATA_INICIO + timedelta(days=30)
-DATA_TERMINO_PERSONALIZADO = DATA_INICIO + timedelta(days=90)
-print("\n[TESTE 1] Criação de Contrato com Plano Padrão (ID=1)")
+# contrato_repo = ContratoModel(session_db=session)
 
-FK_ID_PLANO_PADRAO = 1
+# DATA_ADESAO = datetime.now().replace(microsecond=0)
+# # A validade para um plano mensal (tipo_plano=MENSAL) é de 1 mês
+# DATA_VALIDADE = DATA_ADESAO + relativedelta(months=1)
+# FK_ID_ESTUDANTE=1
+# FK_ID_ADESAO_TESTE = 1
+# FK_ID_PLANO_TESTE =1
+# DATA_INICIO_CONTRATO = DATA_ADESAO
+# DATA_TERMINO_CONTRATO = DATA_VALIDADE # O término do contrato coincide com a validade do plano
 
-dados_plano_padrao: Dict[str, Any] = {
-    "fk_id_estudante": FK_ID_ESTUDANTE,
-    "fk_id_adesao_plano": FK_ID_ADESAO_PLANO,
-    "fk_id_plano": FK_ID_PLANO_PADRAO,
-    "fk_id_plano_personalizado": None, 
-    "data_inicio": DATA_INICIO,
-    "data_termino": DATA_TERMINO_PADRAO,
-    "status_contrato": StatusContratoEnum.ATIVO.value 
-}
-
-try:
-    new_contrato_padrao = contrato_repo.create_contract(dados_plano_padrao)
+# if FK_ID_ADESAO_TESTE and FK_ID_PLANO_TESTE:
+#     # 1. Simulação do Schema de Entrada (Payload do Controller)
+#     payload_simulado = ContratoCreate(
+#         fk_id_estudante=FK_ID_ESTUDANTE,
+#         fk_id_adesao_plano=FK_ID_ADESAO_TESTE,
+#         plano_fks=ContratoPlanoFKs(fk_id_plano=FK_ID_PLANO_TESTE), # O campo aninhado!
+#         data_inicio=DATA_INICIO_CONTRATO,
+#         data_termino=DATA_TERMINO_CONTRATO,
+#         status_contrato=StatusContratoEnum.ATIVO
+#     )
     
-    if new_contrato_padrao:
-        print(f"SUCESSO! ID Contrato: {new_contrato_padrao.id_contrato}")
-        
-        response_schema = ContratoResponse.model_validate(new_contrato_padrao)
-    else:
-        print("FALHA na inserção do Contrato Padrão.")
-        
-except SQLAlchemyError as e:
-    print(f"Err no Teste 1: {e}")
-    session.rollback()
-except Exception as e:
-    print(f" Err isnesperado no Teste 1: {e}")
-
-# print("\n[TESTE 2] Criação de Contrato com Plano Personalizado (ID=2)")
-# FK_ID_PLANO_PERSONALIZADO = 1
-# dados_plano_personalizado: Dict[str, Any] = {
-#     "fk_id_estudante": FK_ID_ESTUDANTE,
-#     "fk_id_adesao_plano": FK_ID_ADESAO_PLANO,
-#     "fk_id_plano": None, 
-#     "fk_id_plano_personalizado": FK_ID_PLANO_PERSONALIZADO, 
-#     "data_inicio": DATA_INICIO,
-#     "data_termino": DATA_TERMINO_PERSONALIZADO,
-#     "status_contrato": StatusContratoEnum.ATIVO.value
-# }
-
-# try:
-#     new_contrato_personalizado = contrato_repo.create_contract(dados_plano_personalizado)
+#     # 2. Simulação do DESANINHAMENTO no Controller
+#     contrato_data_bruta = payload_simulado.model_dump()
+#     plano_fks_data = contrato_data_bruta.pop('plano_fks')
     
-#     if new_contrato_personalizado:
-#         print(f"SUCESSO! ID Contrato: {new_contrato_personalizado.id_contrato}")
+#     # 3. Montar o dicionário LIMPO para o Model
+#     contrato_data_plana = {
+#         **contrato_data_bruta,
+#         'fk_id_plano': plano_fks_data.get('fk_id_plano'),
+#         'fk_id_plano_personalizado': plano_fks_data.get('fk_id_plano_personalizado')
+#     }
+    
+#     try:
+#         new_contrato = contrato_repo.create_contract(contrato_data_plana)
         
-#         response_schema = ContratoResponse.model_validate(new_contrato_personalizado)
+#         if new_contrato:
+#             FK_ID_CONTRATO_TESTE = new_contrato.id_contrato
+#             print(f" SUCESSO! Contrato criado. ID: {FK_ID_CONTRATO_TESTE}")
+#             print(f"   Status: {new_contrato.status_contrato}, Plano FK: {new_contrato.fk_id_plano}")
+#         else:
+#             FK_ID_CONTRATO_TESTE = None
+#             print(" FALHA ao criar Contrato.")
 
-#     else:
-#         print("FALHA na inserção do Contrato Personalizado.")
-        
-# except SQLAlchemyError as e:
-#     print(f"ERRO DB no Teste 2: {e}")
-#     session.rollback()
-# except Exception as e:
-#     print(f" ERRO INESPERADO no Teste 2: {e}")
-
-session.close()
+#     except Exception as e:
+#         session.rollback()
+#         print(f" ERRO no Teste Contrato: {e}")
+#         FK_ID_CONTRATO_TESTE = None
+# else:
+#     print("⚠️ Pulando Contrato: Adesão e/ou Plano não foram criados.")
+#     FK_ID_CONTRATO_TESTE = None

@@ -2,10 +2,9 @@ from src.model.userModel.userConfig import Usuario
 from src.model.userModel.typeUser.aluno import Estudante
 
 from src.model.planosModel.planoConfig import Planos
+from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
 from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
 from src.model.planosModel.contratoConfig import Contrato
-
-
 from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
 
 from src.schemas.plano_schemas import (ModalidadePlanoEnum, PlanoCreate, PlanoResponse, PlanoUpdate, TipoPlanoEnum)
@@ -60,17 +59,14 @@ class PlanosModel():
                 .values(**update_dict)
             )
             
-            # 2. Executa a atualização
             result = self.session.execute(update_stmt)
             
-            # Se nenhuma linha foi afetada, o plano não existia
             if result.rowcount == 0:
                 self.session.rollback()
                 return None
                 
             self.session.commit()
             
-            # 3. Retorna o objeto atualizado (recarregado do DB)
             return self.session.get(Planos, plano_id)
         except SQLAlchemyError as e:
             self.session.rollback()
@@ -79,7 +75,7 @@ class PlanosModel():
     def select_plano_by_id(self, plano_id: int) -> Optional[Planos]:
         try:
             stmt = select(Planos).where(Planos.id_plano==plano_id)
-            result_search = self.session.execute(stmt).unique().one_or_none()
+            result_search = self.session.execute(stmt).unique().scalar_one_or_none()
             return result_search
         except SQLAlchemyError as err:
             logging.error(f'Erro ao procurar plano com id: {plano_id}\nErro:{err}')
@@ -116,71 +112,40 @@ class PlanosModel():
 
 
 
-from decimal import Decimal
-create_session = CreateSessionPostGre()
-session=create_session.get_session()
+# from decimal import Decimal
+# create_session = CreateSessionPostGre()
+# session=create_session.get_session()
+# plano_repo = PlanosModel(session_db=session)
 
-
-plano_padrao_data_test = {
-    'tipo_plano': TipoPlanoEnum.MENSAL.value,
-    'modalidade_plano': ModalidadePlanoEnum.DUAS_SEMANAS.value,
-    'descricao_plano': 'Acesso de duas vezes por semana.',
-    'valor_plano': Decimal('199.99'),
-    'qtde_aulas_totais': 8
-}
+# plano_padrao_data_test = {
+#     'tipo_plano': TipoPlanoEnum.MENSAL.value,
+#     'modalidade_plano': ModalidadePlanoEnum.DUAS_SEMANAS.value,
+#     'descricao_plano': 'Acesso de duas vezes por semana.',
+#     'valor_plano': Decimal('199.99'),
+#     'qtde_aulas_totais': 8
+# }
+# plano_create_data = PlanoCreate(
+#     tipo_plano=TipoPlanoEnum.MENSAL,
+#     modalidade_plano=ModalidadePlanoEnum.DUAS_SEMANAS,
+#     descricao_plano="Plano mensal com 2 aulas por semana (Total 8 aulas)",
+#     valor_plano=Decimal('199.90'),
+#     qtde_aulas_totais=8
+# )
 
 # try:
-# # Instancia o Model (DAO)
-#     planos_model = PlanosModel(session_db=session)
-
-    # print(plano_padrao_data_test)
-
-
-    # plano_create_schema = PlanoCreate(**plano_padrao_data_test)
-
-    # print(plano_create_schema)
-    # print("Tentando criar Plano Padrão...")
-    # new_plano = planos_model.insert_new_plano(plano_create_schema)
+#     # 1. Converte o Schema Pydantic para o Dicionário limpo que o Model espera
+#     plano_dict = plano_create_data.model_dump(exclude_defaults=False)
     
-    # print(f"Plano Padrão criado com sucesso! ID: {new_plano.id_plano} | Tipo: {new_plano.tipo_plano}")
+#     new_plano = plano_repo.insert_new_plano(plano_create_data) # O seu método usa o Schema diretamente, OK.
     
-#busca: 
-    # results=planos_model.select_all_planos()
-    # for a in results:
-    #     print(a)
-    # result = planos_model.select_plano_by_id(1)
-    # print(result)
+#     if new_plano:
+#         FK_ID_PLANO_TESTE = new_plano.id_plano
+#         print(f" SUCESSO! Plano Padrão criado. ID: {FK_ID_PLANO_TESTE}")
+#         print(f"   Tipo: {new_plano.tipo_plano}, Valor: R$ {new_plano.valor_plano}")
+#     else:
+#         FK_ID_PLANO_TESTE = None
+#         print(" FALHA ao criar Plano Padrão.")
 
-    #delete_plano_by id
-# try:
-# # Instancia o Model (DAO)
-#     planos_model = PlanosModel(session_db=session)
-
-#     delete_result = planos_model.delete_plano_by_id(5)
-#     print(delete_result)
-
-#     data_update = {
-#         'tipo_plano': 'trimestral',
-#         'valor_plano': 1
-#     }
-#     update_data_schema = PlanoUpdate(**data_update)
-
-#     update_aplication = planos_model.update_plano_data(plano_id=1, data_to_update=update_data_schema)
-#     print(f'{update_aplication}')
-#     session.close()
-# except SQLAlchemyError as err:
-#     print(f'erro ao inserir plano no banco{err}')
-
-# except Exception as err:
-#     print(f'Erro ao aplicar inserção:{err}')
-
-
-# data_adesao = datetime.now()
-# tipo_plano = 'mensal' # Valor lido da tabela 'planos' via FK
-
-# if tipo_plano == 'mensal':
-#     data_validade = data_adesao + relativedelta(months=1)
-# elif tipo_plano == 'trimestral':
-#     data_validade = data_adesao + relativedelta(months=3)
-
-# sa.Column('data_validade', sa.DateTime, nullable=False)
+# except Exception as e:
+#     print(f" ERRO no Teste Plano: {e}")
+#     FK_ID_PLANO_TESTE = None

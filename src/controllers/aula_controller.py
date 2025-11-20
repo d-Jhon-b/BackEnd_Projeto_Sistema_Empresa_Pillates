@@ -34,7 +34,7 @@ class AulaController:
     
     def get_all_aulas(self, studio_id: Optional[int], current_user: dict, db_session: Session) -> List[AulaResponse]:
         # Permissão: Qualquer usuário autenticado
-        
+        UserValidation._check_all_permission(current_user=current_user)
         user_estudio_id = current_user.get("fk_id_estudio")
         # for i in current_user.items():
         #     print(i)

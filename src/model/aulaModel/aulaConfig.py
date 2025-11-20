@@ -7,7 +7,6 @@ DateTime, Column, String,Enum, ForeignKey, CheckConstraint)
 from sqlalchemy.ext.associationproxy import association_proxy
 from src.database.Base import DeclarativeBase as Base
 
-
 class Aula(Base.Base):
     __tablename__ = 'aula'
     id_aula = Column('id_aula', Integer, primary_key=True, autoincrement=True, nullable=False)
@@ -28,7 +27,7 @@ class Aula(Base.Base):
         back_populates="aula", 
         cascade="all, delete-orphan"
     )
-
+    solicitacao_aula_sugerida = relationship('Solicitacoes', back_populates='aula_referencia')
     estudantes = association_proxy("estudantes_associacao", "estudante")
     def __repr__(self):
         return f'\nid:{self.id_aula}\ndata da aula:{self.data_aula}\ntitulo da aula:{self.titulo_aula}\n'

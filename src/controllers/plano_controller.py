@@ -42,6 +42,23 @@ class PlanosController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Falha ao buscar Planos Padrão: {e}"
             )
+    def get_plano_padrao_by_id(self, plano_id: int, session_db: Session, current_user: Dict[str, Any]) -> PlanoResponse:
+        UserValidation._check_all_permission(current_user) 
+        try:
+            plano_repo = PlanosModel(session_db=session_db)
+            plano_db = plano_repo.select_plano_by_id(plano_id)
+            if not plano_db:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Plano Padrão com ID {plano_id} não encontrado."
+                )
+            return PlanoResponse.model_validate(plano_db)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Falha ao buscar PLano Padrão: {e}"
+            )
+
 
     def update_plano_padrao(self, plano_id: int, session_db: Session, data_update: PlanoUpdate, current_user: Dict[str, Any]) -> PlanoResponse:
         UserValidation._check_admin_permission(current_user)

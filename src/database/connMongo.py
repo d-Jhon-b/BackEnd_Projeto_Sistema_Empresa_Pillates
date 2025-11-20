@@ -59,11 +59,11 @@ class MongoConnectionManager:
             
             
             
-#             print("\n✔️ SUCESSO! A conexão com o MongoDB Atlas foi estabelecida com sucesso.")
+#             print("\n SUCESSO! A conexão com o MongoDB Atlas foi estabelecida com sucesso.")
             
 #         except Exception as e:
 #             # Se a conexão falhar, o erro detalhado será impresso pelo método connect()
-#             print("\n❌ FALHA: Não foi possível estabelecer a conexão com o MongoDB Atlas.")
+#             print("\n FALHA: Não foi possível estabelecer a conexão com o MongoDB Atlas.")
 #             # O detalhe exato do erro deve ter sido impresso acima
             
 #         finally:

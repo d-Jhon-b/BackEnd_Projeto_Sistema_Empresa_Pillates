@@ -57,6 +57,11 @@ class Estudante(Base.Base):
         back_populates="estudante",
         cascade="all, delete-orphan", 
     )
+    solicitacoes = relationship(
+        'Solicitacoes',
+        back_populates="estudante",
+        cascade='all, delete-orphan'
+    )
 
     
     def __repr__(self):

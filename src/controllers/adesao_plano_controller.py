@@ -6,15 +6,20 @@ from typing import Dict, Any, Optional
 
 from src.model.AdesaoPlanoModel import AdesaoPlanoModel
 from src.model.PlanoModel import PlanosModel # Assumindo que você tem um Model para buscar planos
+from src.model.PlanosCustomizadosModel import PlanosPersonalizadosModel
 from src.schemas.adesao_plano_schemas import SubscribePlanoPayload, SubscribePlano
 from src.model.userModel.typeUser.aluno import Estudante # Para validação de FK Estudante
 from src.controllers.validations.permissionValidation import UserValidation
+from src.controllers.validations.AdesaoValidation import AdesaoValidation
 
 class AdesaoPlanoController:
 
     def subscribe_plano(self, session_db: Session, data_payload: SubscribePlanoPayload, current_user: Dict[str, Any]) -> SubscribePlano:
         UserValidation._check_aluno_or_admin_permission(current_user=current_user)
-        
+        adesao_repo = AdesaoPlanoModel(session_db=session_db) 
+        adesao_plano_model = PlanosModel(session_db) 
+        adesao_plano_personalizados_model = PlanosPersonalizadosModel(session_db) 
+
         fk_id_estudante = data_payload.fk_id_estudante
         plano_data = data_payload.fk_id_plano_Geral
         
@@ -22,20 +27,30 @@ class AdesaoPlanoController:
         fk_id_plano_personalizado = plano_data.fk_id_plano_personalizado
 
         estudante_check = session_db.get(Estudante, fk_id_estudante)
+
+        data_validade_calc: Optional[datetime] = None 
+        tipo_plano: Optional[str] = None 
+        data_adesao = datetime.now()
+
         if not estudante_check:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Estudante com ID {fk_id_estudante} não encontrado.")
 
-        
-        adesao_plano_model = PlanosModel(session_db) 
-        
         if fk_id_plano:
             plano_obj = adesao_plano_model.select_plano_by_id(fk_id_plano)
             if not plano_obj:
                  raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Plano Padrão com ID {fk_id_plano} não encontrado.")
-            tipo_plano = plano_obj.tipo_plano.value
-        else: 
-            tipo_plano = 'mensal' 
+            tipo_plano = plano_obj.tipo_plano
 
+        elif fk_id_plano_personalizado:
+            plano_obj = adesao_plano_personalizados_model.select_plano_by_id(fk_id_plano_personalizado)
+            if not plano_obj:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Plano Personalizado com ID {fk_id_plano_personalizado} não encontrado.")
+            
+            if plano_obj.is_temporario and plano_obj.data_validade:
+                data_validade_calc = plano_obj.data_validade
+
+            tipo_plano = plano_obj.tipo_plano_livre
+        AdesaoValidation._check_no_active_plan(session_db=session_db, estudante_id=fk_id_estudante)
         data_adesao = datetime.now()
 
         if tipo_plano == 'mensal':
@@ -57,7 +72,6 @@ class AdesaoPlanoController:
         }
 
         try:
-            adesao_repo = AdesaoPlanoModel(session_db=session_db)
             new_adesao = adesao_repo.subscribe_plan(dados_para_model)
             
             if new_adesao is None:

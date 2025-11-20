@@ -17,7 +17,7 @@ class Planos(Base.Base):
     descricao_plano = Column('descricao_plano', String(255), nullable=True)
     valor_plano = Column('valor_plano', Numeric(precision=10, scale=2)) 
     qtde_aulas_totais = Column('qtde_aulas_totais', Integer, nullable=False)
-
+    
     __table_args__ = (
         CheckConstraint('valor_plano <= 999.99', name='chk_valor_plano_max'),
         CheckConstraint('qtde_aulas_totais <= 1000', name='chk_aulas_totais_max')
@@ -33,5 +33,10 @@ class Planos(Base.Base):
     )    
     contratos = relationship("Contrato", back_populates="plano")
 
+    solicitacoes_padrao = relationship(
+        "Solicitacoes",
+        foreign_keys="[Solicitacoes.fk_id_novo_plano]",
+        back_populates="novo_plano_padrao"
+    )
     def __repr__(self):
         return f"<Planos(id={self.id_plano}, tipo de plano='{self.tipo_plano}')>"

@@ -65,6 +65,7 @@ class UserValidation():
     def check_self_or_admin_permission(current_user: dict, target_user_id: int):
         requester_id = current_user.get("id_user")
         requester_level = current_user.get("lv_acesso")
+        print(f'{requester_id}\n\n\n\n\n')
         is_admin = requester_level in [
             NivelAcessoEnum.SUPREMO.value, 
             NivelAcessoEnum.COLABORADOR.value

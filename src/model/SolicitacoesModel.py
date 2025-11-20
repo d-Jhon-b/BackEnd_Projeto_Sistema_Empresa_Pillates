@@ -1,7 +1,8 @@
 from src.model.userModel.userConfig import Usuario
 from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
+from src.model.aulaModel.aulaConfig import Aula
 from src.controllers.validations.statusSolicitacaoValidation import ValidarStatus
-from src.schemas.solicitacao_schemas import SolicitacaoCreate, SolicitacaoUpdate, StatusSolcitacaoEnum
+from src.schemas.solicitacao_schemas import SolicitacaoCreate, SolicitacaoUpdate, StatusSolcitacaoEnum, AcaoSolicitacaoAulaEnum, AcaoSolicitacaoPlanoEnum
 
 from sqlalchemy.orm import relationship, Mapped, Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,7 +10,7 @@ from sqlalchemy import select, delete, func, update
 
 from typing import Optional, Dict
 from datetime import datetime
-
+import logging
 
 
 from src.database.connPostGreNeon import CreateSessionPostGre
@@ -111,44 +112,152 @@ class SolicitacoesModel():
             self.session_db.rollback()
             return None
 
+    def select_solicitacao_by_id(self, id_solicitacao: int) -> Optional[Solicitacoes]:
+        try:
+            stmt = select(Solicitacoes).where(Solicitacoes.id_solicitacao == id_solicitacao)
+            result = self.session_db.execute(stmt).unique().scalar_one_or_none()
+            
+            return result
+        except SQLAlchemyError as err:
+            logging.error(f'Erro ao buscar solicitação {id_solicitacao}: {err}')
+            return None
+        except Exception as err:
+            logging.error(f'Erro inesperado ao buscar solicitação {id_solicitacao}: {err}')
+            return None
 
+
+        
     # def select_solcitacao(self, id):
     #     pass
 
 
 
-# from src.schemas.solicitacao_schemas import TipoDeSolicitacaoEnum
-# create_sesison = CreateSessionPostGre()
-# session = create_sesison.get_session()
 
+# from src.model.SolicitacoesModel import SolicitacoesModel # Importar o modelo
+# from src.schemas.solicitacao_schemas import SolicitacaoCreate, TipoDeSolicitacaoEnum
+
+
+# create_session =CreateSessionPostGre()
+# session = create_session.get_session()
+
+
+# solicitacoes_repo = SolicitacoesModel(session_db=session)
+# FK_ESTUDANTE = 1
+# FK_ESTUDIO = 1
+# FK_AULA_EXISTENTE = 1
+# FK_PLANO_PADRAO = 1
+# FK_PLANO_PERSONALIZADO = 1
+# DATA_SUGERIDA = datetime.now().replace(minute=0, second=0, microsecond=0)
+
+
+# solicitacao_agendamento = SolicitacaoCreate(
+#     fk_id_estudante=FK_ESTUDANTE,
+#     fk_id_estudio=FK_ESTUDIO,
+#     menssagem="Agendar aula experimental para teste.",
+#     tipo_de_solicitacao=TipoDeSolicitacaoEnum.AULA,
+#     acao_solicitacao_aula=AcaoSolicitacaoAulaEnum.AGENDAMENTO,
+#     data_sugerida=DATA_SUGERIDA
+# )
 # try:
-#     model_solcitacao = SolicitacoesModel(session_db=session)
-    # values = SolicitacaoCreate(
-    #     fk_id_user=1,
-    #     fk_id_estudio=2,
-    #     menssagem='teste do estudio2',
-    #     tipo_de_solicitacao=TipoDeSolicitacaoEnum.AULA
+#     new_solicitacao = solicitacoes_repo.create_solicitacao(solicitacao_agendamento)
+#     if new_solicitacao:
+#         print(f"SUCESSO 1 (AGENDAMENTO): ID {new_solicitacao.id_solicitacao} | Tipo: {new_solicitacao.tipo_de_solicitacao} | Ação: {new_solicitacao.acao_solicitacao_aula}")
+#     else:
+#         print("FALHA 1 (AGENDAMENTO): Retornou None.")
+# except Exception as e:
+#     print(f"ERRO 1 (AGENDAMENTO): {e}")
 
-    # )
-    # nova_solicitacao = model_solcitacao.create_solicitacao(values)
-    # res_delete = model_solcitacao.delete_solicitacao(1)
-    # if res_delete:
-    #     print(res_delete)
-    # else:
-    #     print(res_delete)
-    # values = SolicitacaoUpdate(
-    #     status_solicitacao='recusada',
-    #     data_resposta=datetime.now()
-    # )
 
-    # res_update = model_solcitacao.update_solicitacao(2, values)
-    # print(res_update)
-#     res=model_solcitacao.select_all_solicitacoes(1)
-#     for a in res:
-#         print(a)
 
-# except SQLAlchemyError as err:
-#     print(f'Erro ao {err}')
 
-# except Exception as err:
-#     print(f'Erro ao {err}')
+# solicitacao_cancelamento = SolicitacaoCreate(
+#     fk_id_estudante=FK_ESTUDANTE,
+#     fk_id_estudio=FK_ESTUDIO,
+#     menssagem="Não poderei comparecer à aula de amanhã.",
+#     tipo_de_solicitacao=TipoDeSolicitacaoEnum.AULA,
+#     acao_solicitacao_aula=AcaoSolicitacaoAulaEnum.CANCELAMENTO,
+#     fk_id_aula_referencia=FK_AULA_EXISTENTE,
+#     data_sugerida=DATA_SUGERIDA # Data sugerida ainda é necessária no Pydantic
+# )
+# try:
+#     new_solicitacao = solicitacoes_repo.create_solicitacao(solicitacao_cancelamento)
+#     if new_solicitacao:
+#         print(f"SUCESSO 2 (CANCELAMENTO): ID {new_solicitacao.id_solicitacao} | Tipo: {new_solicitacao.tipo_de_solicitacao} | Ação: {new_solicitacao.acao_solicitacao_aula} | Aula Ref: {new_solicitacao.fk_id_aula_referencia}")
+#     else:
+#         print("FALHA 2 (CANCELAMENTO): Retornou None.")
+# except Exception as e:
+#     print(f"ERRO 2 (CANCELAMENTO): {e}")
+
+
+# solicitacao_mudanca_padrao = SolicitacaoCreate(
+#     fk_id_estudante=FK_ESTUDANTE,
+#     fk_id_estudio=FK_ESTUDIO,
+#     menssagem="Quero mudar para o plano trimestral.",
+#     tipo_de_solicitacao=TipoDeSolicitacaoEnum.PLANO,
+#     acao_solicitacao_plano=AcaoSolicitacaoPlanoEnum.MUDANCA_PLANO,
+#     fk_id_novo_plano=FK_PLANO_PADRAO,
+#     data_sugerida=DATA_SUGERIDA # Data sugerida ainda é necessária no Pydantic
+# )
+# try:
+#     new_solicitacao = solicitacoes_repo.create_solicitacao(solicitacao_mudanca_padrao)
+#     if new_solicitacao:
+#         print(f"SUCESSO 3 (MUDANÇA PADRÃO): ID {new_solicitacao.id_solicitacao} | Tipo: {new_solicitacao.tipo_de_solicitacao} | Ação: {new_solicitacao.acao_solicitacao_plano} | Novo Plano: {new_solicitacao.fk_id_novo_plano}")
+#     else:
+#         print("FALHA 3 (MUDANÇA PADRÃO): Retornou None.")
+# except Exception as e:
+#     print(f"ERRO 3 (MUDANÇA PADRÃO): {e}")
+
+
+# solicitacao_renovacao_personalizado = SolicitacaoCreate(
+#     fk_id_estudante=FK_ESTUDANTE,
+#     fk_id_estudio=FK_ESTUDIO,
+#     menssagem="Renovação do meu pacote personalizado.",
+#     tipo_de_solicitacao=TipoDeSolicitacaoEnum.PLANO,
+#     acao_solicitacao_plano=AcaoSolicitacaoPlanoEnum.RENOVACAO_PLANO,
+#     fk_id_novo_plano_personalizado=FK_PLANO_PERSONALIZADO,
+#     data_sugerida=DATA_SUGERIDA
+# )
+# try:
+#     new_solicitacao = solicitacoes_repo.create_solicitacao(solicitacao_renovacao_personalizado)
+#     if new_solicitacao:
+#         print(f"SUCESSO 4 (RENOV. PERS.): ID {new_solicitacao.id_solicitacao} | Tipo: {new_solicitacao.tipo_de_solicitacao} | Ação: {new_solicitacao.acao_solicitacao_plano} | Novo Plano Pers.: {new_solicitacao.fk_id_novo_plano_personalizado}")
+#     else:
+#         print("FALHA 4 (RENOV. PERS.): Retornou None.")
+# except Exception as e:
+#     print(f"ERRO 4 (RENOV. PERS.): {e}")
+
+# Usaremos o ID da primeira solicitação criada (AGENDAMENTO)
+
+# new_solicitacao = 1
+
+# if 'new_solicitacao' in locals() and new_solicitacao:
+#     # solicitacao_id_para_update = new_solicitacao.id_solicitacao
+
+# solicitacao_update_data = SolicitacaoUpdate(
+#     status_solicitacao=StatusSolcitacaoEnum.Rec
+# )
+# solicitacao_id_para_update=13
+# try:
+#     updated_solicitacao = solicitacoes_repo.update_solicitacao(solicitacao_id_para_update, solicitacao_update_data)
+#     if updated_solicitacao:
+#         print(f"\nSUCESSO 5 (UPDATE): Solicitação ID {solicitacao_id_para_update} atualizada para STATUS: {updated_solicitacao.status_solicitacao} | Resposta em: {updated_solicitacao.data_resposta.strftime('%Y-%m-%d %H:%M')}")
+#     else:
+#         print(f"\nFALHA 5 (UPDATE): Não foi possível atualizar solicitação ID {solicitacao_id_para_update}.")
+# except Exception as e:
+#     print(f"\nERRO 5 (UPDATE): {e}")
+
+
+# # Usaremos o ID da segunda solicitação criada (CANCELAMENTO)
+# if 'solicitacao_cancelamento' in locals() and solicitacao_cancelamento:
+#     solicitacao_id_para_delete = solicitacao_cancelamento.id_solicitacao
+# solicitacao_id_para_delete =4   
+# try:
+#     delete_result = solicitacoes_repo.delete_solicitacao(solicitacao_id_para_delete)
+#     if delete_result:
+#         print(f"\nSUCESSO 6 (DELETE): Solicitação ID {solicitacao_id_para_delete} excluída.")
+#     else:
+#         print(f"\nFALHA 6 (DELETE): Solicitação ID {solicitacao_id_para_delete} não foi encontrada ou excluída.")
+# except Exception as e:
+#     print(f"\nERRO 6 (DELETE): {e}")
+
+# session.close()

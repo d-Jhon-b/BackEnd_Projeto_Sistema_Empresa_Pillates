@@ -4,6 +4,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from src.database.Base import DeclarativeBase as Base
 
+
+
+
 # A classe não precisa dos ENUMs, pois usa String
 class PlanosPersonalizados(Base.Base):
     __tablename__ = 'planos_personalizados' 
@@ -33,6 +36,10 @@ class PlanosPersonalizados(Base.Base):
         primaryjoin="PlanosPersonalizados.id_plano_personalizado == AdesaoPlano.fk_id_plano_personalizado",
         back_populates="plano_personalizado" # O back_populates é o nome que usaremos em AdesaoPlano
     )
-    
+    solicitacoes_personalizadas = relationship(
+        "Solicitacoes",
+        foreign_keys="[Solicitacoes.fk_id_novo_plano_personalizado]",
+        back_populates="novo_plano_personalizado"
+    )
     def __repr__(self):
         return f"<PlanosPersonalizados(id={self.id_plano_personalizado}, nome='{self.nome_plano}')>"

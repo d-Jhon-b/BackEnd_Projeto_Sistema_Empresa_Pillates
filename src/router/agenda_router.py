@@ -10,8 +10,7 @@ from src.model.AgendaModel import AgendaAulaRepository
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
 from datetime import date
 from typing import List
-from src.utils.authService import auth_manager
-
+from src.services.authService import auth_manager
 
 router = APIRouter(prefix="/agenda", tags=["Agenda e Cronograma (MongoDB)"])
 agenda_controller = AgendaController()

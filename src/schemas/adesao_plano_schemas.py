@@ -6,14 +6,16 @@ from pydantic_core import core_schema as cs
 
 class TypeAdesaoPlano(BaseModel):
     fk_id_plano: Optional[int] = Field(default=None)
-    fk_id_plano_personalizado: Optional[int]
+    fk_id_plano_personalizado: Optional[int] =Field(default=None)
     @model_validator(mode='after')
-    def aplicar_um_plano(self):
+    def aplicar_um_plano(self)-> 'TypeAdesaoPlano':
         filled_fields = sum(1 for field in [self.fk_id_plano, self.fk_id_plano_personalizado] if field is not None)
-        if filled_fields ==0:
-            raise ValueError(f'Você deve fornecer exatamente um: fk_id_plano')
-        if filled_fields >1:
-            raise ValueError(f'Você deve fornecer exatamente um: fk_id_plano_personalizado')
+        if filled_fields == 0:
+            raise ValueError('Você deve fornecer exatamente um ID de plano (fk_id_plano OU fk_id_plano_personalizado). Nenhum foi fornecido.')
+        
+        if filled_fields > 1:
+            raise ValueError('Você deve fornecer apenas um ID de plano. Forneça fk_id_plano OU fk_id_plano_personalizado, mas não ambos.')
+        return self
 
 class SubscribePlanoPayload(BaseModel):
     fk_id_estudante: int
