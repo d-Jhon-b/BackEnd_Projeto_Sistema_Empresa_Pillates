@@ -250,8 +250,8 @@ def upgrade() -> None:
     op.create_table(
         'pagamento',
         sa.Column('id_pagamento', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_contrato', sa.Integer, sa.ForeignKey('contrato.id_contrato'), nullable=False),
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),
+        sa.Column('fk_id_contrato', sa.Integer, sa.ForeignKey('contrato.id_contrato', ondelete='CASCADE'), nullable=True),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete='CASCADE'), nullable=False),
         sa.Column('fk_id_venda_extra', sa.Integer, sa.ForeignKey('venda_extra.id_venda_extra'), nullable=True),
         sa.Column('valor_pagamento',sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('data_pagamento', sa.DateTime, nullable=False),
