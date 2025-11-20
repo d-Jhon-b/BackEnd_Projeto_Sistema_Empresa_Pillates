@@ -10,7 +10,7 @@ from src.model.planosModel.planoConfig import Planos
 
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional,List
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, select, delete, update
 from sqlalchemy.exc import SQLAlchemyError
@@ -105,7 +105,8 @@ class ContratoModel():
             logging.error(f"Erro de DB ao buscar contrato ativo do estudante {fk_id_estudante}: {err}")
             return None
             
-    def update_contrato_data(self, contrato_id: int, data_to_update: Dict[str, Any]) -> Optional[Contrato]:
+    # def update_contrato_data(self, contrato_id: int, data_to_update: Dict[str, Any]) -> Optional[Contrato]:
+    def update_contrato(self, contrato_id: int, data_to_update: Dict[str, Any]) -> Optional[Contrato]:
         """Atualiza campos específicos de um contrato."""
         update_dict = {k: v for k, v in data_to_update.items() if v is not None}
         if not update_dict:
@@ -131,8 +132,17 @@ class ContratoModel():
             return None 
 
 
-
-
+    def select_all_contracts_by_estudante(self, fk_id_estudante: int) -> List[Contrato]:
+        contratos = self.session.query(Contrato).options(
+            joinedload(Contrato.plano), 
+            joinedload(Contrato.plano_personalizado),
+            joinedload(Contrato.adesao_plano)
+        ).filter(
+            Contrato.fk_id_estudante == fk_id_estudante
+        ).order_by(
+            Contrato.data_inicio.desc() # Ordena do mais novo para o mais antigo
+        ).all()
+        return contratos
 
 
 # import logging
@@ -199,5 +209,5 @@ class ContratoModel():
 #         print(f" ERRO no Teste Contrato: {e}")
 #         FK_ID_CONTRATO_TESTE = None
 # else:
-#     print("⚠️ Pulando Contrato: Adesão e/ou Plano não foram criados.")
+#     print("Pulando Contrato: Adesão e/ou Plano não foram criados.")
 #     FK_ID_CONTRATO_TESTE = None

@@ -9,6 +9,7 @@ from src.model.financasModel.pagamentoConfig import Pagamento
 from src.model.planosModel.contratoConfig import Contrato 
 from src.model.financasModel.vendaExtraConfig import VendaExtra
 from src.model.userModel.typeUser.aluno import Estudante 
+from src.model.AlunoModel import AlunoModel
 
 class PagamentoService:
 
@@ -49,25 +50,35 @@ class PagamentoService:
         self.db.commit()
         return parcelas_criadas
 
-    def get_pagamento_by_id(self, pagamento_id: int)->Optional[Pagamento]:        
+    def get_pagamento_by_id(self, pagamento_id: int, current_user:Dict[str, Any])->Optional[Pagamento]:        
         pagamento = self.db.query(Pagamento).filter(Pagamento.id_pagamento == pagamento_id).first()
 
         # if current_user is not None:
         #     target_user_id = pagamento.fk_id_estudante
         #     UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
-
         if not pagamento:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail=f"Pagamento com ID {pagamento_id} não encontrado."
             )
+        fk_id_estudante = pagamento.fk_id_estudante
+        estudante_model = AlunoModel(db_session=self.db)
+        target_user_id = estudante_model.select_id_user_by_fk_id_estudante(fk_id_estudante)
+
+        if not target_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail="Pagamento encontrado, mas usuário associado não localizado."
+            )
+        
+        UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
         return pagamento
 
     def registrar_pagamento(self, pagamento_id: int, metodo: str, current_user: Dict[str, Any]):
 
-        pagamento_db:Pagamento = self.get_pagamento_by_id(pagamento_id)
-        target_user_id = pagamento_db.fk_id_estudante
-        UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
+        pagamento_db:Pagamento = self.get_pagamento_by_id(pagamento_id, current_user=current_user)
+        # target_user_id = pagamento_db.fk_id_estudante
+        # UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
 
         if pagamento_db.status_pagamento == 'pago':
             raise HTTPException(

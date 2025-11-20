@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import Optional
-from datetime import datetime
+from typing import Optional,Literal
+from datetime import datetime, date
 from enum import Enum
 
 # --- Enums ---
@@ -28,6 +28,19 @@ class ContratoResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class ContratoUpdate(BaseModel):
+    status_contrato: Optional[Literal['ativo', 'suspenso', 'cancelado', 'expirado']] = Field(
+        None, description="Status do contrato (apenas Admin pode alterar)."
+    )
+    
+    data_termino: Optional[date] = Field(None, description="Data de término do contrato.")
+    # motivo_cancelamento: Optional[str] = Field(None, max_length=255, description="Descrição do motivo do cancelamento/suspensão.")
+    
+    class Config:
+        from_attributes = True
+
 
 
 

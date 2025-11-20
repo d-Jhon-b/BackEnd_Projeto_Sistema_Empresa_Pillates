@@ -5,7 +5,8 @@ from dateutil.relativedelta import relativedelta
 from typing import Dict, Any, Optional
 
 from src.model.AdesaoPlanoModel import AdesaoPlanoModel
-from src.model.PlanoModel import PlanosModel # Assumindo que você tem um Model para buscar planos
+from src.model.PlanoModel import PlanosModel 
+from src.model.AlunoModel import AlunoModel
 from src.model.PlanosCustomizadosModel import PlanosPersonalizadosModel
 from src.schemas.adesao_plano_schemas import SubscribePlanoPayload, SubscribePlano
 from src.model.userModel.typeUser.aluno import Estudante # Para validação de FK Estudante
@@ -16,6 +17,7 @@ class AdesaoPlanoController:
 
     def subscribe_plano(self, session_db: Session, data_payload: SubscribePlanoPayload, current_user: Dict[str, Any]) -> SubscribePlano:
         UserValidation._check_aluno_or_admin_permission(current_user=current_user)
+
         adesao_repo = AdesaoPlanoModel(session_db=session_db) 
         adesao_plano_model = PlanosModel(session_db) 
         adesao_plano_personalizados_model = PlanosPersonalizadosModel(session_db) 
@@ -50,8 +52,16 @@ class AdesaoPlanoController:
                 data_validade_calc = plano_obj.data_validade
 
             tipo_plano = plano_obj.tipo_plano_livre
-        AdesaoValidation._check_no_active_plan(session_db=session_db, estudante_id=fk_id_estudante)
+
         data_adesao = datetime.now()
+        AdesaoValidation._check_no_active_contract(session_db=session_db, estudante_id=fk_id_estudante)
+        adesao_pendente = adesao_repo.select_pending_adesao_by_estudante(estudante_id=fk_id_estudante)
+        
+        if adesao_pendente is not None:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail=f"O estudante ID {fk_id_estudante} já possui uma adesão pendente de contratação (ID: {adesao_pendente.id_adesao_plano}) que não expirou. Contrate-a ou aguarde sua expiração."
+            )
 
         if tipo_plano == 'mensal':
             data_validade_calc = data_adesao + relativedelta(months=1)
@@ -84,3 +94,39 @@ class AdesaoPlanoController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                 detail=f"Erro no serviço de adesão: {e}"
             )
+        
+
+
+    def get_adesao_pendente_by_estudante(self, session_db: Session, estudante_id: int, current_user: Dict[str, Any]) -> SubscribePlano:
+
+        aluno_model = AlunoModel(session_db)
+        fk_id_user=aluno_model.select_id_user_by_fk_id_estudante(estudante_id=estudante_id)
+        print(f'{fk_id_user}\n\n\n\n')
+
+        UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=fk_id_user)
+
+        adesao_repo = AdesaoPlanoModel(session_db=session_db)
+        adesao_pendente = adesao_repo.select_pending_adesao_by_estudante(estudante_id=estudante_id)
+        
+        if adesao_pendente is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Nenhuma adesão de plano pendente de contratação encontrada para o estudante ID {estudante_id}."
+            )
+        
+        return SubscribePlano.model_validate(adesao_pendente)
+    
+
+    def get_all_adesoes_by_estudante(self, session_db: Session, estudante_id: int, current_user: Dict[str, Any]) -> list[SubscribePlano]:
+        aluno_model = AlunoModel(session_db)
+        fk_id_user = aluno_model.select_id_user_by_fk_id_estudante(estudante_id=estudante_id)
+
+        if fk_id_user is None:
+             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Estudante com ID {estudante_id} não encontrado.")
+        
+        UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=fk_id_user) 
+        
+        adesao_repo = AdesaoPlanoModel(session_db=session_db)
+        todas_adesoes = adesao_repo.select_all_adesoes_by_estudante(estudante_id=estudante_id)
+        
+        return [SubscribePlano.model_validate(adesao) for adesao in todas_adesoes]

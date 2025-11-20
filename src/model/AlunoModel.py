@@ -1,5 +1,6 @@
 from src.model.userModel.userConfig import Usuario
 from src.model.userModel.typeUser.aluno import Estudante
+from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
 
 from datetime import date
 from typing import Dict, Union, Optional, List
@@ -37,7 +38,21 @@ class AlunoModel:
         except SQLAlchemyError as err:
             logging.error(f'erro ao selecionar todos os alunos:\n{err}')
             return []
-        
+    
+    def select_id_user_by_fk_id_estudante(self, estudante_id:int)->Optional[int]:
+        try:
+            stmt =(
+                select(Estudante.fk_id_user).join(Usuario).where(Estudante.id_estudante == estudante_id)
+            )   
+            id_user = self.session.execute(stmt).scalar_one_or_none()        
+        # UserValidation.check_self_or_admin_permission
+            return id_user
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar id_user pelo id_estudante: {err}")
+            raise err
+        except Exception as err:
+            logging.error(f"Erro ao buscar id_user pelo id_estudante: {err}")
+            raise err
 
     def select_student_by_id(self, user_id:int |None = None):
         try:
@@ -64,15 +79,18 @@ class AlunoModel:
 # db_session = session_create.get_session()
 # try:
 #     aluno_teste = AlunoModel(db_session=db_session)
-#     aluno_select_all = aluno_teste.select_all_students(studio_id=1)
-#     for a in aluno_select_all:
-#         print(a) 
-#     # aluno_select_one = aluno_teste.select_student_by_id(user_id=1004)
-#     # print(aluno_select_one)
+#     # aluno_select_all = aluno_teste.select_all_students(studio_id=1)
+#     # for a in aluno_select_all:
+#     #     print(a) 
+    
+#     aluno_select_one = aluno_teste.select_student_by_id(4)
+#     aluno_id: Estudante = aluno_select_one.estudante.id_estudante
+#     print(aluno_id)
+#     print(aluno_select_one)
 # except SQLAlchemyError as err:
 #     print(err)
 
-# try:
+# # try:
 #     aluno_test = AlunoModel(db_session=db_session)
 #     # aluno_select_all = aluno_test.select_all_students(studio_id=1)
 #     # for a in aluno_select_all:

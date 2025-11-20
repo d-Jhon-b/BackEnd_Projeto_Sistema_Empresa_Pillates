@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Any, Callable
-from datetime import datetime
+from datetime import datetime, date
 from bson import ObjectId
 from pydantic_core import core_schema as cs 
 
@@ -10,11 +10,12 @@ class TypeAdesaoPlano(BaseModel):
     @model_validator(mode='after')
     def aplicar_um_plano(self)-> 'TypeAdesaoPlano':
         filled_fields = sum(1 for field in [self.fk_id_plano, self.fk_id_plano_personalizado] if field is not None)
-        if filled_fields == 0:
-            raise ValueError('Você deve fornecer exatamente um ID de plano (fk_id_plano OU fk_id_plano_personalizado). Nenhum foi fornecido.')
-        
-        if filled_fields > 1:
-            raise ValueError('Você deve fornecer apenas um ID de plano. Forneça fk_id_plano OU fk_id_plano_personalizado, mas não ambos.')
+        # if filled_fields == 0:
+        #     raise ValueError('Você deve fornecer exatamente um ID de plano (fk_id_plano OU fk_id_plano_personalizado). Nenhum foi fornecido.')
+        # if filled_fields > 1:
+        #     raise ValueError('Você deve fornecer apenas um ID de plano. Forneça fk_id_plano OU fk_id_plano_personalizado, mas não ambos.')
+        if filled_fields != 1:
+            raise ValueError('Você deve fornecer exatamente um ID de plano (fk_id_plano OU fk_id_plano_personalizado).')
         return self
 
 class SubscribePlanoPayload(BaseModel):

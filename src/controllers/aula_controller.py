@@ -2,16 +2,21 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional, Dict, Any
-from starlette.concurrency import run_in_threadpool # Adicionar esta importação
+from starlette.concurrency import run_in_threadpool
 
-
+from datetime import datetime, date, timedelta
 from src.model.AulaModel import AulaModel
-from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, MatriculaCreate
-from src.controllers.validations.permissionValidation import UserValidation, NivelAcessoEnum # Reutilizando sua validação
+from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, MatriculaCreate, AulaRecorrenteCreate
+
+from src.controllers.utils.date_conversion import DateConverter
+from src.controllers.validations.permissionValidation import UserValidation, NivelAcessoEnum 
 from src.model.agendaModel.excecaoRepository import ExcecaoRepository 
+from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository
+from src.schemas.agenda_aluno_schemas import AgendaAlunoCreate, AgendaAlunoResponse, AgendaAlunoUpdate
 
 from src.model.AgendaModel import AgendaAulaRepository 
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema 
+
 
 class AulaController:
 
@@ -182,7 +187,119 @@ class AulaController:
             print(f'{e}')
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Erro na matrícula (verifique se o estudante/aula existem ou se já está matriculado).")
         
+    async def create_aulas_recorrentes(
+        self, 
+        recorrencia_data: AulaRecorrenteCreate, 
+        current_user: dict, 
+        db_session: Session, 
+        agenda_repo: AgendaAulaRepository, # Instância injetada
+        excecao_repo: ExcecaoRepository, # Instância injetada
+        agenda_aluno_repo: AgendaAlunoRepository # Instância injetada
+    ) -> Dict[str, Any]:
+        """
+        Cria aulas recorrentes no SQL, Agenda do Estúdio (Mongo) e Agenda do Aluno (Mongo), 
+        garantindo atomicidade no SQL.
+        """
+        
+        UserValidation._check_admin_permission(current_user)
+        # Instância do Modelo SQL, dependente da Session
+        aula_model = AulaModel(db_session=db_session)
 
+        # 1. Pré-processamento e Validação
+        try:
+            dia_alvo_num = DateConverter.get_weekday_index(recorrencia_data.dia_da_semana.value) 
+            hora_inicio = datetime.strptime(recorrencia_data.horario_inicio, "%H:%M").time()
+        except (ValueError, KeyError) as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Erro no formato de data/hora ou dia da semana. Detalhe: {e}")
+        
+        # 2. Busca exceções (Usando instância injetada)
+        excecoes_db = await excecao_repo.find_excecoes_by_period(
+            start_date=recorrencia_data.data_inicio_periodo, 
+            end_date=recorrencia_data.data_fim_periodo, 
+            estudio_id=recorrencia_data.fk_id_estudio
+        )
+        datas_excecao = {e["dataExcecao"].date() for e in excecoes_db}
+
+        # 3. Gera as datas recorrentes válidas
+        # ... (lógica de geração de datas_validas permanece a mesma) ...
+        data_atual = recorrencia_data.data_inicio_periodo
+        datas_validas = []
+        while data_atual.weekday() != dia_alvo_num:
+            data_atual += timedelta(days=1)
+        while data_atual <= recorrencia_data.data_fim_periodo:
+            if data_atual not in datas_excecao:
+                data_completa = datetime.combine(data_atual, hora_inicio)
+                datas_validas.append(data_completa)
+            data_atual += timedelta(weeks=1) 
+            
+        if not datas_validas:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nenhuma data de agendamento válida encontrada no período (verifique exceções ou datas)."
+            )
+
+        # 4. Loop de Criação e Transação
+        aulas_criadas = []
+        estudantes_ids = recorrencia_data.estudantes_a_matricular
+        
+        # Prepara dados base (Otimização)
+        base_data_sql = recorrencia_data.model_dump(
+            exclude={"dia_da_semana", "horario_inicio", "data_inicio_periodo", "data_fim_periodo", "estudantes_a_matricular", "capacidade_max", "disciplina", "duracao_minutos"}, 
+            exclude_none=True
+        )
+        base_data_mongo = {
+            "fk_id_professor": recorrencia_data.fk_id_professor,
+            "fk_id_estudio": recorrencia_data.fk_id_estudio,
+            "desc_aula": recorrencia_data.desc_aula,
+            "disciplina": recorrencia_data.disciplina,
+            "duracao_minutos": recorrencia_data.duracao_minutos,
+            "participantes_ids": estudantes_ids,
+        }
+        
+        try:
+            for dt_completa in datas_validas:
+                data_for_sql = {**base_data_sql, "data_aula": dt_completa}
+                new_aula_sql = await run_in_threadpool(
+                    aula_model.insert_new_aula, 
+                    data_for_sql, 
+                    estudantes_ids
+                )
+                
+                agenda_create_schema = AgendaAulaCreateSchema(
+                    fk_id_aula=new_aula_sql.id_aula, data_aula=dt_completa, **base_data_mongo
+                )
+                await agenda_repo.create(agenda_create_schema)
+
+                for estudante_id in estudantes_ids:
+                    aluno_agenda_data = AgendaAlunoCreate(
+                        fk_id_estudante=estudante_id,
+                        fk_id_aula_sql=new_aula_sql.id_aula,
+                        fk_id_professor_sql=new_aula_sql.fk_id_professor,
+                        data_hora_aula=dt_completa,
+                        disciplina=recorrencia_data.disciplina,
+                        fk_id_estudio=new_aula_sql.fk_id_estudio
+                    )
+                    await agenda_aluno_repo.create_registro(aluno_agenda_data)
+                
+                aulas_criadas.append(new_aula_sql.id_aula)
+            
+            # Commit da transação SQL
+            await run_in_threadpool(db_session.commit)
+
+        except SQLAlchemyError as e:
+            await run_in_threadpool(db_session.rollback)
+            print(f"ERRO SQL durante recorrência: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Falha de persistência ao agendar. Transação SQL revertida. Detalhe: {e}")
+        except Exception as e:
+            await run_in_threadpool(db_session.rollback)
+            print(f"ERRO GERAL durante recorrência: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro ao agendar a recorrência. Transação SQL revertida. Detalhe: {e}")
+
+        return {
+            "message": f"{len(aulas_criadas)} aulas recorrentes criadas com sucesso para o período.",
+            "aulas_ids": aulas_criadas,
+            "datas_agendadas": [dt.strftime("%Y-%m-%d %H:%M") for dt in datas_validas]
+        }
 
 
     
@@ -192,7 +309,6 @@ class AulaController:
 
     #     aula_model = AulaModel(db_session=db_session)
         
-    #     # 1. Extrai dados do Pydantic para o Model
     #     estudantes_ids = aula_data.estudantes_a_matricular
     #     aula_dict = aula_data.model_dump(exclude={"estudantes_a_matricular"}, exclude_none=True)
         
@@ -210,7 +326,6 @@ class AulaController:
 
     #     aula_model = AulaModel(db_session=db_session)
         
-    #     # 1. Converte o Pydantic para Dict (o Model só precisa de um Dict de atualização)
     #     update_dict = update_data.model_dump(exclude_none=True)
         
     #     updated_aula = aula_model.update_aula_data(aula_id, update_dict)

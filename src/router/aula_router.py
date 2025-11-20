@@ -2,14 +2,17 @@ from fastapi import APIRouter, status, Depends, Query, Body, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, MatriculaCreate
+from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, MatriculaCreate,AulaRecorrenteCreate
+from src.schemas.agenda_aluno_schemas import AgendaAlunoCreate, AgendaAlunoResponse, AgendaAlunoUpdate,StatusPresencaEnum
+from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository
+
 from src.controllers.aula_controller import AulaController
 from src.database.dependencies import get_db
 from src.utils.authUtils import auth_manager
 from src.controllers.excecao_controller import ExcecaoController
 
 from src.model.AgendaModel import AgendaAulaRepository 
-from src.router.agenda_router import get_agenda_aula_repository 
+from src.router.agenda_router import get_agenda_aula_repository, get_agenda_aluno_repository
 from src.router.excecao_router import get_excecao_controller_dependency
 
 
@@ -103,6 +106,39 @@ async def enroll_student_endpoint(
     current_user: dict = Depends(auth_manager)
 ):
     return await aula_controller.enroll_student_in_aula(aula_id, matricula_data, current_user, db_session=db, agenda_repo=agenda_repo)
+
+
+
+
+@router.post(
+    "/create/recorrente",
+    status_code=status.HTTP_201_CREATED,
+    summary="Cria um conjunto de Aulas Recorrentes em um período, excluindo exceções (Admin)."
+)
+async def create_aulas_recorrentes_endpoint(
+    recorrencia_data: AulaRecorrenteCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository),
+    excecao_controller: ExcecaoController = Depends(get_excecao_controller_dependency),
+    agenda_aluno_repo: AgendaAlunoRepository = Depends(get_agenda_aluno_repository) 
+):
+    return await aula_controller.create_aulas_recorrentes(
+        recorrencia_data=recorrencia_data,
+        current_user=current_user,
+        db_session=db,
+        agenda_repo=agenda_repo,
+        excecao_repo=excecao_controller.excecao_repo, # Repositório extraído do controller
+        agenda_aluno_repo=agenda_aluno_repo
+    )
+
+
+
+
+
+
+
+
 
 
 

@@ -21,12 +21,13 @@ def get_pagamento_service(session_db: Session = Depends(get_db)) -> PagamentoSer
 def get_pagamento(
     pagamento_id: int, 
     service: PagamentoService = Depends(get_pagamento_service),
-    current_user: dict = Depends(auth_manager)
+    current_user: dict = Depends(auth_manager),
+    db: Session = Depends(get_db)
 ):  
-    pagamento:Pagamento = service.get_pagamento_by_id(pagamento_id=pagamento_id)
-    
-    target_user_id = pagamento.fk_id_estudante
-    UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
+    pagamento:Pagamento = service.get_pagamento_by_id(pagamento_id=pagamento_id, current_user=current_user)
+    # target_user_id = pagamento.fk_id_estudante
+
+    # UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
     return pagamento
 
 
@@ -36,7 +37,8 @@ def pay_pagamento(
     pagamento_id: int, 
     pagamento_data: PagamentoInput,
     current_user: dict = Depends(auth_manager),
-    service: PagamentoService = Depends(get_pagamento_service) 
+    service: PagamentoService = Depends(get_pagamento_service),
+    db: Session = Depends(get_db)
 ):
     # if pagamento_data.metodo not in ['cartao', 'pix', 'dinheiro']:
     #      raise HTTPException(
@@ -47,6 +49,6 @@ def pay_pagamento(
     updated_pagamento = service.registrar_pagamento(
             pagamento_id=pagamento_id, 
             metodo=pagamento_data.metodo.value, 
-            current_user=current_user
+            current_user=current_user,
         )    
     return {"message": "Pagamento registrado com sucesso", "pagamento": updated_pagamento}

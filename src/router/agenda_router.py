@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, Query, status, HTTPException
 from sqlalchemy.orm import Session
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from src.database.dependencies import get_db, get_agenda_aulas_dependency 
+from src.database.dependencies import get_db, get_agenda_aulas_dependency, get_agenda_aluno_dependency
 from src.controllers.agenda_controller import AgendaController
 from src.controllers.aula_controller import AulaController
 
 from src.model.AgendaModel import AgendaAulaRepository
+from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
 from datetime import date
 from typing import List
@@ -21,6 +22,14 @@ def get_agenda_aula_repository(
     collection: AsyncIOMotorCollection = Depends(get_agenda_aulas_dependency) 
 ) -> AgendaAulaRepository:
     return AgendaAulaRepository(collection=collection)
+
+
+def get_agenda_aluno_repository(
+    collection: AsyncIOMotorCollection = Depends(get_agenda_aluno_dependency) 
+) -> AgendaAlunoRepository:
+    """Retorna uma instância do Repositório de Agenda do Aluno (MongoDB)."""
+    return AgendaAlunoRepository(collection=collection)
+
 
 
 

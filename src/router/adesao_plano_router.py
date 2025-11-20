@@ -32,3 +32,41 @@ def subscribe_plano_endpoint(
         data_payload=data_payload, 
         current_user=current_user
     )
+
+
+
+@router.get(
+    "/estudante/{estudante_id}/pendente",
+    response_model=SubscribePlano,
+    summary="Busca a Adesão de Plano que está pendente de contratação (Requer Aluno ou Admin)"
+)
+def get_adesao_pendente_endpoint(
+    estudante_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):
+    return adesao_controller.get_adesao_pendente_by_estudante(
+        session_db=db, 
+        estudante_id=estudante_id, 
+        current_user=current_user
+    )
+
+
+@router.get(
+    "/estudante/{estudante_id}/historico",
+    response_model=list[SubscribePlano], # Retorna uma lista
+    summary="Busca todas as Adesões de Plano (pendentes ou contratadas) para o estudante (Requer Aluno ou Admin)"
+)
+def get_historico_adesoes_endpoint(
+    estudante_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):
+    """
+    Retorna o histórico completo de adesões de planos feitas pelo estudante.
+    """
+    return adesao_controller.get_all_adesoes_by_estudante(
+        session_db=db, 
+        estudante_id=estudante_id, 
+        current_user=current_user
+    )

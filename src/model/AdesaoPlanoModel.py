@@ -12,7 +12,7 @@ from src.model.planosModel.contratoConfig import Contrato
 from src.database.connPostGreNeon import CreateSessionPostGre
 from src.schemas.adesao_plano_schemas import SubscribePlano, SubscribePlanoPayload
 
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, MultipleResultsFound
 from sqlalchemy.orm import Session, joinedload, join
 from sqlalchemy import select, and_
 # from sqlalchemy import join
@@ -24,6 +24,33 @@ class AdesaoPlanoModel():
     def  __init__(self, session_db:Session):
         self.session = session_db
 
+    def select_pending_adesao_by_estudante(self, estudante_id: int) -> Optional[AdesaoPlano]:
+        try:
+            current_time = datetime.now()
+            has_contract_stmt = select(Contrato.id_contrato).where(
+                Contrato.fk_id_adesao_plano == AdesaoPlano.id_adesao_plano
+            ).exists()
+            
+            stmt = (
+                select(AdesaoPlano)
+                .where(
+                    and_(
+                        AdesaoPlano.fk_id_estudante == estudante_id,
+                        AdesaoPlano.data_validade > current_time,
+                        ~has_contract_stmt  
+                    )
+                )
+                .order_by(AdesaoPlano.data_adesao.desc()) 
+            )
+
+            return self.session.execute(stmt).scalar_one_or_none()
+            
+        except MultipleResultsFound as err:
+            logging.error(f"Múltiplas adesões pendentes encontradas para o estudante {estudante_id}. {err}")
+            return None 
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar adesão pendente do estudante {estudante_id}: {err}")
+            return None
 
     def subscribe_plan(self, data_to_insert: Dict[str, Any]) -> Optional[AdesaoPlano]:
         try:
@@ -93,7 +120,6 @@ class AdesaoPlanoModel():
         try:
             current_time = datetime.now()
             
-            # Filtra por ID do estudante E data_validade deve ser MAIOR que a data atual
             stmt = (
                 select(AdesaoPlano)
                 .where(
@@ -137,6 +163,22 @@ class AdesaoPlanoModel():
             logging.error(f"Erro ao buscar contrato para adesão {adesao_id}: {err}")
             return None
 
+    def select_all_adesoes_by_estudante(self, estudante_id: int) -> list[AdesaoPlano]:
+        try:
+            stmt = (
+                select(AdesaoPlano)
+                .where(AdesaoPlano.fk_id_estudante == estudante_id)
+                .order_by(AdesaoPlano.data_adesao.desc()) 
+            )
+            return self.session.scalars(stmt).all()
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar todas as adesões do estudante {estudante_id}: {err}")
+            return []
+    
+
+
+
+
 # from datetime import datetime
 # from dateutil.relativedelta import relativedelta
 
@@ -175,5 +217,5 @@ class AdesaoPlanoModel():
 #         print(f" ERRO no Teste Adesão: {e}")
 #         FK_ID_ADESAO_TESTE = None
 # else:
-#     print("⚠️ Pulando Adesão: Plano Padrão não foi criado.")
+#     print(" Pulando Adesão: Plano Padrão não foi criado.")
 #     FK_ID_ADESAO_TESTE = None
