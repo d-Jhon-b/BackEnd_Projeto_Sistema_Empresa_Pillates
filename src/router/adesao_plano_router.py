@@ -1,9 +1,9 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends,HTTPException
 from sqlalchemy.orm import Session
 from src.database.dependencies import get_db
 from src.utils.authUtils import auth_manager 
 from src.controllers.adesao_plano_controller import AdesaoPlanoController
-from src.schemas.adesao_plano_schemas import SubscribePlanoPayload, SubscribePlano
+from src.schemas.adesao_plano_schemas import SubscribePlanoPayload, SubscribePlano,AdesaoPlanoUpdate
 
 router = APIRouter(
     prefix="/adesao",
@@ -68,5 +68,39 @@ def get_historico_adesoes_endpoint(
     return adesao_controller.get_all_adesoes_by_estudante(
         session_db=db, 
         estudante_id=estudante_id, 
+        current_user=current_user
+    )
+
+
+
+@router.get(
+    "/{adesao_id}",
+    response_model=SubscribePlano, 
+    summary="Busca uma Adesão específica pelo ID. (Requer Admin)"
+)
+async def get_adesao_by_id_endpoint(
+    adesao_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):
+    return adesao_controller.get_adesao_by_id(db, adesao_id, current_user)
+
+
+@router.patch(
+    "/{adesao_id}",
+    response_model=SubscribePlano, 
+    summary="Atualiza dados de uma Adesão unitariamente (PATCH - Admin apenas)"
+)
+async def patch_adesao_endpoint(
+    adesao_id: int,
+    data_update: AdesaoPlanoUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager) 
+):
+    
+    return adesao_controller.update_adesao_plano_data(
+        session_db=db, 
+        adesao_id=adesao_id, 
+        data_update=data_update, 
         current_user=current_user
     )

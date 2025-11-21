@@ -235,6 +235,7 @@ def upgrade() -> None:
         sa.Column('valor_final', sa.Numeric(precision=10, scale=2), nullable=False), 
         sa.Column('data_inicio', sa.DateTime, nullable=False),
         sa.Column('data_termino', sa.DateTime, nullable=False),
+        sa.Column('aulas_restantes', sa.Integer, nullable=False, server_default=sa.text('0')),
         sa.Column('status_contrato', sa.Enum('ativo', 'suspenso', 'cancelado', 'expirado', name='enum_status_contrato'), nullable=False),
         sa.CheckConstraint('fk_id_plano IS NULL OR fk_id_plano_personalizado IS NULL', name='chk_one_plan_fk_active')
     )

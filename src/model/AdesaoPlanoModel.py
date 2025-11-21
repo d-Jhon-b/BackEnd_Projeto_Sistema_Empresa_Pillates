@@ -14,7 +14,7 @@ from src.schemas.adesao_plano_schemas import SubscribePlano, SubscribePlanoPaylo
 
 from sqlalchemy.exc import SQLAlchemyError, MultipleResultsFound
 from sqlalchemy.orm import Session, joinedload, join
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete
 # from sqlalchemy import join
 from typing import Dict, Optional, Union, Any
 import logging
@@ -176,6 +176,16 @@ class AdesaoPlanoModel():
             return []
     
 
+    def delete_adesao_by_id(self, adesao_id: int) -> bool:
+
+        try:
+            stmt = delete(AdesaoPlano).where(AdesaoPlano.id_adesao_plano == adesao_id)
+            res_delete = self.session.execute(stmt)
+            return res_delete.rowcount > 0 
+
+        except Exception as err:
+            logging.error(f"Erro ao deletar adesão {adesao_id}: {err}")
+            raise
 
 
 

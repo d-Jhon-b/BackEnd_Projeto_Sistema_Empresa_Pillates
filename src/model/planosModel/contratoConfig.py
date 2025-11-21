@@ -24,6 +24,7 @@ class Contrato(Base.Base):
     data_termino = Column(DateTime, nullable=False) 
     
     valor_final = Column(Numeric(precision=10, scale=2), nullable=False) # <--- Adicionar esta linha!
+    aulas_restantes = Column(Integer, nullable=False, default=0)
     status_contrato = Column('status_contrato', Enum('ativo', 'suspenso', 'cancelado', 'expirado', name='enum_status_contrato'), nullable=False)
 
     __table_args__ = (

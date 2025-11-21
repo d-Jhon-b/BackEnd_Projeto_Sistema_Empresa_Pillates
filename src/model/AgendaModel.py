@@ -12,7 +12,6 @@ class AgendaAulaRepository:
         data_dict = data.model_dump(by_alias=True)
         try:
             result = await self.collection.insert_one(data_dict)
-            # Recomenda-se buscar o documento criado para garantir a coerência
             created_doc = await self.collection.find_one({"_id": result.inserted_id})
             return created_doc
         except Exception as e:
@@ -99,7 +98,29 @@ class AgendaAulaRepository:
         return update_result
     
 
+
+
+    async def find_future_aulas_by_titulo(self, titulo_aula: str) -> List[Dict[str, Any]]:
+
+        try:
+            current_datetime = datetime.now()
+            
+            query = {
+                "tituloAulaCompleto": titulo_aula,
+                "dataAgendaAula": {"$gte": current_datetime} 
+            }
+            
+            # Assume que self.collection é a coleção AgendaAulas
+            aulas = await self.collection.find(query).to_list(length=None)
+            
+            return aulas
+        except Exception as e:
+            print(f"Erro ao buscar aulas futuras por título: {e}")
+            return []
     
+
+
+
     # async def create(self, aula: AgendaAulaCreateSchema) -> AgendaAulaResponseSchema:
     #     aula_data = aula.model_dump(by_alias=True, exclude_none=True)
 

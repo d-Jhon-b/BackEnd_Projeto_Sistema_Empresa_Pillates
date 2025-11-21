@@ -4,21 +4,41 @@ from typing import List, Dict, Any, Optional
 from bson import ObjectId
 import logging
 from datetime import date, datetime
+from src.repository.ContratoRepository import ContratoRepository 
+from starlette.concurrency import run_in_threadpool 
+from fastapi import HTTPException,status
+
+# from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository 
 
 class AgendaAlunoRepository:
     def __init__(self, collection: AsyncIOMotorCollection):
         self.collection = collection
 
-    async def create_registro(self, data: AgendaAlunoCreate) -> Dict[str, Any]:
-        """Cria um novo registro de aula/evolução na agenda do aluno."""
-        data_dict = data.model_dump(by_alias=True)
+    async def insert_registro(self, registro_data: Dict[str, Any]) -> Dict[str, Any]:
+
+        registro_data["DataCriacao"] = datetime.now() # Adiciona timestamp de criação
+        
         try:
-            result = await self.collection.insert_one(data_dict)
-            created_doc = await self.collection.find_one({"_id": result.inserted_id})
-            return created_doc
+            # Insere o documento na coleção
+            result = await self.collection.insert_one(registro_data)
+            
+            # Busca o documento inserido (incluindo o _id)
+            new_registro = await self.collection.find_one({"_id": result.inserted_id})
+            
+            # O MongoDB retorna o _id como ObjectId; o find_one já o retorna
+            # formatado ou mapeado para o formato do PyMongo.
+            return new_registro 
         except Exception as e:
-            logging.error(f"ERRO MOTOR/MONGO: Falha ao inserir registro na Agenda do Aluno: {e}")
-            raise
+            logging.error(f"Erro ao inserir registro no MongoDB: {e}")
+            raise e  
+        # except Exception as e:
+        #     logging.error(f"Erro ao inserir registro no MongoDB: {e}")
+        #     raise HTTPException(
+        #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+        #         detail="Falha ao inserir o registro de aula na agenda do aluno."
+        #     )
+        
+
 
     async def find_registros_by_aula_id(self, aula_id: int) -> List[Dict[str, Any]]:
         """Busca todos os alunos registrados para uma Aula (usado para checar presença/evolução)."""
@@ -38,26 +58,51 @@ class AgendaAlunoRepository:
         return registros
 
 
-    async def update_registro(self, registro_id: str, update_data: AgendaAlunoUpdate) -> Optional[Dict[str, Any]]:
-        """Atualiza o status de presença, nota de evolução ou anexos de um registro."""
+    async def update_registro(self, registro_id: str, data_update: AgendaAlunoUpdate) -> Optional[Dict[str, Any]]:
+        """
+        Atualiza o status de presença de um registro da agenda do aluno no MongoDB.
+        """
+        # Converte o Pydantic model para um dicionário de atualização
+        update_data = data_update.model_dump(exclude_none=True)
         
-        # Converte para Dicionário, usando alias=True se for Pydantic (ou by_alias=True no model_dump)
-        update_dict = update_data.model_dump(by_alias=True, exclude_none=True)
-        
-        if not update_dict:
-            return None 
+        if not update_data:
+            return await self.select_registro_by_id(registro_id)
 
-        update_operation = {"$set": update_dict}
-        
         try:
-            object_id = ObjectId(registro_id)
-        except:
-             logging.error(f"ID de registro inválido: {registro_id}")
-             return None
-             
-        result = await self.collection.find_one_and_update(
-            {"_id": object_id},
-            update_operation,
-            return_document=True, # Retorna o documento atualizado
-        )
-        return result
+            update_result = await self.collection.update_one(
+                {"_id": registro_id},
+                {"$set": update_data}
+            )
+
+            if update_result.modified_count == 1:
+                # Retorna o registro atualizado
+                return await self.select_registro_by_id(registro_id)
+            elif update_result.matched_count == 0:
+                # O registro não foi encontrado para atualização
+                return None
+            else:
+                # Retorna o registro existente se matched_count for 1 e modified_count for 0 (nenhuma mudança real)
+                return await self.select_registro_by_id(registro_id)
+        except Exception as e:
+            logging.error(f"Erro ao atualizar registro {registro_id} no MongoDB: {e}")
+            return None
+    
+    async def find_future_aulas_by_titulo(self, titulo_aula: str) -> List[Dict[str, Any]]:
+        current_datetime = datetime.now()
+        query = {
+            "tituloAulaCompleto": titulo_aula, 
+            "dataAgendaAula": {"$gte": current_datetime}
+        }
+        aulas_cursor = self.collection.find(query)
+        return await aulas_cursor.to_list(length=None)
+
+    async def select_registro_by_id(self, registro_id: str) -> Optional[Dict[str, Any]]:
+
+        try:
+            registro = await self.collection.find_one({"_id": registro_id})
+        
+            return registro
+        except Exception as e:
+            # Log de erro específico do MongoDB
+            logging.error(f"Erro ao buscar registro {registro_id} no MongoDB: {e}")
+            return None

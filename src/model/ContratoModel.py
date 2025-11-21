@@ -107,7 +107,6 @@ class ContratoModel():
             
     # def update_contrato_data(self, contrato_id: int, data_to_update: Dict[str, Any]) -> Optional[Contrato]:
     def update_contrato(self, contrato_id: int, data_to_update: Dict[str, Any]) -> Optional[Contrato]:
-        """Atualiza campos específicos de um contrato."""
         update_dict = {k: v for k, v in data_to_update.items() if v is not None}
         if not update_dict:
             return self.session.get(Contrato, contrato_id)
@@ -143,8 +142,27 @@ class ContratoModel():
             Contrato.data_inicio.desc() # Ordena do mais novo para o mais antigo
         ).all()
         return contratos
+    
+    #----------------------------Métodos para uso do Serviço de Adesão+Contrato
+    def select_contrato_by_adesao(self, fk_id_adesao_plano: int) -> Optional[Contrato]:
+        try:
+            stmt = (
+                select(Contrato)
+                .where(Contrato.fk_id_adesao_plano == fk_id_adesao_plano)
+            )
+            return self.session.execute(stmt).scalar_one_or_none()
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar Contrato por Adesão ID {fk_id_adesao_plano}: {err}")
+            return None
 
-
+    def delete_contrato_by_id(self, contrato_id: int) -> bool:
+        try:
+            stmt = delete(Contrato).where(Contrato.id_contrato == contrato_id)
+            res_delete = self.session.execute(stmt)
+            return res_delete.rowcount > 0
+        except Exception as err:
+            logging.error(f"Erro ao deletar Contrato {contrato_id}: {err}")
+            raise
 # import logging
 # from datetime import datetime, timedelta
 # from sqlalchemy.orm import Session

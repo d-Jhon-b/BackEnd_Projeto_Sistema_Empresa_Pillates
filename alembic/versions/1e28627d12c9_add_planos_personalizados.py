@@ -19,53 +19,46 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    pass
-    # op.create_table(
-    #     'planos_personalizados',
-    #     sa.Column('id_plano_personalizado', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-    #     sa.Column('nome_plano', sa.String(255), nullable=False),
-    #     sa.Column('tipo_plano_livre', sa.String(100), nullable=False), # String livre
-    #     sa.Column('modalidade_plano_livre', sa.String(100), nullable=False), # String livre
-        
-    #     sa.Column('descricao_plano', sa.String(255), nullable=True),
-    #     sa.Column('valor_plano', sa.Numeric(precision=10, scale=2), nullable=False),
-    #     sa.Column('qtde_aulas_totais', sa.Integer, nullable=False),
-    #     sa.Column('is_temporario', sa.Boolean, nullable=False, server_default=sa.text('false')),
-    #     sa.Column('data_criacao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
-    #     sa.Column('data_validade', sa.DateTime, nullable=True),
-        
-    #     # Mantendo as constraints de CHECK para valor e quantidade, mas com nome diferente
-    #     sa.CheckConstraint('valor_plano <= 999.99', name='chk_valor_plano_personalizado_max'),
-    #     sa.CheckConstraint('qtde_aulas_totais <= 1000', name='chk_aulas_totais_personalizado_max')
-    # )
+    connection = op.get_bind()
 
-    # # 2. Adiciona a chave estrangeira na tabela 'contrato'
-    # op.add_column(
-    #     'contrato', 
-    #     sa.Column(
-    #         'fk_id_plano_personalizado', 
-    #         sa.Integer, 
-    #         sa.ForeignKey('planos_personalizados.id_plano_personalizado', ondelete='SET NULL'), 
-    #         nullable=True
-    #     )
-    # )
-    
-    # # 3. Adiciona um CHECK CONSTRAINT para garantir que APENAS UM dos FKs de plano seja preenchido
-    # # Isso é crucial para a integridade: um contrato ou usa um plano padrão, ou um plano personalizado.
-    # op.create_check_constraint(
-    #     'chk_one_plan_fk_active', 
-    #     'contrato', 
-    #     '(fk_id_plano IS NULL OR fk_id_plano_personalizado IS NULL)'
-    # )
+    planos = [
+        ('mensal', '1x_semana', 'Plano mensal 1x por semana', 210.00, 4),
+        ('mensal', '2x_semana', 'Plano mensal 2x por semana', 310.00, 8),
+        ('mensal', '3x_semana', 'Plano mensal 3x por semana', 390.00, 12),
+
+        ('trimestral', '1x_semana', 'Plano trimestral 1x por semana', 185.00, 12),
+        ('trimestral', '2x_semana', 'Plano trimestral 2x por semana', 285.00, 24),
+        ('trimestral', '3x_semana', 'Plano trimestral 3x por semana', 375.00, 36),
+
+        ('semestral', '1x_semana', 'Plano semestral 1x por semana', 170.00, 24),
+        ('semestral', '2x_semana', 'Plano semestral 2x por semana', 270.00, 48),
+        ('semestral', '3x_semana', 'Plano semestral 3x por semana', 360.00, 72),
+
+        ('anual', '1x_semana', 'Plano anual 1x por semana', 155.00, 48),
+        ('anual', '2x_semana', 'Plano anual 2x por semana', 255.00, 96),
+        ('anual', '3x_semana', 'Plano anual 3x por semana', 345.00, 144),
+    ]
+
+    for tipo, modalidade, desc, valor, aulas in planos:
+        connection.execute(
+            sa.text("""
+                INSERT INTO planos (tipo_plano, modalidade_plano, descricao_plano, valor_plano, qtde_aulas_totais)
+                VALUES (:tipo, :mod, :desc, :valor, :aulas)
+            """),
+            {"tipo": tipo, "mod": modalidade, "desc": desc, "valor": valor, "aulas": aulas}
+        )
+
+
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    pass
-    # op.drop_constraint('chk_one_plan_fk_active', 'contrato', type_='check')
-    
-    # # 2. Remove a coluna de chave estrangeira da tabela 'contrato'
-    # op.drop_column('contrato', 'fk_id_plano_personalizado')
-    
-    # # 3. Remove a tabela 'planos_personalizados'
-    # op.drop_table('planos_personalizados')
+    connection = op.get_bind()
+
+    connection.execute(
+        sa.text("""
+            DELETE FROM planos
+            WHERE tipo_plano IN ('mensal','trimestral','semestral','anual')
+            AND modalidade_plano IN ('1x_semana','2x_semana','3x_semana')
+        """)
+    )

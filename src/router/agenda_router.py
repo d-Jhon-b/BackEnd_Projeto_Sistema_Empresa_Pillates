@@ -5,10 +5,13 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from src.database.dependencies import get_db, get_agenda_aulas_dependency, get_agenda_aluno_dependency
 from src.controllers.agenda_controller import AgendaController
 from src.controllers.aula_controller import AulaController
+from src.controllers.agenda_aluno_controller import AgendaAlunoController
 
 from src.model.AgendaModel import AgendaAulaRepository
+from src.repository.ContratoRepository import ContratoRepository 
 from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
+from src.schemas.agenda_aluno_schemas import AgendaAlunoCreate, AgendaAlunoResponse,AgendaAlunoUpdate
 from datetime import date
 from typing import List
 from src.services.authService import auth_manager
@@ -31,6 +34,65 @@ def get_agenda_aluno_repository(
     return AgendaAlunoRepository(collection=collection)
 
 
+def get_contrato_repository(
+    db: Session = Depends(get_db)
+) -> ContratoRepository:
+    """Retorna uma instância do ContratoRepository (SQL)."""
+    return ContratoRepository(db_session=db)
+
+
+def get_agenda_aluno_controller(
+    agenda_repo: AgendaAlunoRepository = Depends(get_agenda_aluno_repository), 
+    db: Session = Depends(get_db),
+    contrato_repo: ContratoRepository = Depends(get_contrato_repository) 
+) -> AgendaAlunoController:
+    """Retorna uma instância do AgendaAlunoController."""
+    return AgendaAlunoController(agenda_repo=agenda_repo, db_session=db, contrato_repo=contrato_repo) 
+
+
+@router.post(
+    "/aluno/registro",
+    response_model=AgendaAlunoResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="[Instrutor/Colaborador] Criar novo Registro de Aula para Estudante"
+)
+async def create_agenda_aluno_registro_endpoint(
+    data: AgendaAlunoCreate,
+    agenda_aluno_ctrl: AgendaAlunoController = Depends(get_agenda_aluno_controller),
+    current_user: dict = Depends(auth_manager)
+):
+    """
+    Cria um registro individual de aula na agenda do aluno no MongoDB.
+    
+    Observação: Esta rota não executa débito de aulas; o débito ocorre APENAS na atualização
+    do status para 'Presente' via rota PATCH.
+    """
+    # Adicionar checagem de permissão, se necessário
+    if current_user.get("lv_acesso") not in ["instrutor", "colaborador", "supremo"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado para criar registros de aluno.")
+        
+    return await agenda_aluno_ctrl.create_registro(data=data)
+
+@router.patch(
+    "/aluno/registro/{registro_id}",
+    response_model=AgendaAlunoResponse,
+    status_code=status.HTTP_200_OK,
+    summary="[Instrutor/Colaborador] Atualizar Status de Presença e Debitar Aula (Transacional)"
+)
+async def update_status_presenca_endpoint(
+    registro_id: str,
+    update_data: AgendaAlunoUpdate,
+    agenda_aluno_ctrl: AgendaAlunoController = Depends(get_agenda_aluno_controller),
+    current_user: dict = Depends(auth_manager)
+):
+
+    if current_user.get("lv_acesso") not in ["instrutor", "colaborador", "supremo"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado. Apenas instrutores/colaboradores podem registrar presença.")
+    
+    return await agenda_aluno_ctrl.update_status_presenca(
+        registro_id=registro_id,
+        update_data=update_data
+    )
 
 
 @router.get("/cronograma", response_model=List[AgendaAulaResponseSchema], summary="Buscar Cronograma de Aulas por Período")
@@ -57,7 +119,6 @@ async def get_my_aulas_endpoint(
   agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository),
   current_user: dict = Depends(auth_manager) # Usar o auth_manager real
 ):
-    # Verificação básica se o usuário é aluno (ou se pode ver aulas)
     if current_user.get("lv_acesso") not in ["aluno", "instrutor", "colaborador", "supremo"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado.")
 

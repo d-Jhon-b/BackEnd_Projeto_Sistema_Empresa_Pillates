@@ -6,17 +6,18 @@ from starlette.concurrency import run_in_threadpool
 
 from datetime import datetime, date, timedelta
 from src.model.AulaModel import AulaModel
-from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, MatriculaCreate, AulaRecorrenteCreate
+from src.schemas.aulas_schemas import AulaResponse, AulaCreate, AulaUpdate, MatriculaCreate, AulaRecorrenteCreate, MatriculaSeriesCreate
 
 from src.controllers.utils.date_conversion import DateConverter
 from src.controllers.validations.permissionValidation import UserValidation, NivelAcessoEnum 
 from src.model.agendaModel.excecaoRepository import ExcecaoRepository 
 from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository
 from src.schemas.agenda_aluno_schemas import AgendaAlunoCreate, AgendaAlunoResponse, AgendaAlunoUpdate
+from src.repository.PlanoValidationRepository import PlanoValidationRepository
 
 from src.model.AgendaModel import AgendaAulaRepository 
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema 
-
+from src.controllers.agenda_aluno_controller import AgendaAlunoController 
 
 class AulaController:
 
@@ -153,9 +154,14 @@ class AulaController:
         return {"message": "Aula excluída com sucesso de ambos os sistemas."}
 
     
-    async def enroll_student_in_aula(self, aula_id: int, matricula_data: MatriculaCreate, current_user: dict, db_session: Session, agenda_repo: AgendaAulaRepository):
+    async def enroll_student_in_aula(self, aula_id: int, matricula_data: MatriculaCreate, current_user: dict, db_session: Session, 
+            agenda_repo: AgendaAulaRepository
+            # plano_validation_repo: PlanoValidationRepository    
+        ):
         # Permissão: Colaborador/Admin (quem faz a matrícula)
         UserValidation._check_admin_permission(current_user)
+
+        # plano_validation_repo.is_student_eligible_for_enrollment(estudante_id, aula_id)
 
         aula_model = AulaModel(db_session=db_session)
         matricula_dict = matricula_data.model_dump(exclude_none=True)
@@ -192,9 +198,9 @@ class AulaController:
         recorrencia_data: AulaRecorrenteCreate, 
         current_user: dict, 
         db_session: Session, 
-        agenda_repo: AgendaAulaRepository, # Instância injetada
-        excecao_repo: ExcecaoRepository, # Instância injetada
-        agenda_aluno_repo: AgendaAlunoRepository # Instância injetada
+        agenda_repo: AgendaAulaRepository, 
+        excecao_repo: ExcecaoRepository, 
+        agenda_aluno_repo: AgendaAlunoRepository 
     ) -> Dict[str, Any]:
         """
         Cria aulas recorrentes no SQL, Agenda do Estúdio (Mongo) e Agenda do Aluno (Mongo), 
@@ -238,11 +244,9 @@ class AulaController:
                 detail="Nenhuma data de agendamento válida encontrada no período (verifique exceções ou datas)."
             )
 
-        # 4. Loop de Criação e Transação
         aulas_criadas = []
         estudantes_ids = recorrencia_data.estudantes_a_matricular
         
-        # Prepara dados base (Otimização)
         base_data_sql = recorrencia_data.model_dump(
             exclude={"dia_da_semana", "horario_inicio", "data_inicio_periodo", "data_fim_periodo", "estudantes_a_matricular", "capacidade_max", "disciplina", "duracao_minutos"}, 
             exclude_none=True
@@ -251,6 +255,7 @@ class AulaController:
             "fk_id_professor": recorrencia_data.fk_id_professor,
             "fk_id_estudio": recorrencia_data.fk_id_estudio,
             "desc_aula": recorrencia_data.desc_aula,
+            "titulo_aula": recorrencia_data.titulo_aula, 
             "disciplina": recorrencia_data.disciplina,
             "duracao_minutos": recorrencia_data.duracao_minutos,
             "participantes_ids": estudantes_ids,
@@ -301,6 +306,89 @@ class AulaController:
             "datas_agendadas": [dt.strftime("%Y-%m-%d %H:%M") for dt in datas_validas]
         }
 
+
+    async def enroll_student_in_series(
+        self, 
+        matricula_data: 'MatriculaSeriesCreate', # Usar aspas se o schema estiver no mesmo arquivo
+        current_user: dict, 
+        db_session: Session, 
+        agenda_repo: AgendaAulaRepository,
+        agenda_aluno_ctrl: 'AgendaAlunoController' # Injete o Controller
+    ):
+        UserValidation._check_admin_permission(current_user)
+
+        aula_model = AulaModel(db_session=db_session)
+
+        estudante_id = matricula_data.fk_id_estudante
+        titulo_aula = matricula_data.titulo_aula
+        tipo_de_aula = matricula_data.tipo_de_aula
+
+        try:
+            aulas_series = await agenda_repo.find_future_aulas_by_titulo(titulo_aula=titulo_aula)
+
+            if not aulas_series:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Nenhuma aula futura encontrada para a série: {titulo_aula}"
+                )
+
+            matriculas_efetuadas = 0
+            for aula_mongo in aulas_series:
+                aula_sql_id = aula_mongo.get('AulaID')
+
+            # Dados para Matrícula no SQL (Estudante_Aula)
+                matricula_dict = {
+                "fk_id_estudante": estudante_id,
+                "tipo_de_aula": tipo_de_aula
+                }
+
+                try:
+                    await run_in_threadpool(
+                        aula_model.enroll_student, 
+                        aula_sql_id, 
+                        matricula_dict
+                    )
+
+                    await agenda_repo.add_participant(
+                        aula_id=aula_sql_id, 
+                        participant_id=estudante_id
+                    )
+
+                    registro_data = AgendaAlunoCreate(
+                        EstudanteID=estudante_id,
+                        AulaID=aula_sql_id,
+                        ProfessorID=aula_mongo.get('professorResponsavel'),
+                        DataHoraAula=aula_mongo.get('dataAgendaAula'),
+                        # Usar 'disciplina' ou 'titulo_aula' do Mongo para o registro
+                        disciplina=aula_mongo.get('disciplina') or titulo_aula, 
+                        EstudioID=aula_mongo.get('EstudioID')
+                    )
+
+                    # Chama o método de criação (assumindo que ele está no AgendaAlunoController)
+                    await agenda_aluno_ctrl.create_registro(registro_data)
+
+                    matriculas_efetuadas += 1
+
+                except ValueError as e:
+                    # Lidar com a exceção de limite de alunos
+                    print(f"Aviso: Aula {aula_sql_id} atingiu limite. Pulando. Detalhe: {e}")
+                    continue
+                except SQLAlchemyError as e:
+                    # Lidar com o erro de chave duplicada (aluno já matriculado na aula)
+                        if "duplicate key value" in str(e):
+                            print(f"Aviso: Aluno {estudante_id} já matriculado na aula SQL {aula_sql_id}. Pulando.")
+                            continue
+                        raise e
+
+            if matriculas_efetuadas == 0:
+                return {"message": f"Estudante {estudante_id} já está matriculado em todas as aulas futuras da série '{titulo_aula}' ou todas atingiram o limite."}
+
+            return {"message": f"Estudante {estudante_id} matriculado em {matriculas_efetuadas} aulas futuras da série '{titulo_aula}' (SQL, MongoDB e Agenda de Aluno criada)."}
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Erro geral na matrícula em série: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao matricular em série de aulas.")
 
     
     # def create_new_aula(self, aula_data: AulaCreate, current_user: dict, db_session: Session) -> AulaResponse:

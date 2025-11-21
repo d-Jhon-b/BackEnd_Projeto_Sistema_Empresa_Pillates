@@ -24,6 +24,7 @@ class ContratoResponse(BaseModel):
     fk_id_plano_personalizado: Optional[int] = Field(None, description="ID do plano personalizado (vindo da Adesão).")
     data_inicio: datetime
     data_termino: datetime
+    aulas_restantes: int
     status_contrato: StatusContratoEnum
     
     class Config:
@@ -37,7 +38,7 @@ class ContratoUpdate(BaseModel):
     
     data_termino: Optional[date] = Field(None, description="Data de término do contrato.")
     # motivo_cancelamento: Optional[str] = Field(None, max_length=255, description="Descrição do motivo do cancelamento/suspensão.")
-    
+    aulas_restantes: Optional[int] = Field(None, description="Ajuste manual do saldo de aulas.")
     class Config:
         from_attributes = True
 

@@ -26,3 +26,5 @@ class TargetUserFinder:
             
         UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
         return target_user_id
+    
+    # def check_and_get_estudante_user_id(session_db:Session, user_id)

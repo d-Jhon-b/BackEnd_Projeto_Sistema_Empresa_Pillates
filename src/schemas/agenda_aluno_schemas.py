@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field,ConfigDict
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
+# from bson import ObjectId
+from bson import ObjectId # 🎯 IMPORTAÇÃO CORRETA E PADRÃO PARA O OBJETO REAL
+
 
 class StatusPresencaEnum(str, Enum):
     PRESENTE = "Presente"
@@ -42,8 +45,7 @@ class AgendaAlunoUpdate(BaseModel):
 
 class AgendaAlunoResponse(BaseModel):
     """Schema de resposta, incluindo o ID do MongoDB."""
-    id_registro: str = Field(..., alias="_id")
-    EstudanteID: int
+    id: Optional[str] = Field(None, alias="_id") 
     AulaID: int
     ProfessorID: int
     EstudioID: int
@@ -53,5 +55,12 @@ class AgendaAlunoResponse(BaseModel):
     NotaEvolucao: Optional[str] = None
     AnexosLinks: Optional[List[str]] = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True, 
+        json_encoders={
+            ObjectId: str # Pydantic agora reconhecerá a classe de objeto real
+        }
+    )
+    # class Config:
+    #     populate_by_name = True

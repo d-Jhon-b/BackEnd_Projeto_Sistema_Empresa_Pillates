@@ -40,3 +40,13 @@ class SubscribePlano(AdesaoPlanoBase):
     # fk_id_plano: int
     pass
 
+
+
+class AdesaoPlanoUpdate(BaseModel):
+
+    # data_validade: Optional[datetime] = Field(None, description="Nova data de validade da adesão.")
+    fk_id_plano: Optional[int] = Field(None, description="Novo ID do plano padrão (Se o plano for alterado).")
+    fk_id_plano_personalizado: Optional[int] = Field(None, description="Novo ID do plano personalizado (Se o plano for alterado).")
+
+    class Config:
+        extra = 'forbid'

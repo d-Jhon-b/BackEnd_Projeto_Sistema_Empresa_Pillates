@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.router import (
-    auth_router, aluno_router, 
+    auth_router, 
+    aluno_router, 
     instrutor_router, 
     colaborador_router, 
     user_router, 
@@ -12,7 +13,8 @@ from src.router import (
     plano_router,
     adesao_plano_router,
     contrato_router,
-    pagamento_router
+    pagamento_router,
+    adesao_router,
 )
 from src.database.connMongo import MongoConnectionManager 
 from contextlib import asynccontextmanager
@@ -72,6 +74,7 @@ app.include_router(plano_router.router)
 app.include_router(adesao_plano_router.router)
 app.include_router(contrato_router.router)
 app.include_router(pagamento_router.router)
+app.include_router(adesao_router.router)
 
 
 

@@ -119,3 +119,10 @@ class AulaRecorrenteCreate(BaseModel):
         if 'data_inicio_periodo' in info.data and v <= info.data['data_inicio_periodo']:
             raise ValueError("A data final do período deve ser posterior à data inicial.")
         return v
+    
+
+class MatriculaSeriesCreate(BaseModel):
+    """Payload para matricular um estudante em todas as aulas futuras de uma série (por título)."""
+    fk_id_estudante: int = Field(..., alias="EstudanteID")
+    titulo_aula: str = Field(..., alias="TituloAula")
+    tipo_de_aula: TipoAulaEnum = Field(TipoAulaEnum.NORMAL, alias="TipoAula")
