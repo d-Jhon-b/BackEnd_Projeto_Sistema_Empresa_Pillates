@@ -40,7 +40,8 @@ class UserValidation():
     def _check_instrutor_permission( current_user: dict):
         allowed_levels = [
             NivelAcessoEnum.INSTRUTOR.value,
-            NivelAcessoEnum.COLABORADOR.value 
+            NivelAcessoEnum.COLABORADOR.value,
+            NivelAcessoEnum.SUPREMO.value
         ]
         UserValidation._check_permission(current_user, allowed_levels)
     
@@ -69,7 +70,8 @@ class UserValidation():
 
         is_admin = requester_level in [
             NivelAcessoEnum.SUPREMO.value, 
-            NivelAcessoEnum.COLABORADOR.value
+            NivelAcessoEnum.COLABORADOR.value,
+            
         ]
         is_requesting_self = (requester_id == target_user_id)
 
@@ -77,4 +79,23 @@ class UserValidation():
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Você não tem permissão para visualizar este usuário."
+            )
+        
+    @staticmethod
+    def check_self_or_intructor_or_admin_permission(current_user: dict, target_user_id: int):
+        requester_id = current_user.get("id_user")
+        requester_level = current_user.get("lv_acesso")
+
+        is_admin_or_instructor = requester_level in [
+            NivelAcessoEnum.SUPREMO.value, 
+            NivelAcessoEnum.COLABORADOR.value,
+            NivelAcessoEnum.INSTRUTOR.value 
+        ]
+        
+        is_requesting_self = (requester_id == target_user_id)
+
+        if not (is_admin_or_instructor or is_requesting_self):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para visualizar este recurso."
             )

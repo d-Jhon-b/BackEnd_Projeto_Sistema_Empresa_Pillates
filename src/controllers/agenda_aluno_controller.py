@@ -1,21 +1,23 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict, Any, List
-from datetime import datetime
+from typing import Dict, Any, List,Optional
+from datetime import datetime,date
 
 from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository
 from src.schemas.agenda_aluno_schemas import AgendaAlunoResponse
 from src.controllers.utils.TargetUserFinder import TargetUserFinder 
 import logging
 from starlette.concurrency import run_in_threadpool # Para funções síncronas
-from src.schemas.agenda_aluno_schemas import AgendaAlunoCreate, AgendaAlunoResponse,AgendaAlunoUpdate
+from src.schemas.agenda_aluno_schemas import AgendaAlunoCreate, AgendaAlunoResponse,AgendaAlunoUpdate,StatusPresencaEnum
 from src.repository.ContratoRepository import ContratoRepository
-
+from src.controllers.validations.permissionValidation import UserValidation
+from src.controllers.utils.TargetUserFinder import TargetUserFinder
 
 class AgendaAlunoController:
-    def __init__(self, db_session: Session, agenda_aluno_repo: AgendaAlunoRepository): # <-- DEVE TER ESTES ARGUMENTOS
+    def __init__(self, db_session: Session, agenda_aluno_repo: AgendaAlunoRepository): 
         self.db_session = db_session
         self.agenda_repo = agenda_aluno_repo
+        self.contrato_repo = ContratoRepository(db_session=db_session)
         # self.agenda_aluno_repo = agenda_aluno_repo
 
     # def __init__(self, agenda_repo: AgendaAlunoRepository, db_session: Session,contrato_repo: ContratoRepository):
@@ -32,7 +34,7 @@ class AgendaAlunoController:
             TargetUserFinder.check_and_get_target_user_id(
                 session_db=self.db_session, 
                 current_user=current_user, 
-                estudante_id=id_estudante # Checa se o usuário logado tem acesso a este ID
+                estudante_id=id_estudante 
             )
             
             registros = await self.agenda_repo.find_registros_by_estudante_and_period(
@@ -53,9 +55,10 @@ class AgendaAlunoController:
     async def update_status_presenca(
         self, 
         registro_id: str, 
-        update_data: AgendaAlunoUpdate
+        update_data: AgendaAlunoUpdate,
+        current_user: Dict[str, Any]
     ) -> Dict[str, Any]:
-
+        UserValidation._check_instrutor_permission(current_user=current_user)
         registro_original = await self.agenda_repo.select_registro_by_id(registro_id) 
 
         if not registro_original:
@@ -67,12 +70,18 @@ class AgendaAlunoController:
         estudante_id = registro_original.get("EstudanteID") 
         status_antigo = registro_original.get("StatusPresenca") 
         novo_status = update_data.status_presenca
-        
-        if novo_status == "Presente" and status_antigo != "Presente":
-            logging.info(f"Tentando debitar aula para Estudante ID: {estudante_id}")
-            
-            try:
 
+        status_que_consomem = [StatusPresencaEnum.PRESENTE.value, StatusPresencaEnum.FALTA.value]
+        
+        deve_debitar = (
+            novo_status in status_que_consomem and 
+            status_antigo not in status_que_consomem
+        )
+
+        # if novo_status == "Presente" and status_antigo != "Presente":
+        if deve_debitar:
+            logging.info(f"Tentando debitar aula para Estudante ID: {estudante_id}")
+            try:
                 await run_in_threadpool(
                     self.contrato_repo.debitar_aula_do_plano, 
                     estudante_id
@@ -94,15 +103,12 @@ class AgendaAlunoController:
                     detail="Erro interno ao processar o débito da aula. O débito SQL falhou e foi revertido."
                 )
 
-        # 3. Atualiza o Status no MongoDB (Executa APENAS se o débito foi OK ou se NÃO houve débito)
         updated_registro = await self.agenda_repo.update_registro(
             registro_id, update_data
         )
 
         if not updated_registro:
-            # Isto é um erro grave, pois o SQL já debitou, mas o Mongo falhou.
-            # Em sistemas de produção, isto exigiria um mecanismo de compensação (ex: estorno manual ou fila de mensagens).
-            # Para este projeto, apenas levantamos o 500.
+
             logging.critical("CRITICAL: Débito SQL realizado, mas falha ao atualizar Mongo!")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -130,6 +136,72 @@ class AgendaAlunoController:
             raise e
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao criar registro de aula.")
+
+    async def get_student_agenda(
+        self, 
+        estudante_id: int, 
+        current_user: dict, 
+        agenda_aluno_repo: AgendaAlunoRepository, 
+        start_date: Optional[date] = None, 
+        end_date: Optional[date] = None
+    ) -> List[AgendaAlunoResponse]:
+
+        # user_id = TargetUserFinder.check_and_get_target_user_id(session_db=self.db_session, estudante_id=estudante_id, current_user=current_user)
+        # 1. Validação de Permissão e Filtro
+        # user_id = current_user.get("id_usuario")
+        # user_lv_acesso = current_user.get("lv_acesso")
+        
+        # # Permite: 
+        # # a) Se o usuário logado for o próprio estudante.
+        # # b) Se for Admin ou Supremo.
+        # if (estudante_id != user_id) and (user_lv_acesso not in [NivelAcessoEnum.ADMIN.value, NivelAcessoEnum.SUPREMO.value]):
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="Você só pode acessar sua própria agenda, a menos que seja um administrador."
+        #     )
+        try:
+            target_user_id = TargetUserFinder.check_and_get_target_user_id(
+                session_db=self.db_session, 
+                estudante_id=estudante_id, 
+                current_user=current_user
+            )
+        except HTTPException as e:
+            # Propaga erros 403 (Forbidden) ou 404 (Not Found)
+            raise
+
+        start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
+        end_dt = datetime.combine(end_date, datetime.max.time()) if end_date else None
+        
+        # 3. Busca no Repositório
+        agenda_db = await agenda_aluno_repo.get_agenda_by_student_id(
+            estudante_id=estudante_id, 
+            start_date=start_dt, 
+            end_date=end_dt
+        )
+
+        if not agenda_db:
+            return [] # Retorna lista vazia se não houver registros
+        
+        # 4. Converte para Schema de Resposta
+        return [AgendaAlunoResponse.model_validate(registro) for registro in agenda_db]
+    
+
+
+    async def delete_registro_agenda(
+        self, 
+        registro_id: str, 
+        current_user: Dict[str, Any]
+    ) -> bool:
+        UserValidation._check_admin_permission(current_user) 
+        success = await self.agenda_repo.delete_registro(registro_id=registro_id)
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Registro de aula ID {registro_id} não encontrado ou ID inválido."
+            )
+            
+        return True
 
     # async def create_registro(self, data: AgendaAlunoCreate) -> Dict[str, Any]:
 

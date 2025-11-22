@@ -2,6 +2,10 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
 from typing import List, Dict, Any,Optional
 from datetime import datetime
+from bson import ObjectId 
+
+
+
 
 class AgendaAulaRepository: 
     def __init__(self, collection: AsyncIOMotorCollection):
@@ -23,8 +27,6 @@ class AgendaAulaRepository:
         # query = {"dataAgendaAula": {"$gte": start_dt, "$lte": end_dt}}
         query = {
             "dataAgendaAula": {"$gte": start_dt, "$lte": end_dt},
-            # ADICIONANDO A CONDIÇÃO DO ID DO ESTÚDIO
-            # Nota: 'EstudioID' é o alias comum para 'fk_id_estudio' no Pydantic/MongoDB
             "EstudioID": id_estudio 
         }
         aulas_list = []
@@ -48,20 +50,25 @@ class AgendaAulaRepository:
         result = await self.collection.delete_one({"AulaID": aula_id})
         return result.deleted_count > 0
     
+    async def get_by_aula_id(self, aula_id: int) -> Optional[Dict[str, Any]]:
 
+        try:
+
+            document = await self.collection.find_one({"AulaID": aula_id}) 
+            return document
+        except Exception as e:
+            # Trate erros de conexão ou busca aqui
+            print(f"Erro ao buscar aula {aula_id} no MongoDB: {e}")
+            return None
+        
     async def update_by_aula_id(self, aula_id: int, data_to_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Atualiza campos específicos de um agendamento no MongoDB usando o fk_id_aula (ID do SQL).
-        Retorna o documento atualizado ou None.
-        """
-        mongo_fields = {}
 
+        mongo_fields = {}
         if 'titulo_aula' in data_to_update:
             mongo_fields['disciplina'] = data_to_update['titulo_aula']
 
         if 'duracao_minutos' in data_to_update:
             mongo_fields['duracao_minutos'] = data_to_update['duracao_minutos']
-
 
         if 'data_aula' in data_to_update:
             mongo_fields['dataAgendaAula'] = data_to_update['data_aula']
@@ -86,9 +93,7 @@ class AgendaAulaRepository:
         return result
     
     async def add_participant(self, aula_id: int, participant_id: int) -> Optional[Dict[str, Any]]:
-        """ Adiciona um ID à lista 'participantes_ids' no documento do MongoDB. """
         
-        # Use $push para adicionar o ID se ele não existir
         update_result = await self.collection.find_one_and_update(
             {"AulaID": aula_id},
             {"$addToSet": {"participantes": participant_id}}, # $addToSet garante que não haverá duplicatas
@@ -119,12 +124,4 @@ class AgendaAulaRepository:
             return []
     
 
-
-
-    # async def create(self, aula: AgendaAulaCreateSchema) -> AgendaAulaResponseSchema:
-    #     aula_data = aula.model_dump(by_alias=True, exclude_none=True)
-
-    #     aula_data.pop('_id', None) 
-    #     result = await self.collection.insert_one(aula_data)
-    #     created_doc = await self.collection.find_one({"_id": result.inserted_id})
-    #     return AgendaAulaResponseSchema.model_validate(created_doc)
+    

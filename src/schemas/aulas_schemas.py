@@ -101,7 +101,7 @@ class AulaRecorrenteCreate(BaseModel):
     fk_id_estudio: int
     titulo_aula: str
     desc_aula: Optional[str] = None
-    capacidade_max: int
+    # capacidade_max: int
     duracao_minutos: int
     disciplina: str
     

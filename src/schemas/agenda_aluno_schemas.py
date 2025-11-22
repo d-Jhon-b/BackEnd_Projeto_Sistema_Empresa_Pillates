@@ -7,6 +7,7 @@ from bson import ObjectId # 🎯 IMPORTAÇÃO CORRETA E PADRÃO PARA O OBJETO RE
 
 
 class StatusPresencaEnum(str, Enum):
+    AGENDADA = "Agendada" 
     PRESENTE = "Presente"
     FALTA = "Falta"
     REAGENDADA = "Reagendada"
@@ -14,20 +15,15 @@ class StatusPresencaEnum(str, Enum):
 
 class AgendaAlunoCreate(BaseModel):
     """Schema para a criação do registro da aula na agenda do aluno."""
-    # Chaves Estrangeiras (SQL IDs)
     fk_id_estudante: int = Field(..., alias="EstudanteID")
     fk_id_aula_sql: int = Field(..., alias="AulaID")
     fk_id_professor_sql: int = Field(..., alias="ProfessorID")
     
-    # Dados da Aula (para consulta rápida)
     data_hora_aula: datetime = Field(..., alias="DataHoraAula")
     disciplina: str
     
-    # Campos dinâmicos (iniciais)
-    status_presenca: StatusPresencaEnum = Field(StatusPresencaEnum.FALTA, alias="StatusPresenca")
-    # 'FALTA' é o padrão, pois a presença só é marcada após a aula.
+    status_presenca: StatusPresencaEnum = Field(StatusPresencaEnum.AGENDADA, alias="StatusPresenca")
     
-    # Opcional: Referência ao Estúdio/Unidade (Para multisite)
     fk_id_estudio: int = Field(..., alias="EstudioID")
 
 
@@ -45,7 +41,8 @@ class AgendaAlunoUpdate(BaseModel):
 
 class AgendaAlunoResponse(BaseModel):
     """Schema de resposta, incluindo o ID do MongoDB."""
-    id: Optional[str] = Field(None, alias="_id") 
+    id: Optional[ObjectId] = Field(None, alias="_id", default_factory=None) 
+    # id: Optional[str] = Field(None, alias="_id",default=None) 
     AulaID: int
     ProfessorID: int
     EstudioID: int
@@ -59,7 +56,7 @@ class AgendaAlunoResponse(BaseModel):
         populate_by_name=True,
         arbitrary_types_allowed=True, 
         json_encoders={
-            ObjectId: str # Pydantic agora reconhecerá a classe de objeto real
+            ObjectId: str 
         }
     )
     # class Config:

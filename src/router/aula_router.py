@@ -134,13 +134,6 @@ async def create_aulas_recorrentes_endpoint(
         excecao_repo=excecao_controller.excecao_repo, # Repositório extraído do controller
         agenda_aluno_repo=agenda_aluno_repo
     )
-
-
-
-
-
-
-
 @router.post(
     "/matricular/series", # Nova rota para matrícula em série
     status_code=status.HTTP_201_CREATED,

@@ -83,10 +83,10 @@ class AlunoModel:
 #     # for a in aluno_select_all:
 #     #     print(a) 
     
-#     aluno_select_one = aluno_teste.select_student_by_id(4)
+#     aluno_select_one = aluno_teste.select_student_by_id(1)
 #     aluno_id: Estudante = aluno_select_one.estudante.id_estudante
 #     print(aluno_id)
-#     print(aluno_select_one)
+#     # print(aluno_select_one)
 # except SQLAlchemyError as err:
 #     print(err)
 
