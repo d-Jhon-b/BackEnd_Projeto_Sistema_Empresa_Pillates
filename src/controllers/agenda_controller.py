@@ -14,11 +14,13 @@ class AgendaController:
     async def get_cronograma(self, start_date: date, 
         end_date: date,                      
         agenda_repository: AgendaAulaRepository,
-        current_user:dict 
+        current_user:dict
         ) -> List[AgendaAulaResponseSchema]:
 
 
         fk_id_estudio = current_user.get('fk_id_estudio')
+        # fk_id_estudio = current_user.get('lv_acesso')
+        # print(f'{fk_id_estudio}\n\n\n\n\n')
         # lv_acesso = current_user.get('lv_acesso')
 
         UserValidation._check_admin_permission(current_user)

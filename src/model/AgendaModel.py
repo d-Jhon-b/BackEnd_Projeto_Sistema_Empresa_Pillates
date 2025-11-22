@@ -29,6 +29,7 @@ class AgendaAulaRepository:
             "dataAgendaAula": {"$gte": start_dt, "$lte": end_dt},
             "EstudioID": id_estudio 
         }
+        # print(query)
         aulas_list = []
         async for doc in self.collection.find(query):
             aulas_list.append(AgendaAulaResponseSchema.model_validate(doc)) 

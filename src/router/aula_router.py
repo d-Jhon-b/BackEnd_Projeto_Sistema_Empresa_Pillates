@@ -147,7 +147,7 @@ async def enroll_student_series_endpoint(
     current_user: dict = Depends(auth_manager)
 ):
     # Instanciamos o Controller do AgendaAluno aqui (ou você cria uma dependência)
-    agenda_aluno_ctrl = AgendaAlunoController(db_session=db, agenda_aluno_repo=agenda_aluno_repo)
+    agenda_aluno_ctrl = AgendaAlunoController(db_session=db, agenda_aluno_repo=agenda_aluno_repo,agenda_aulas_repo=agenda_repo)
 
     return await aula_controller.enroll_student_in_series(
         matricula_data=matricula_data,

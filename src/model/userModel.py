@@ -111,7 +111,13 @@ class UserModel():
             if is_valid:
                 stmt = select(Usuario).where(Usuario.email_user == self.email_user)
                 user = self.session.execute(stmt).scalar_one_or_none()
+
+                # print(f'\n\n[UserModel] fk_id_estudio lido do DB: {user.fk_id_estudio}\n\n')
+                # fk_id_estudio2 = user.fk_id_estudio
+                # print(fk_id_estudio2)
+                # print(user)
                 return user
+
             else:
                 return None
             

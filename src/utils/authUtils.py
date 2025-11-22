@@ -61,6 +61,9 @@ class JWTAuthManager:
         
         payload = self.decode_access_token(token)
         
+        print(f'\n\n[authUtils] Payload decodificado: {payload}\n\n')
+        # print(f'\n\n[authUtils] Payload decodificado: {payload}\n\n')
+
         if payload is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

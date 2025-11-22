@@ -1,8 +1,6 @@
-# src/router/auth_router.py
-
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from src.schemas.user_schemas import LoginRequestSchema, TokenResponseSchema
+from src.schemas.user_schemas import LoginRequestSchema, TokenResponseSchema,ResetPasswordSchema,ForgotPasswordSchema
 from src.controllers.userController import UserController
 from src.database.dependencies import get_db
 
@@ -27,3 +25,29 @@ def login_endpoint(
 ):
     """Authenticates the user and returns a JWT."""
     return user_controller.login_for_access_token(payload, db_session=db)
+
+@router.post(
+    "/forgot-password",
+    status_code=status.HTTP_200_OK,
+    summary="Solicitar redefinição de senha"
+)
+async def forgot_password_endpoint(
+    payload: ForgotPasswordSchema,
+    background_tasks: BackgroundTasks, 
+    db: Session = Depends(get_db)
+):
+    auth_service = AuthService(db_session=db)
+    return await auth_service.forgot_password(payload, background_tasks)
+
+
+@router.post(
+    "/reset-password",
+    status_code=status.HTTP_200_OK,
+    summary="Redefinir a senha com um token válido"
+)
+def reset_password_endpoint(
+    payload: ResetPasswordSchema,
+    db: Session = Depends(get_db)
+):
+    auth_service = AuthService(db_session=db)
+    return auth_service.reset_password(payload)

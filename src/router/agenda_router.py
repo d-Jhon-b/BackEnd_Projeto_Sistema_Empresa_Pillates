@@ -56,6 +56,8 @@ async def get_cronograma_endpoint(
     agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository),
     current_user: dict = Depends(auth_manager) 
 ):
+    id_teste=current_user.get('fk_id_estudio')
+    print(f'{id_teste}\n\n\n\n\n')
     return await agenda_controller.get_cronograma(
         start_date=start_date,
         end_date=end_date,

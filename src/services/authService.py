@@ -21,6 +21,7 @@ class AuthService:
         user_data_dict = {'email_user': payload.email, 'senha_user': payload.password}
         
         user = self.user_model.login_user(user_data=user_data_dict)
+        
 
         if not user:
             raise HTTPException(
@@ -29,7 +30,15 @@ class AuthService:
             )
 
         # token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso} #original
-        token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso, "fk_id_estudio": user.fk_id_estudio}
+        # token_data = {"id_user": user.id_user, "lv_acesso": user.lv_acesso, "fk_id_estudio": user.fk_id_estudio}
+        token_data = {"id_user": user.id_user, "fk_id_estudio": user.fk_id_estudio,"lv_acesso": user.lv_acesso,}
+        print(token_data)
+        fk_id_estudio = token_data.get("fk_id_estudio")
+        
+        if fk_id_estudio is None:
+            print("ERRO CRÍTICO: fk_id_estudio é None no token_data!")
+            pass
+
         access_token = auth_manager.create_access_token(data=token_data)
         
         return {"access_token": access_token, "token_type": "bearer"}
