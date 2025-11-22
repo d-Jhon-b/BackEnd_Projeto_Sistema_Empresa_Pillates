@@ -186,13 +186,35 @@ def upgrade() -> None:
         sa.CheckConstraint('qtde_aulas_totais <= 1000', name='chk_aulas_totais_max')
 
     )
+
+    op.create_table(
+        'planos_personalizados',
+        sa.Column('id_plano_personalizado', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
+        sa.Column('nome_plano', sa.String(255), nullable=False),
+        sa.Column('tipo_plano_livre', sa.String(100), nullable=False), # String livre
+        sa.Column('modalidade_plano_livre', sa.String(100), nullable=False), # String livre
+        
+        sa.Column('descricao_plano', sa.String(255), nullable=True),
+        sa.Column('valor_plano', sa.Numeric(precision=10, scale=2), nullable=False),
+        sa.Column('qtde_aulas_totais', sa.Integer, nullable=False),
+        sa.Column('is_temporario', sa.Boolean, nullable=False, server_default=sa.text('false')),
+        sa.Column('data_criacao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
+        sa.Column('data_validade', sa.DateTime, nullable=True),
+        
+        # Mantendo as constraints de CHECK para valor e quantidade, mas com nome diferente
+        sa.CheckConstraint('valor_plano <= 999.99', name='chk_valor_plano_personalizado_max'),
+        sa.CheckConstraint('qtde_aulas_totais <= 1000', name='chk_aulas_totais_personalizado_max')
+    )
+
     #tabela de adesao de plano
     #não aplicado
     op.create_table(
         'adesao_plano',
         sa.Column('id_adesao_plano', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user', ondelete='CASCADE'), nullable=False),
-        sa.Column('data_adesao', sa.DateTime, nullable=False),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete='SET NULL'), nullable=True),
+        sa.Column('fk_id_plano', sa.Integer, sa.ForeignKey('planos.id_plano', ondelete='SET NULL'), nullable=True),
+        sa.Column('fk_id_plano_personalizado', sa.Integer, sa.ForeignKey('planos_personalizados.id_plano_personalizado', ondelete='SET NULL'), nullable=True),
+        sa.Column('data_adesao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
         sa.Column('data_validade', sa.DateTime, nullable=False)
     )
 
@@ -201,17 +223,27 @@ def upgrade() -> None:
     op.create_table(
         'contrato',
         sa.Column('id_contrato', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),
-        sa.Column('fk_id_plano', sa.Integer, sa.ForeignKey('planos.id_plano'), nullable=False),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete='SET NULL'), nullable=True),
+        sa.Column('fk_id_plano', sa.Integer, sa.ForeignKey('planos.id_plano', ondelete='SET NULL'), nullable=True),
+        sa.Column('fk_id_adesao_plano', sa.Integer, sa.ForeignKey('adesao_plano.id_adesao_plano', ondelete='SET NULL'), nullable=True),
+        sa.Column(
+            'fk_id_plano_personalizado', 
+            sa.Integer, 
+            sa.ForeignKey('planos_personalizados.id_plano_personalizado', ondelete='SET NULL'), 
+            nullable=True
+        ),
+        sa.Column('valor_final', sa.Numeric(precision=10, scale=2), nullable=False), 
         sa.Column('data_inicio', sa.DateTime, nullable=False),
         sa.Column('data_termino', sa.DateTime, nullable=False),
-        sa.Column('status_contrato', sa.Enum('ativo', 'suspenso', 'cancelado', 'expirado', name='enum_status_contrato'), nullable=False)
+        sa.Column('aulas_restantes', sa.Integer, nullable=False, server_default=sa.text('0')),
+        sa.Column('status_contrato', sa.Enum('ativo', 'suspenso', 'cancelado', 'expirado', name='enum_status_contrato'), nullable=False),
+        sa.CheckConstraint('fk_id_plano IS NULL OR fk_id_plano_personalizado IS NULL', name='chk_one_plan_fk_active')
     )
     #não aplicado
     op.create_table(
         'venda_extra',
         sa.Column('id_venda_extra',sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete='SET NULL'), nullable=True),
         sa.Column('descricao', sa.String(255), nullable=True),
         sa.Column('valor_venda_extra', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('data_venda', sa.DateTime, nullable=False),
@@ -220,27 +252,70 @@ def upgrade() -> None:
     op.create_table(
         'pagamento',
         sa.Column('id_pagamento', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_contrato', sa.Integer, sa.ForeignKey('contrato.id_contrato'), nullable=False),
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),
+        sa.Column('fk_id_contrato', sa.Integer, sa.ForeignKey('contrato.id_contrato', ondelete='CASCADE'), nullable=True),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete='CASCADE'), nullable=False),
         sa.Column('fk_id_venda_extra', sa.Integer, sa.ForeignKey('venda_extra.id_venda_extra'), nullable=True),
         sa.Column('valor_pagamento',sa.Numeric(precision=10, scale=2), nullable=False),
-        sa.Column('data_pagamento', sa.DateTime, nullable=False),
+        sa.Column('data_pagamento', sa.DateTime, nullable=True),
         sa.Column('data_vencimento', sa.DateTime, nullable=False),
-        sa.Column('metodo_pagamento', sa.Enum('cartao', 'pix', 'dinheiro', name='enum_metodo_pagamento'), nullable=False),
+        sa.Column('metodo_pagamento', sa.Enum('cartao', 'pix', 'dinheiro', name='enum_metodo_pagamento'), nullable=True),
         sa.Column('status_pagamento', sa.Enum('pago', 'pendente', 'atrasado', name='enum_status_pagamento'), nullable=False),
-        sa.Column('descricao_pagamento', sa.String(255), nullable=False)
+        sa.Column('descricao_pagamento', sa.String(255), nullable=False),
+
+        sa.CheckConstraint(
+            '(fk_id_contrato IS NOT NULL AND fk_id_venda_extra IS NULL) OR '
+            '(fk_id_contrato IS NULL AND fk_id_venda_extra IS NOT NULL)',
+            name='chk_one_payment_source'
+        )
     )
     #não aplicado
     op.create_table(
         'solicitacoes',
         sa.Column('id_solicitacao', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=True),
+        # sa.Column('fk_id_user', sa.Integer, sa.ForeignKey('usuario.id_user'), nullable=True),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante'), nullable=False),        
+        
         sa.Column('fk_id_estudio', sa.Integer, sa.ForeignKey('estudio.id_estudio'), nullable=False),
         sa.Column('tipo_de_solicitacao', sa.Enum('aula', 'plano','pagamento','outros', name='enum_solicitacao'), nullable=False),
         sa.Column('menssagem', sa.Text, nullable=True),
-        sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, default="em espera"),
+        # sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, default="em espera"),
+        sa.Column('status_solicitacao', sa.Enum('atendida', 'recusada', 'em espera', name='enum_status_solicitacao'), nullable=False, server_default=sa.text("'em espera'")),
         sa.Column('data_criacao', sa.DateTime, nullable=False, server_default=sa.text('now()')),
-        sa.Column('data_resposta', sa.DateTime, nullable=True)
+        sa.Column('data_resposta', sa.DateTime, nullable=True),
+        sa.Column('acao_solicitacao_aula', sa.Enum('AGENDAMENTO', 'REAGENDAMENTO', 'CANCELAMENTO', name='enum_acao_solicitacao_aula'), nullable=True),
+        sa.Column('acao_solicitacao_plano', sa.Enum(
+            'MUDANCA_PLANO', 
+            'CANCELAMENTO_PLANO', 
+            'RENOVACAO_PLANO', 
+            name='enum_acao_solicitacao_plano'
+        ), nullable=True), 
+        sa.Column(
+            'fk_id_aula_referencia', 
+            sa.Integer, 
+            sa.ForeignKey('aula.id_aula'), 
+            nullable=True, 
+            comment="ID da aula que está sendo referenciada (para reagendamento/cancelamento)"
+        ),
+        sa.Column('data_sugerida', sa.DateTime, nullable=True),
+        
+        sa.Column(
+            'fk_id_novo_plano', 
+            sa.Integer, 
+            sa.ForeignKey('planos.id_plano'), 
+            nullable=True
+        ),
+        sa.Column(
+            'fk_id_novo_plano_personalizado', 
+            sa.Integer, 
+            sa.ForeignKey('planos_personalizados.id_plano_personalizado'), 
+            nullable=True
+        ),
+        sa.CheckConstraint(
+            '(fk_id_novo_plano IS NULL) OR (fk_id_novo_plano_personalizado IS NULL)', 
+            name='chk_one_new_plan_fk_active'
+        ),
+
+    
     )   
 
 
@@ -255,11 +330,13 @@ def downgrade() -> None:
     # Venda_Extra depende de Estudante
     op.drop_table('venda_extra')
     
+    # Contrato depende de Estudante e Planos
+    op.drop_constraint('chk_one_plan_fk_active', 'contrato', type_='check')
+
+    op.drop_table('contrato')
     # Adesao_Plano depende de Usuario
     op.drop_table('adesao_plano')
     
-    # Contrato depende de Estudante e Planos
-    op.drop_table('contrato')
     
     # 2. DROP DAS TABELAS DE LIGAÇÃO
     
@@ -275,6 +352,8 @@ def downgrade() -> None:
     # 3. DROP DAS TABELAS DE ENTIDADE DE NEGÓCIO
     # Remover constraint de check da tabela 'aula'
     op.drop_constraint('chk_titular_substituto_diferentes', 'aula', type_='check')
+    
+    op.drop_constraint('chk_one_new_plan_fk_active', 'solicitacoes',type_='check')
     # Aula depende de Estudio e Professor
     op.drop_table('solicitacoes')
     op.drop_table('aula')
@@ -283,6 +362,10 @@ def downgrade() -> None:
     op.drop_constraint('chk_valor_plano_max', 'planos', type_='check')
     op.drop_constraint('chk_aulas_totais_max', 'planos', type_='check')
     op.drop_table('planos')
+    
+    op.drop_constraint('chk_valor_plano_personalizado_max', 'planos_personalizados', type_='check')
+    op.drop_constraint('chk_aulas_totais_personalizado_max', 'planos_personalizados', type_='check')
+    op.drop_table('planos_personalizados')
 
     # 4. DROP DAS TABELAS DE PAPÉIS (DEPENDEM DE USUARIO)
     
@@ -329,4 +412,6 @@ def downgrade() -> None:
     op.execute('DROP TYPE tipo_endereco_enum;')
     op.execute('DROP TYPE lv_acesso_enum;')
     op.execute('DROP TYPE tipo_doc_user_enum;')
-
+    op.execute('DROP TYPE enum_acao_solicitacao_plano;') 
+    op.execute('DROP TYPE enum_acao_solicitacao_aula;')
+    

@@ -8,9 +8,8 @@ from datetime import date, datetime
 from typing import List, Dict, Any
 from src.model.AulaModel import AulaModel
 from starlette.concurrency import run_in_threadpool # Adicionar esta importação
-
+from src.controllers.utils.TargetUserFinder import TargetUserFinder
 class AgendaController:
-
 
     async def get_cronograma(self, start_date: date, 
         end_date: date,                      
@@ -39,16 +38,18 @@ class AgendaController:
         db_session_sql: Session, 
         agenda_repository: AgendaAulaRepository
     ) -> List[AgendaAulaResponseSchema]:
+        
+        
         user_id = current_user.get("id_user")
         user_level = current_user.get("lv_acesso")
-        aula_model = AulaModel(db_session=db_session_sql)
-
         is_instructor = user_level in ["instrutor", "colaborador", "supremo"]
         
+        UserValidation._check_all_permission(current_user)
+        aula_model = AulaModel(db_session=db_session_sql)
         aulas_ids = await run_in_threadpool(
             aula_model.select_my_aulas, 
             user_id, 
-            is_instructor # Passa o parâmetro booleano
+            is_instructor 
         ) 
 
         if not aulas_ids:

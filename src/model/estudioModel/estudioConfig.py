@@ -12,7 +12,7 @@ class Estudio(Base.Base):
     endereco_estudio = Column(String(255), nullable=False, unique=True)
     cep_estudio = Column(String(8), nullable=False)
     mongo_registros_estudio = Column(String(255), nullable=False)
-
+    solicitacoes = relationship("Solicitacoes", back_populates="estudio")
     def __repr__(self):
         return f"<Estudio(id={self.id_estudio}, endereco='{self.endereco_estudio}')>"
     

@@ -2,6 +2,10 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
 from typing import List, Dict, Any,Optional
 from datetime import datetime
+from bson import ObjectId 
+from pymongo.errors import PyMongoError
+import logging
+
 
 class AgendaAulaRepository: 
     def __init__(self, collection: AsyncIOMotorCollection):
@@ -12,7 +16,6 @@ class AgendaAulaRepository:
         data_dict = data.model_dump(by_alias=True)
         try:
             result = await self.collection.insert_one(data_dict)
-            # Recomenda-se buscar o documento criado para garantir a coerência
             created_doc = await self.collection.find_one({"_id": result.inserted_id})
             return created_doc
         except Exception as e:
@@ -24,8 +27,6 @@ class AgendaAulaRepository:
         # query = {"dataAgendaAula": {"$gte": start_dt, "$lte": end_dt}}
         query = {
             "dataAgendaAula": {"$gte": start_dt, "$lte": end_dt},
-            # ADICIONANDO A CONDIÇÃO DO ID DO ESTÚDIO
-            # Nota: 'EstudioID' é o alias comum para 'fk_id_estudio' no Pydantic/MongoDB
             "EstudioID": id_estudio 
         }
         aulas_list = []
@@ -49,20 +50,25 @@ class AgendaAulaRepository:
         result = await self.collection.delete_one({"AulaID": aula_id})
         return result.deleted_count > 0
     
+    async def get_by_aula_id(self, aula_id: int) -> Optional[Dict[str, Any]]:
 
+        try:
+
+            document = await self.collection.find_one({"AulaID": aula_id}) 
+            return document
+        except Exception as e:
+            # Trate erros de conexão ou busca aqui
+            print(f"Erro ao buscar aula {aula_id} no MongoDB: {e}")
+            return None
+        
     async def update_by_aula_id(self, aula_id: int, data_to_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Atualiza campos específicos de um agendamento no MongoDB usando o fk_id_aula (ID do SQL).
-        Retorna o documento atualizado ou None.
-        """
-        mongo_fields = {}
 
+        mongo_fields = {}
         if 'titulo_aula' in data_to_update:
             mongo_fields['disciplina'] = data_to_update['titulo_aula']
 
         if 'duracao_minutos' in data_to_update:
             mongo_fields['duracao_minutos'] = data_to_update['duracao_minutos']
-
 
         if 'data_aula' in data_to_update:
             mongo_fields['dataAgendaAula'] = data_to_update['data_aula']
@@ -87,9 +93,7 @@ class AgendaAulaRepository:
         return result
     
     async def add_participant(self, aula_id: int, participant_id: int) -> Optional[Dict[str, Any]]:
-        """ Adiciona um ID à lista 'participantes_ids' no documento do MongoDB. """
         
-        # Use $push para adicionar o ID se ele não existir
         update_result = await self.collection.find_one_and_update(
             {"AulaID": aula_id},
             {"$addToSet": {"participantes": participant_id}}, # $addToSet garante que não haverá duplicatas
@@ -99,11 +103,55 @@ class AgendaAulaRepository:
         return update_result
     
 
-    
-    # async def create(self, aula: AgendaAulaCreateSchema) -> AgendaAulaResponseSchema:
-    #     aula_data = aula.model_dump(by_alias=True, exclude_none=True)
 
-    #     aula_data.pop('_id', None) 
-    #     result = await self.collection.insert_one(aula_data)
-    #     created_doc = await self.collection.find_one({"_id": result.inserted_id})
-    #     return AgendaAulaResponseSchema.model_validate(created_doc)
+
+    async def find_future_aulas_by_titulo(self, titulo_aula: str) -> List[Dict[str, Any]]:
+
+        try:
+            current_datetime = datetime.now()
+            
+            query = {
+                "tituloAulaCompleto": titulo_aula,
+                "dataAgendaAula": {"$gte": current_datetime} 
+            }
+            
+            aulas = await self.collection.find(query).to_list(length=None)
+            
+            return aulas
+        except Exception as e:
+            print(f"Erro ao buscar aulas futuras por título: {e}")
+            return []
+    
+
+    async def remove_student_from_all_aulas(self, estudante_id: int) -> int:
+        """
+        Remove o ID do estudante do array 'participantes' em todos os documentos de aula.
+        Retorna a contagem de documentos modificados.
+        """
+        try:
+
+            result = await self.collection.update_many(
+                {"participantes": estudante_id}, 
+                {"$pull": {"participantes": estudante_id}}
+            )
+            return result.modified_count
+            
+        except PyMongoError as err:
+            logging.error(f'Erro ao remover estudante {estudante_id} dos participantes do AgendaAulas: {err}')
+            return 0
+        except Exception as err:
+            logging.error(f'Erro geral ao processar remoção de participante no Mongo (AgendaAulas): {err}')
+            return 0
+        
+    #-----------parte
+    async def remove_participant(self, aula_id: int, participant_id: int) -> bool:
+            update_result = await self.collection.find_one_and_update(
+                {"AulaID": aula_id},
+                {"$pull": {"participantes": participant_id}}, 
+                return_document=False 
+            )
+            return update_result is not None
+    #------------------não aplicado para produto final
+
+        
+    

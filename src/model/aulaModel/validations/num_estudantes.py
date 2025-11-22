@@ -11,7 +11,7 @@ from src.database.connPostGreNeon import CreateSessionPostGre
 
 class NumAlunosValidation:
     @staticmethod
-    def num_max_alunos(db_session, aula_id:int)->bool:
+    def num_max_alunos(db_session:Session, aula_id:int)->bool:
         try:
             stmt = select(func.count(Estudante_Aula.fk_id_estudante)).where(
                 Estudante_Aula.fk_id_aula == aula_id

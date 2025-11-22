@@ -6,6 +6,9 @@ from src.schemas.user_schemas import LoginRequestSchema, TokenResponseSchema
 from src.controllers.userController import UserController
 from src.database.dependencies import get_db
 
+from src.services.authService import AuthService
+
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]

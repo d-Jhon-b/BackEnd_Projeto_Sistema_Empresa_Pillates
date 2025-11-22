@@ -1,87 +1,63 @@
-from math import erf
-import select
-from typing import Optional, Annotated
-from decimal import Decimal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, condecimal
+from typing import Optional, List
 from enum import Enum
+from decimal import Decimal
 
-from sqlalchemy import except_
-
-from src.database.connPostGreNeon import CreateSessionPostGre
-from src.model.planosModel.planosConfig import Planos
+# --- Enums para a tabela Planos ---
 
 class TipoPlanoEnum(str, Enum):
-    mensal = 'mensal'
-    trimestral = 'trimestral'
-    semestral = 'semestral'
-    anual = 'anual'
+    MENSAL = 'mensal'
+    TRIMESTRAL = 'trimestral'
+    SEMESTRAL = 'semestral'
+    ANUAL = 'anual'
 
 class ModalidadePlanoEnum(str, Enum):
-    one_week = '1x_semana'
-    two_week = '2x_semana'
-    three_week = '3x_semana'
+    UMA_SEMANA = '1x_semana'
+    DUAS_SEMANAS = '2x_semana'
+    TRES_SEMANAS = '3x_semana'
 
-class PlanoBase(BaseModel):
+# --- Schemas de Entrada (Payloads) ---
+
+class PlanoCreate(BaseModel):
+
     tipo_plano: TipoPlanoEnum
     modalidade_plano: ModalidadePlanoEnum
-    descricao_plano: Optional[
-        Annotated[str, Field(max_length=255)]
-    ] = None
-    valor_plano: Optional[
-        Annotated[
-            Decimal, 
-            Field(max_digits=10, decimal_places=2)
-        ]
-    ] = None
-    qtde_aulas_totais: int
+    descricao_plano: Optional[str] = Field(None, max_length=255)
+    
+    valor_plano: Decimal = Field(
+            ..., 
+            max_digits=10, 
+            decimal_places=2, 
+            gt=Decimal('0.00'), 
+            le=Decimal('999.99')
+        )    
 
-class PlanoCreate(PlanoBase):
-    pass
+
+    qtde_aulas_totais: int = Field(..., gt=0, le=1000)
 
 class PlanoUpdate(BaseModel):
     tipo_plano: Optional[TipoPlanoEnum] = None
     modalidade_plano: Optional[ModalidadePlanoEnum] = None
-    descricao_plano: Optional[
-        Annotated[str, Field(max_length=255)]
-    ] = None
-    valor_plano: Optional[
-        Annotated[
-            Decimal, 
-            Field(max_digits=10, decimal_places=2)
-        ]
-    ] = None
-    qtde_aulas_totais: Optional[int] = None
+    descricao_plano: Optional[str] = Field(None, max_length=255)
+    
+    valor_plano: Optional[Decimal] = Field(
+        None, # Padrão é None, indicando que é opcional
+        max_digits=10, 
+        decimal_places=2, 
+        gt=Decimal('0.00'), 
+        le=Decimal('999.99')
+    )    
+    
+    qtde_aulas_totais: Optional[int] = Field(None, gt=0, le=1000)
 
-class PlanoDetalhe(Planos):
-    criado_em: Optional[str] = None 
-    atualizado_em: Optional[str] = None
-
-    class Config:
-        orm_mode = True
-
-class PlanoInDBBase(PlanoBase):
+# --- Schemas de Resposta  --
+class PlanoResponse(BaseModel):
     id_plano: int
-
+    tipo_plano: TipoPlanoEnum
+    modalidade_plano: ModalidadePlanoEnum
+    descricao_plano: Optional[str]
+    valor_plano: Decimal
+    qtde_aulas_totais: int
+    
     class Config:
-        orm_mode = True
-
-class Plano(PlanoInDBBase):
-    pass
-
-def __repr__(self):
-    return (
-        f"<Planos(id_plano={self.id_plano}, tipo_plano={self.tipo_plano}, "
-        f"modalidade_plano={self.modalidade_plano}, valor_plano={self.valor_plano})>"
-    )
-
-
-try:
-    db = CreateSessionPostGre()
-    session = db.get_session()
-    stmt = select(Planos)
-    result = session.execute(stmt).unique().all()
-    for plano in result:
-        print(plano)
-    session.close()
-except Exception as err:
-    print(err)
+        from_attributes = True

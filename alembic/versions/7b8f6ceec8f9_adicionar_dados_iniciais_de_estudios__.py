@@ -139,8 +139,8 @@ def downgrade() -> None:
     op.execute("DELETE FROM contato WHERE fk_id_user >= 1")
     op.execute('DELETE FROM estudante_aula WHERE fk_id_estudante >=1')
     op.execute("DELETE FROM estudante WHERE fk_id_user >= 1")
-
-    op.execute("DELETE FROM solicitacoes WHERE fk_id_user >= 1")
+    
+    op.execute("DELETE FROM solicitacoes WHERE fk_id_estudante >= 1")
     
     op.execute("DELETE FROM adm_plus WHERE fk_id_user >= 1")
     op.execute('DELETE FROM aula WHERE fk_id_professor>=1')
