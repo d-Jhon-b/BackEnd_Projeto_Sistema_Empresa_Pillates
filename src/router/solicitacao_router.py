@@ -8,6 +8,8 @@ from src.schemas.solicitacao_schemas import SolicitacaoCreatePayload,Solicitacao
 from src.database.dependencies import get_db 
 from src.utils.authUtils import auth_manager # Importe sua função de autenticação
 
+from src.model.AgendaModel import AgendaAulaRepository 
+
 router = APIRouter(
     prefix="/solicitacao",
     tags=["Solicitações do Estudio"]
@@ -17,12 +19,18 @@ solicitacao_controller = SolicitacaoController()
 
 
 
+def get_agenda_repo(db: Session = Depends(get_db)) -> AgendaAulaRepository:
+    return AgendaAulaRepository(AgendaAulaRepository)
+
+# def get_solicitacao_controller(db: Session = Depends(get_db)) -> SolicitacaoController:
+#     return SolicitacaoController()
+
 @router.get(
     "/",
     response_model=List[SolicitacaoResponseSchema],
     summary="Listar todas as solicitações do estudio ao qual o admnistrador está associado."
 )
-async def get_all_solicitacoes_endpoint( # 🚨 MUDAR para async def
+async def get_all_solicitacoes_endpoint( 
     studio_id: Optional[int] = Query(None, 
     description=
     """
@@ -53,38 +61,65 @@ async def create_new_request_endpoint( # 🚨 MUDAR para async def
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)
 ):
-    # 🚨 CORREÇÃO: Usar await run_in_threadpool para chamar o método síncrono do Controller
     return await run_in_threadpool(
         solicitacao_controller.create_new_request,
         session_db=db, 
         data_request=payload, 
         current_user=current_user
     )
-
-
-@router.patch(
-"/responseSolicitacao/{id_solicitacao}",
-response_model=SolicitacaoResponseSchema,
-status_code=status.HTTP_200_OK,
-summary="Alterar estado de uma solicitação para: 'aceita' ou 'recusada'. "
+@router.put(
+    "/{id_solicitacao}/resolucao",
+    status_code=status.HTTP_200_OK,
+    summary="Atende ou Recusa uma solicitação de Aula, Plano, Pagamento ou Outros."
 )
-async def update_request_endpoint( # 🚨 MUDAR para async def
-    payload: SolicitacaoUpdate,
-    db: Session=Depends(get_db),
-    current_user: dict=Depends(auth_manager),     
-    id_solicitacao: int = Path(..., description="Id para aplicar alteração em solicitacao")
+
+
+async def resolver_solicitacao_endpoint(
+    id_solicitacao: int,
+    status_solicitacao: StatusSolcitacaoEnum, 
+    # controller: SolicitacaoController = Depends(get_solicitacao_controller),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_repo),
+    session_db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
 ):
+    # O controller agora lida com toda a lógica transacional
+    try:
+        updated_solicitacao = await solicitacao_controller.handle_request_resolution(
+            id_solicitacao=id_solicitacao,
+            session_db=session_db,
+            current_user=current_user,
+            status_solicitacao=status_solicitacao,
+            agenda_repo=agenda_repo
+        )
+        return {"mensagem": f"Solicitação {id_solicitacao} resolvida como {status_solicitacao.value}.", "solicitacao": updated_solicitacao}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro inesperado ao resolver solicitação: {e}")
 
-    from src.model.AgendaModel import AgendaAulaRepository # Exemplo
-    agenda_repo = AgendaAulaRepository(db)
+# @router.patch(
+# "/responseSolicitacao/{id_solicitacao}",
+# response_model=SolicitacaoResponseSchema,
+# status_code=status.HTTP_200_OK,
+# summary="Alterar estado de uma solicitação para: 'aceita' ou 'recusada'. "
+# )
+# async def update_request_endpoint( # 🚨 MUDAR para async def
+#     payload: SolicitacaoUpdate,
+#     db: Session=Depends(get_db),
+#     current_user: dict=Depends(auth_manager),     
+#     id_solicitacao: int = Path(..., description="Id para aplicar alteração em solicitacao")
+# ):
 
-    return await solicitacao_controller.handle_request_resolution(
-        id_solicitacao=id_solicitacao,
-        session_db=db,
-        current_user=current_user,
-        status_solicitacao=payload.status_solicitacao,
-        agenda_repo=agenda_repo
-    )
+#     from src.model.AgendaModel import AgendaAulaRepository # Exemplo
+#     agenda_repo = AgendaAulaRepository(db)
+
+#     return await solicitacao_controller.handle_request_resolution(
+#         id_solicitacao=id_solicitacao,
+#         session_db=db,
+#         current_user=current_user,
+#         status_solicitacao=payload.status_solicitacao,
+#         agenda_repo=agenda_repo
+#     )
 
 
 

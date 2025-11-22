@@ -53,6 +53,7 @@ def delete_adesao_contrato_unificado(
     
     return 
 
+
 # @router.patch(
 #     "/adesao/{adesao_id}",
 #     status_code=status.HTTP_200_OK,

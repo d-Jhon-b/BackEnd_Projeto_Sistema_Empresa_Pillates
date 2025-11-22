@@ -3,8 +3,8 @@ from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaRespons
 from typing import List, Dict, Any,Optional
 from datetime import datetime
 from bson import ObjectId 
-
-
+from pymongo.errors import PyMongoError
+import logging
 
 
 class AgendaAulaRepository: 
@@ -115,7 +115,6 @@ class AgendaAulaRepository:
                 "dataAgendaAula": {"$gte": current_datetime} 
             }
             
-            # Assume que self.collection é a coleção AgendaAulas
             aulas = await self.collection.find(query).to_list(length=None)
             
             return aulas
@@ -124,4 +123,35 @@ class AgendaAulaRepository:
             return []
     
 
+    async def remove_student_from_all_aulas(self, estudante_id: int) -> int:
+        """
+        Remove o ID do estudante do array 'participantes' em todos os documentos de aula.
+        Retorna a contagem de documentos modificados.
+        """
+        try:
+
+            result = await self.collection.update_many(
+                {"participantes": estudante_id}, 
+                {"$pull": {"participantes": estudante_id}}
+            )
+            return result.modified_count
+            
+        except PyMongoError as err:
+            logging.error(f'Erro ao remover estudante {estudante_id} dos participantes do AgendaAulas: {err}')
+            return 0
+        except Exception as err:
+            logging.error(f'Erro geral ao processar remoção de participante no Mongo (AgendaAulas): {err}')
+            return 0
+        
+    #-----------parte
+    async def remove_participant(self, aula_id: int, participant_id: int) -> bool:
+            update_result = await self.collection.find_one_and_update(
+                {"AulaID": aula_id},
+                {"$pull": {"participantes": participant_id}}, 
+                return_document=False 
+            )
+            return update_result is not None
+    #------------------não aplicado para produto final
+
+        
     

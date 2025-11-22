@@ -192,6 +192,26 @@ class AulaModel:
         return count if count is not None else 0
         
 
+
+
+
+        #----------adicionado para, mas não aplicado de froma exata
+    def unenroll_student(self, aula_id: int, estudante_id: int) -> bool:
+        try:
+            stmt = delete(Estudante_Aula).where(
+                (Estudante_Aula.fk_id_aula == aula_id) & 
+                (Estudante_Aula.fk_id_estudante == estudante_id)
+            )
+            result = self.session.execute(stmt)
+            self.session.commit()
+            
+            return result.rowcount > 0
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise
+    #------------------não aplicado para produto final
+
+
 # create_session = CreateSessionPostGre()
 # session = create_session.get_session()
 # aula_model = AulaModel(session)

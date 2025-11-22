@@ -21,7 +21,6 @@ from src.schemas.agenda_schemas import AgendaAulaCreateSchema
 from src.controllers.agenda_aluno_controller import AgendaAlunoController 
 import logging
 class AulaController:
-
     def get_aula_by_id(self, aula_id: int, current_user: dict, db_session: Session) -> AulaResponse:
         # lv_acesso = current_user.get('lv_acesso')
         # print(lv_acesso)
@@ -154,6 +153,7 @@ class AulaController:
         return {"message": "Aula excluída com sucesso de ambos os sistemas."}
 
     
+
     async def enroll_student_in_aula(self, aula_id: int, matricula_data: MatriculaCreate, current_user: dict, db_session: Session, 
             agenda_repo: AgendaAulaRepository,
             agenda_aluno_ctrl: 'AgendaAlunoController' 
@@ -350,9 +350,9 @@ class AulaController:
 
             num_aulas_na_serie = len(aulas_series)
             
-            # logging.info(f"DEBUG: Estudante {estudante_id}, Saldo Restante: 4 (Confirmado).")
-            # logging.info(f"DEBUG: Aulas Futuras (Calculadas): 0 (Confirmado).")
-            # logging.info(f"DEBUG CRÍTICO: Série '{titulo_aula}' tem {num_aulas_na_serie} aulas.")
+            # logging.info(f"Estudante {estudante_id}, Saldo Restante: 4 (Confirmado).")
+            # logging.info(f" Aulas Futuras (Calculadas): 0 (Confirmado).")
+            # logging.info(f"CRÍTICO: Série '{titulo_aula}' tem {num_aulas_na_serie} aulas.")
         
             saldo_disponivel =await EnrollmentValidation.validate_series_enrollment( 
                 db_session=db_session, 
@@ -426,7 +426,59 @@ class AulaController:
             print(f"Erro geral na matrícula em série: {e}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao matricular em série de aulas.")
 
-    
+
+    #-------------parte inacabada ainda
+    async def unenroll_student_from_aula(
+        self, 
+        aula_id: int, 
+        estudante_id: int, 
+        current_user: dict, 
+        db_session: Session, 
+        agenda_repo: AgendaAulaRepository,
+        agenda_aluno_repo: AgendaAlunoRepository 
+    ) -> Dict[str, Any]:
+
+        UserValidation._check_admin_permission(current_user)
+
+        aula_model = AulaModel(db_session=db_session)
+        
+        # 1. REMOÇÃO SQL (Estudante_Aula)
+        deleted_sql = await run_in_threadpool(
+            aula_model.unenroll_student, 
+            aula_id, 
+            estudante_id
+        )
+        
+        if not deleted_sql:
+            # Se a matrícula não foi encontrada no SQL, a operação não pode continuar
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Matrícula do Estudante {estudante_id} na Aula {aula_id} não encontrada no SQL."
+            )
+
+       
+        
+        mongo_updated = await agenda_repo.remove_participant(
+            aula_id=aula_id, 
+            participant_id=estudante_id
+        )
+
+        if not mongo_updated:
+            logging.warning(f"ALERTA: Estudante desmatriculado do SQL, mas ID {estudante_id} não encontrado no array 'participantes' da Aula {aula_id} no MongoDB (Agenda Estúdio).")
 
 
+        deleted_aluno_agenda = await agenda_aluno_repo.delete_registro_by_estudante_and_aula(
+            estudante_id=estudante_id,
+            aula_id=aula_id
+        )
+        
+        if not deleted_aluno_agenda:
+            logging.warning(f"ALERTA: Registro individual do estudante {estudante_id} para Aula {aula_id} não encontrado/deletado no MongoDB (Agenda Aluno).")
 
+
+        return {
+            "message": f"Estudante {estudante_id} desmatriculado da Aula {aula_id} com sucesso.",
+            "status_sql": "Sucesso",
+            "status_mongo_estudio": "Sucesso (removido do array participantes)" if mongo_updated else "Alerta (não encontrado no array participantes)",
+            "status_mongo_aluno": "Sucesso (registro individual deletado)" if deleted_aluno_agenda else "Alerta (registro individual não encontrado)"
+        }

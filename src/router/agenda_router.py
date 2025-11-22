@@ -63,6 +63,30 @@ async def get_cronograma_endpoint(
         current_user=current_user
     )
 
+#-----------------------parte a repensar:
+@router.delete("/aula/{aula_id}/estudante/{estudante_id}", 
+               summary="Remover Estudante de uma Aula Específica (Desmatricular)")
+async def unenroll_student_endpoint(
+    aula_id: int,
+    estudante_id: int,
+    db_session: Session = Depends(get_db),
+    agenda_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository),
+    agenda_aluno_repo: AgendaAlunoRepository = Depends(get_agenda_aluno_repository),
+    current_user: dict = Depends(auth_manager)
+):
+    """
+    Remove um estudante da matrícula de uma aula, excluindo o registro em 
+    SQL (Estudante_Aula), no array de participantes do Mongo Agenda Estúdio
+    e o registro individual no Mongo Agenda Aluno.
+    """
+    return await aula_controller.unenroll_student_from_aula(
+        aula_id=aula_id,
+        estudante_id=estudante_id,
+        current_user=current_user,
+        db_session=db_session,
+        agenda_repo=agenda_repo,
+        agenda_aluno_repo=agenda_aluno_repo
+    )
 
 
 

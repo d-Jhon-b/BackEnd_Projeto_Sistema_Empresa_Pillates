@@ -4,7 +4,7 @@ from typing import Optional, List
 from enum import Enum
 # from bson import ObjectId
 from bson import ObjectId # 🎯 IMPORTAÇÃO CORRETA E PADRÃO PARA O OBJETO REAL
-
+from src.schemas.agenda_schemas import PyObjectId
 
 class StatusPresencaEnum(str, Enum):
     AGENDADA = "Agendada" 
@@ -41,7 +41,8 @@ class AgendaAlunoUpdate(BaseModel):
 
 class AgendaAlunoResponse(BaseModel):
     """Schema de resposta, incluindo o ID do MongoDB."""
-    id: Optional[ObjectId] = Field(None, alias="_id", default_factory=None) 
+    # id: Optional[ObjectId] = Field(None, alias="_id", default_factory=None) 
+    id: Optional[PyObjectId] = Field(None, alias="_id", default_factory=None) 
     # id: Optional[str] = Field(None, alias="_id",default=None) 
     AulaID: int
     ProfessorID: int
@@ -61,3 +62,7 @@ class AgendaAlunoResponse(BaseModel):
     )
     # class Config:
     #     populate_by_name = True
+
+
+
+    

@@ -1,10 +1,10 @@
 
 from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
-from typing import List, Optional
+from typing import List, Optional,Dict,Any
 from datetime import date
 from sqlalchemy.orm import Session
 from motor.motor_asyncio import AsyncIOMotorCollection
-
+import logging
 
 from src.database.dependencies import get_agenda_aluno_dependency, get_agenda_aulas_dependency, get_db 
 from src.services.authService import auth_manager 
@@ -47,15 +47,26 @@ def get_agenda_aluno_repository(
 #     """Retorna uma instância do ContratoRepository (SQL)."""
 #     return ContratoRepository(db_session=db)
 
+# def get_agenda_aluno_controller(
+#     db: Session = Depends(get_db),
+#     agenda_aluno_repo: AgendaAlunoRepository = Depends(get_agenda_aluno_repository)
+# ) -> AgendaAlunoController:
+
+#     return AgendaAlunoController(db_session=db, agenda_aluno_repo=agenda_aluno_repo)
+
+
 def get_agenda_aluno_controller(
     db: Session = Depends(get_db),
-    agenda_aluno_repo: AgendaAlunoRepository = Depends(get_agenda_aluno_repository)
+    agenda_aluno_repo: AgendaAlunoRepository = Depends(get_agenda_aluno_repository),
+    # ADICIONANDO A DEP. DO REPOSITÓRIO DE AULAS DO ESTÚDIO:
+    agenda_aulas_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository) 
 ) -> AgendaAlunoController:
-
-    return AgendaAlunoController(db_session=db, agenda_aluno_repo=agenda_aluno_repo)
-
-
-
+    # O AgendaAlunoController agora recebe o terceiro repositório
+    return AgendaAlunoController(
+        db_session=db, 
+        agenda_aluno_repo=agenda_aluno_repo,
+        agenda_aulas_repo=agenda_aulas_repo # Injetando
+    )
 
 
 @router.get("/minhas_aulas", response_model=List[AgendaAulaResponseSchema], summary="[ALUNO] Buscar Minhas Aulas Agendadas por Período")
@@ -119,3 +130,32 @@ async def update_status_presenca_endpoint(
     )
     
     return AgendaAlunoResponse.model_validate(updated_doc)
+
+
+
+
+
+
+@router.delete("/admin/exclusao_total/{id_estudante}", status_code=status.HTTP_200_OK)
+async def delete_student_agenda(
+    id_estudante: int = Path(..., description="ID do estudante a ser excluído totalmente da agenda."),
+    current_user: Dict[str, Any] = Depends(auth_manager),
+    # USAMOS A DEPENDÊNCIA COMPLETA AGORA:
+    agenda_aluno_ctrl: AgendaAlunoController = Depends(get_agenda_aluno_controller) 
+) -> Dict[str, Any]:
+
+    try:
+        result = await agenda_aluno_ctrl.delete_student_agenda_data(
+            id_estudante=id_estudante, 
+            current_user=current_user
+        )
+        return result
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logging.error(f"Erro inesperado no router ao deletar agenda do estudante {id_estudante}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Erro interno do servidor ao processar exclusão de agendas do estudante."
+        )

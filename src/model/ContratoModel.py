@@ -36,8 +36,10 @@ class ContratoModel():
             valor_base = 0.0
             if adesao_db.plano_padrao:
                 valor_base = adesao_db.plano_padrao.valor_plano
+                qtde_aulas = adesao_db.plano_padrao.qtde_aulas_totais 
             elif adesao_db.plano_personalizado:
                 valor_base = adesao_db.plano_personalizado.valor_plano 
+                qtde_aulas = adesao_db.plano_personalizado.qtde_aulas_totais 
             
             data_inicio_contrato = adesao_db.data_adesao 
             data_termino_contrato = adesao_db.data_validade 
@@ -52,6 +54,7 @@ class ContratoModel():
                 data_inicio=data_inicio_contrato,
                 data_termino=data_termino_contrato,
                 valor_final=valor_final_contrato,
+                aulas_restantes=qtde_aulas,
                 status_contrato='ativo'
             )
 
@@ -143,6 +146,31 @@ class ContratoModel():
         ).all()
         return contratos
     
+
+    def update_contract_status(self, id_contrato:int, update_type:str):
+        try:
+            stmt_update_status = (
+                update(Contrato)
+                .where(Contrato.id_contrato == id_contrato)
+                .values(status_contrato=update_type) 
+            )
+            
+            result = self.session.execute(stmt_update_status)
+            
+            if result.rowcount == 0:
+                self.session.rollback()
+                return None
+            self.session.commit()
+
+            return self.session.get(Contrato, id_contrato)
+        except SQLAlchemyError as err:
+            logging.error(f'Erro ao processar update de status do contrato.\nerro:{err}')
+            return None
+        except Exception as err:
+            logging.error(f'Erro ao processar update de status do contrato.\nerro:{err}')
+            return None
+        
+
     #----------------------------Métodos para uso do Serviço de Adesão+Contrato
     def select_contrato_by_adesao(self, fk_id_adesao_plano: int) -> Optional[Contrato]:
         try:
@@ -163,6 +191,10 @@ class ContratoModel():
         except Exception as err:
             logging.error(f"Erro ao deletar Contrato {contrato_id}: {err}")
             raise
+
+
+
+
 # import logging
 # from datetime import datetime, timedelta
 # from sqlalchemy.orm import Session

@@ -8,6 +8,19 @@ from src.repository.ContratoRepository import ContratoRepository
 from starlette.concurrency import run_in_threadpool 
 from fastapi import HTTPException,status
 from pymongo import ASCENDING, DESCENDING
+from pymongo.errors import PyMongoError, ConnectionFailure
+
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select, update, delete, func
+from src.model.aulaModel.aulaConfig import Aula, Estudante_Aula
+from src.model.userModel.userConfig import Usuario
+from src.model.planosModel.contratoConfig import Contrato
+from src.model.planosModel.planoConfig import Planos
+from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
+from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
+from src.model.userModel.typeUser.aluno import Estudante
+import logging
 # from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository 
 
 class AgendaAlunoRepository:
@@ -173,18 +186,70 @@ class AgendaAlunoRepository:
         
             return registro
         except Exception as e:
-            # Log de erro específico do MongoDB
             logging.error(f"Erro ao buscar registro {registro_id} no MongoDB: {e}")
             return None
         
 
     async def delete_registro(self, registro_id: str) -> bool:
-        
         try:
             object_id = ObjectId(registro_id)
         except:
-            # Lidar com IDs inválidos (opcional, mas boa prática)
             return False 
 
         result = await self.collection.delete_one({"_id": object_id})
         return result.deleted_count > 0
+    
+    async def delete_mongo_registro_estudante_by_id(self, id_estudante):
+        try:
+            result = await self.collection.delete_many({"EstudanteID": id_estudante})
+            return result.deleted_count > 0
+        
+        except PyMongoError as err:
+            logging.error(f'Erro ao processar remoção agendas do estudante com id {id_estudante}\nErro:{err}')
+            return 0
+        except Exception as err:
+            logging.error(f'Erro ao processar alteração no Mongo\nErro:{err}')
+            return 0 
+    
+
+    #------------------não aplicado para produto final
+    async def delete_registro_by_estudante_and_aula(self, estudante_id: int, aula_id: int) -> bool:
+        try:
+            result = await self.collection.delete_one({
+                "EstudanteID": estudante_id,
+                "AulaID": aula_id
+            })
+            return result.deleted_count > 0
+        except PyMongoError as err:
+            logging.error(f'Erro Mongo ao deletar registro (EstudanteID: {estudante_id}, AulaID: {aula_id}): {err}')
+            return False
+    #------------------não aplicado para produto final
+
+    """
+    Método apenas para excluir registros no Banco de dados SQl.
+    Motivo peloq qual estou misturando com o repository para acessar o mongo:
+    "Seria problematico criar um novo arquivo e classe para armazenar uma única função ou duas,
+    pretendo manter esse método aqui por hora, dado que o prazo está curto...
+    A parte ruim é ter q chamar todas as Configs do Banco relacionadas com esse tipo de aplicação... 
+    deprimente, mas é o que temos para hj.
+    "
+
+    """
+    def delete_sql_registro_aula_estudante_by_id(self, id_estudante:int, session_db:Session):
+        try:
+            stmt = delete(Estudante_Aula).where(Estudante_Aula.fk_id_estudante == id_estudante)
+            res_delete = session_db.execute(stmt)
+            deleted_count = res_delete.rowcount
+            session_db.commit()
+            if deleted_count > 0:
+                logging.info(f'Sucesso ao excluir {deleted_count} registros do estudante {id_estudante} no SQL.')
+                return True 
+            else:
+                logging.warning(f'Nenhum registro encontrado para exclusão para o estudante {id_estudante} no SQL.')
+                return True  
+            
+        except SQLAlchemyError as err:
+            logging.error(f'Erro ao aplicar remoção de registro do estudante de id:{id_estudante}\n\nErro:{err}')
+            session_db.rollback()
+            return None
+    

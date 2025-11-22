@@ -38,7 +38,8 @@ class SolicitacaoCreatePayload(BaseModel):
     acao_solicitacao_aula:Optional[AcaoSolicitacaoAulaEnum] = Field(None, description="Ação específica se tipo_de_solicitacao for 'aula'.")
     
     fk_id_aula_referencia: Optional[int] = Field(None, description="ID da aula sugerida")
-    data_sugerida: datetime
+
+    data_sugerida: Optional[datetime] = None
     fk_id_novo_plano: Optional[int] = Field(None, description="ID do novo plano padrão, se aplicável.")
     fk_id_novo_plano_personalizado: Optional[int] = Field(None, description="ID do novo plano personalizado, se aplicável.")
 
