@@ -60,8 +60,8 @@ class JWTAuthManager:
         token = credentials.credentials 
         
         payload = self.decode_access_token(token)
-        
-        print(f'\n\n[authUtils] Payload decodificado: {payload}\n\n')
+
+        # print(f'\n\n[authUtils] Payload decodificado: {payload}\n\n')
         # print(f'\n\n[authUtils] Payload decodificado: {payload}\n\n')
 
         if payload is None:

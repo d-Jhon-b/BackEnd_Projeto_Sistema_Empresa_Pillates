@@ -2,9 +2,10 @@ from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from src.model.userModel.userConfig import Usuario
 from sqlalchemy.orm import Session
+
 class ValidarEmail():
     @staticmethod
-    def validar_email(session:Session, email:str):
+    def validar_email(session, email:str):
         stmt = select(Usuario).where(Usuario.email_user == email) 
         res = session.execute(stmt).scalar_one_or_none()
         if res:
