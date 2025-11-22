@@ -11,6 +11,18 @@ from src.schemas.planos_personalizados_schemas import PlanoPersonalizadoCreate, 
 
 from src.database.dependencies import get_db
 from src.utils.authUtils import auth_manager 
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+# from src.database.connPostGreNeon import CreateSessionPostGre
+# from src.controllers.planoController import (
+#     criar_plano_controller,
+#     listar_planos_controller,
+#     meus_planos_controller
+# )
+# from src.controllers.validations.permissionValidation import UserValidation
+# from src.schemas.plano_schemas import PlanoCreate, PlanoDetalhe
+# from src.schemas.user_schemas import UserResponse
 
 router = APIRouter(
     prefix="/planos",

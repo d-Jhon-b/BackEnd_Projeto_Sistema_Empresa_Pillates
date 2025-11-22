@@ -116,3 +116,4 @@ def update_contrato_endpoint(
         data_payload=data_payload, 
         current_user=current_user
     )
+

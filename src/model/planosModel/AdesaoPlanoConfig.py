@@ -35,3 +35,4 @@ class AdesaoPlano(Base.Base):
         foreign_keys=[fk_id_plano_personalizado], 
         back_populates="adesao_planos"
     )
+    
