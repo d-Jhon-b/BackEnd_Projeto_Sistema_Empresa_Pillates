@@ -82,7 +82,7 @@ class AdesaoPlanoModel():
             logging.error(f'{err}')
             self.session.rollback()
             return None
-        except SQLAlchemyError as err:
+        except Exception as err:
             logging.error(f'{err}')
             self.session.rollback()
             return None
