@@ -193,7 +193,12 @@ class AgendaAlunoRepository:
     async def delete_registro(self, registro_id: str) -> bool:
         try:
             object_id = ObjectId(registro_id)
-        except:
+        
+        except PyMongoError as err:
+            logging.error(f'Erro ao converter id de registro do mongo para tipo ObjectID.\nErro{err}')
+            return False 
+        except Exception as err:
+            logging.error(f'Erro ao processar conversão de id do mongo para tipo ObjectID.\nErro{err}')
             return False 
 
         result = await self.collection.delete_one({"_id": object_id})
