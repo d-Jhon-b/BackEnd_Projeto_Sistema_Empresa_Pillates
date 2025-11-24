@@ -54,6 +54,17 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     connection = op.get_bind()
+    connection.execute(
+        sa.text("""
+            UPDATE solicitacoes
+            SET fk_id_novo_plano = NULL
+            WHERE fk_id_novo_plano IN (
+                SELECT id_plano FROM planos
+                WHERE tipo_plano IN ('mensal','trimestral','semestral','anual')
+                AND modalidade_plano IN ('1x_semana','2x_semana','3x_semana')
+            )
+        """)
+    )
 
     connection.execute(
         sa.text("""
@@ -61,5 +72,12 @@ def downgrade() -> None:
             WHERE tipo_plano IN ('mensal','trimestral','semestral','anual')
             AND modalidade_plano IN ('1x_semana','2x_semana','3x_semana')
         """)
-      
     )
+    # connection.execute(
+    #     sa.text("""
+    #         DELETE FROM planos
+    #         WHERE tipo_plano IN ('mensal','trimestral','semestral','anual')
+    #         AND modalidade_plano IN ('1x_semana','2x_semana','3x_semana')
+    #     """)
+      
+    # )

@@ -136,6 +136,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.execute("DELETE FROM solicitacoes WHERE fk_id_estudante >= 1")
     op.execute("DELETE FROM contato WHERE fk_id_user >= 1")
     op.execute('DELETE FROM estudante_aula WHERE fk_id_estudante >=1')
     op.execute("DELETE FROM estudante WHERE fk_id_user >= 1")
