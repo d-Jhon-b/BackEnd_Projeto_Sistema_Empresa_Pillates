@@ -215,8 +215,8 @@ def upgrade() -> None:
     op.create_table(
         'adesao_plano',
         sa.Column('id_adesao_plano', sa.Integer, primary_key=True, autoincrement=True, nullable=False),
-        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete=value_cascade_constraint_drop), nullable=True),
-        sa.Column('fk_id_plano', sa.Integer, sa.ForeignKey('planos.id_plano', ondelete=value_cascade_constraint_drop), nullable=True),
+        sa.Column('fk_id_estudante', sa.Integer, sa.ForeignKey('estudante.id_estudante', ondelete=value_set_null), nullable=True),
+        sa.Column('fk_id_plano', sa.Integer, sa.ForeignKey('planos.id_plano', ondelete=value_set_null), nullable=True),
         sa.Column('fk_id_plano_personalizado', sa.Integer, sa.ForeignKey('planos_personalizados.id_plano_personalizado', ondelete=value_set_null), nullable=True),
         sa.Column('data_adesao', sa.DateTime, nullable=False, server_default=sa.text(values_string_function_now)),
         sa.Column('data_validade', sa.DateTime, nullable=False)
