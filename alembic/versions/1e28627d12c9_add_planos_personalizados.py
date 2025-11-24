@@ -61,4 +61,5 @@ def downgrade() -> None:
             WHERE tipo_plano IN ('mensal','trimestral','semestral','anual')
             AND modalidade_plano IN ('1x_semana','2x_semana','3x_semana')
         """)
+      
     )

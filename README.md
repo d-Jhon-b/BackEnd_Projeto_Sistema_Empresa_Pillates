@@ -76,3 +76,12 @@ PostgreSQL (NEON): Banco de dados relacional.
 Alembic: Ferramenta de migração de banco de dados.
 Pydantic: Para validação e serialização de dados (Schemas).
 
+
+5. Instalações de bibliotecas offline para desenvolvimento
+# Comando para instalação:
+5.1. Verifique que a pasta packages está em seu diretorio:
+    -Nesta pasta se encontram as bibliotecas usadas no projeto, com versões compativeis para aplicação
+    -Verifique que o arquivo `instacoes_offline.txt` está em seu diretório principal
+-Em seu Diretório principal rode o comando:
+`pip install --no-index --find-links=packages -r instacoes_offline.txt` ->
+
