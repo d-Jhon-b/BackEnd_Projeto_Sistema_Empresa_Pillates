@@ -70,8 +70,9 @@ class TargetUserFinder:
         id_estundate=target_user_id.estudante.id_estudante
         print(id_estundate)
             
-      
         return id_estundate
+    
+    
     # @staticmethod
     # def check_estudante_id(
     #     current_user:Dict[str, Any],

@@ -42,6 +42,7 @@ class PlanosController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Falha ao buscar Planos Padrão: {e}"
             )
+            
     def get_plano_padrao_by_id(self, plano_id: int, session_db: Session, current_user: Dict[str, Any]) -> PlanoResponse:
         UserValidation._check_all_permission(current_user) 
         try:

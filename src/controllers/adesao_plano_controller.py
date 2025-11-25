@@ -236,30 +236,9 @@ class AdesaoPlanoController:
             )
         
 
-
-    # def update_adesao_plano_data(self, session_db: Session, adesao_id: int, data_update: AdesaoPlanoUpdate, current_user: Dict[str, Any]) -> SubscribePlano:
-    #     UserValidation._check_admin_permission(current_user=current_user)
-    #     update_dict = data_update.model_dump(exclude_unset=True)
+    
         
-    #     if not update_dict:
-    #         adesao = AdesaoPlanoModel(session_db).select_adesao_by_id(adesao_id)
-    #         if not adesao:
-    #             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Adesão com ID {adesao_id} não encontrada.")
-    #         return SubscribePlano.model_validate(adesao)
-
-    #     adesao_repo = AdesaoPlanoModel(session_db=session_db)
+    # def get_my_plan(self, session:Session, curret_user: Dict[str, Any]):
         
-    #     try:
-    #         updated_adesao = adesao_repo.update_adesao_plano(adesao_id, update_dict)
-            
-    #         if updated_adesao is None:
-    #             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Adesão com ID {adesao_id} não encontrada para atualização.")
-    #         return SubscribePlano.model_validate(updated_adesao)
-            
-    #     except HTTPException:
-    #         raise
-    #     except Exception as e:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-    #             detail=f"Erro ao atualizar Adesão {adesao_id}: {e}"
-    #         )
+
+    #     return

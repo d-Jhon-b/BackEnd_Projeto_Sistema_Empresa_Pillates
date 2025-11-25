@@ -5,7 +5,9 @@ from src.utils.authUtils import auth_manager
 from src.services.AdesaoContratoService import AdesaoContratoService
 from src.schemas.adesao_plano_schemas import SubscribePlanoPayload, AdesaoPlanoBase,AdesaoPlanoUpdate
 from src.controllers.validations.permissionValidation import UserValidation
+from src.schemas.contrato_schemas import ContratoCreate,ContratoResponse,ContratoUpdate
 
+from src.controllers.contrato_controller import ContratoController
 router = APIRouter(
     prefix="/planos",
     tags=["Planos - Adesão e Contrato"] 
@@ -13,7 +15,8 @@ router = APIRouter(
 
 def get_adesao_contrato_service(db: Session = Depends(get_db)) -> AdesaoContratoService:
     return AdesaoContratoService(db_session=db)
-
+def get_plano_ativo_controller() -> ContratoController:
+    return ContratoController()
 
 @router.post(
     "/adesao",
@@ -32,7 +35,25 @@ async def aderir_plano_e_gerar_contrato_endpoint(
     
     return result["adesao"]
 
-
+@router.get(
+    "/my-active-plano", 
+    response_model=ContratoResponse, # Retorna o Contrato ativo
+    summary="Busca o Contrato ativo/vigente do estudante logado (Meu Plano). (Requer Aluno/Admin)"
+)
+def get_my_active_plano_endpoint(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager),
+    controller: ContratoController = Depends(get_plano_ativo_controller)
+):
+    """
+    Automaticamente encontra o ID do estudante logado (current_user) e retorna os 
+    detalhes do Contrato ativo, que corresponde ao 'Meu Plano' do frontend.
+    """
+    # A validação de permissão de ALUNO está embutida no TargetUserFinder
+    return controller.get_my_active_plano_and_contract(
+        session_db=db, 
+        current_user=current_user
+    )
 
 
 @router.delete(

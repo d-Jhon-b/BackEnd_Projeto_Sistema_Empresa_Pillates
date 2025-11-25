@@ -170,3 +170,31 @@ class ContratoController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                 detail=f"Erro no serviço de atualização de Contrato: {e}"
             )
+        
+
+
+    
+    def get_my_active_plano_and_contract(self, session_db: Session, current_user: Dict[str, Any]) -> ContratoResponse:
+        
+        user_id = current_user.get('id_user')
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não autenticado. ID de usuário ausente.")
+
+        try:
+            fk_id_estudante = TargetUserFinder.check_id_estudante_by_id_user(
+                session_db=session_db, 
+                user_id=user_id
+            )
+        except HTTPException as e:
+            raise e
+        
+        contrato_repo = ContratoModel(session_db=session_db)
+        contrato_ativo = contrato_repo.select_active_contract_by_estudante(fk_id_estudante=fk_id_estudante)
+        
+        if contrato_ativo is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Nenhum contrato ativo (plano vigente) encontrado para o estudante ID {fk_id_estudante}."
+            )
+            
+        return ContratoResponse.model_validate(contrato_ativo)

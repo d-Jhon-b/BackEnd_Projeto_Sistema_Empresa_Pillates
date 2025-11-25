@@ -53,6 +53,9 @@ def get_contrato_endpoint(
         contrato_id=contrato_id, 
         current_user=current_user
     )
+
+
+
 @router.get(
     "/estudante/{estudante_id}/ativo",
     response_model=ContratoResponse,
