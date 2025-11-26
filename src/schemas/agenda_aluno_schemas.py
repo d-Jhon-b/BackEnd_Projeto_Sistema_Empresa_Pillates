@@ -30,14 +30,14 @@ class AgendaAlunoCreate(BaseModel):
 class AgendaAlunoUpdate(BaseModel):
     """Schema para atualização (principalmente Presença e Evolução)."""
     
-    # Atualizado pelo Instrutor/Admin
     status_presenca: Optional[StatusPresencaEnum] = Field(None, alias="StatusPresenca")
     
-    # Atualizado pelo Instrutor/Admin após a aula
     nota_evolucao: Optional[str] = Field(None, alias="NotaEvolucao")
     
     # Anexos (links para S3/Cloud Storage, se for o caso)
     anexos_links: Optional[List[str]] = Field(None, alias="AnexosLinks")
+
+    
 
 class AgendaAlunoResponse(BaseModel):
     """Schema de resposta, incluindo o ID do MongoDB."""

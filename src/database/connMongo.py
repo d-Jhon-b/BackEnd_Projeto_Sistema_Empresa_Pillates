@@ -3,7 +3,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import HTTPException, status
 from typing import Optional
 from src.database.modelConfig.configMongo import MongoParamBuilder 
-
+import logging
 class MongoConnectionManager:
     client: Optional[AsyncIOMotorClient] = None
     DB_NAME: str = "" 
@@ -23,7 +23,8 @@ class MongoConnectionManager:
         try:
             cls.client = AsyncIOMotorClient(MONGO_URI)
             await cls.client.admin.command('ping') 
-            print(f"MongoConnectionManager: Cliente MongoDB Atlas ativo (DB: {cls.DB_NAME}).")
+            # print(f"MongoConnectionManager: Cliente MongoDB Atlas ativo (DB: {cls.DB_NAME}).")
+            logging.info(f"MongoConnectionManager: Cliente MongoDB Atlas ativo (DB: {cls.DB_NAME}).")
         except Exception as e:
             cls.client = None
             import traceback

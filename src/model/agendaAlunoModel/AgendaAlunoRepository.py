@@ -217,6 +217,38 @@ class AgendaAlunoRepository:
             return 0 
     
 
+    async def find_registros_by_multiple_students_and_period(
+        self, 
+        estudante_ids: List[int], 
+        start_dt: datetime, 
+        end_dt: datetime
+    ) -> List[Dict[str, Any]]:
+        """
+        Busca os registros de AgendaAluno para uma lista de estudantes em um período.
+        """
+        query = {
+            "EstudanteID": {"$in": estudante_ids}, 
+            "DataHoraAula": {"$gte": start_dt, "$lte": end_dt} 
+        }
+        
+        registros: List[Dict[str, Any]] = []
+        try:
+            cursor = self.collection.find(query).sort("DataHoraAula", ASCENDING)
+            
+            async for doc in cursor:
+                doc['_id'] = str(doc['_id'])
+                registros.append(doc)
+
+            return registros
+            
+        except PyMongoError as err:
+            logging.error(f'Erro Mongo ao buscar agendas para múltiplos estudantes: {err}')
+            raise err
+        except Exception as err:
+            logging.error(f'Erro geral ao buscar agendas para múltiplos estudantes: {err}')
+            raise err
+
+
     #------------------não aplicado para produto final
     async def delete_registro_by_estudante_and_aula(self, estudante_id: int, aula_id: int) -> bool:
         try:

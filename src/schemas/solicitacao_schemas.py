@@ -60,8 +60,8 @@ class SolicitacaoCreatePayload(BaseModel):
             if not self.acao_solicitacao_aula:
                 raise ValueError("Ação da aula é obrigatória para solicitações de aula.")
 
-            if self.acao_solicitacao_aula in [AcaoSolicitacaoAulaEnum.AGENDAMENTO, AcaoSolicitacaoAulaEnum.REAGENDAMENTO] and not self.data_sugerida:
-                 raise ValueError("Data sugerida é obrigatória para AGENDAMENTO ou REAGENDAMENTO de aulas.")
+            # if self.acao_solicitacao_aula in [AcaoSolicitacaoAulaEnum.AGENDAMENTO, AcaoSolicitacaoAulaEnum.REAGENDAMENTO] and not self.data_sugerida:
+            #      raise ValueError("Data sugerida é obrigatória para AGENDAMENTO ou REAGENDAMENTO de aulas.")
             if self.acao_solicitacao_aula in [AcaoSolicitacaoAulaEnum.REAGENDAMENTO, AcaoSolicitacaoAulaEnum.CANCELAMENTO] and not self.fk_id_aula_referencia:
                 raise ValueError(f"ID da aula de referência é obrigatório para {self.acao_solicitacao_aula.value}.")
             

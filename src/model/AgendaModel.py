@@ -1,10 +1,15 @@
 from motor.motor_asyncio import AsyncIOMotorCollection
 from src.schemas.agenda_schemas import AgendaAulaCreateSchema, AgendaAulaResponseSchema
 from typing import List, Dict, Any,Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId 
 from pymongo.errors import PyMongoError
 import logging
+from src.database.dependencies import MongoConnectionManager
+import pytz # Você provavelmente precisará instalar: pip install pytz
+#teste
+import asyncio
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class AgendaAulaRepository: 
@@ -154,5 +159,117 @@ class AgendaAulaRepository:
             return update_result is not None
     #------------------não aplicado para produto final
 
+    async def remove_participant_by_date(self, aula_id: int, participant_id: int, aula_date: datetime) -> bool:
+
+        query = {
+            "AulaID": aula_id,
+            "dataAgendaAula": aula_date 
+        }
         
+        update_result = await self.collection.find_one_and_update(
+            query,
+            {"$pull": {"participantes": participant_id}}, 
+            return_document=False 
+        )
+        return update_result is not None
+    async def find_aula_by_titulo_and_date(
+        self, 
+        titulo_aula: str, 
+        date_time: datetime
+    ) -> Optional[Dict[str, Any]]:
+        """ Busca uma ocorrência de aula pelo título e dentro do dia da data fornecida. """
+        
+        start_of_day = datetime.combine(date_time.date(), datetime.min.time())
+        end_of_day = datetime.combine(date_time.date(), datetime.max.time())
+
+        query = {
+            "tituloAulaCompleto": titulo_aula,
+            "dataAgendaAula": {"$gte": start_of_day, "$lte": end_of_day}
+        }
+        
+        logging.debug(f"DEBUG_REPO_BUSCA_TITULO: Query busca por título e data: {query}")
+        try:
+            document = await self.collection.find_one(query) 
+            logging.debug(f"DEBUG_REPO_BUSCA_TITULO: Documento encontrado: {document}")
+            return document
+        except PyMongoError as e:
+            logging.error(f"Erro Mongo ao buscar aula '{titulo_aula}' na data {date_time.date()}: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Erro geral ao buscar aula '{titulo_aula}' na data {date_time.date()}: {e}")
+            return None
+
+    async def find_aula_by_id_and_date(
+        self, 
+        aula_id: int, 
+        date_time: datetime
+    ) -> Optional[Dict[str, Any]]:
+
+        start_of_day = datetime.combine(date_time.date(), datetime.min.time())
+        end_of_day = datetime.combine(date_time.date(), datetime.max.time())
+        
+        query = {
+            "AulaID": aula_id,
+            "dataAgendaAula": {"$gte": start_of_day, "$lte": end_of_day}
+        }
+        
+        try:
+            document = await self.collection.find_one(query) 
+            return document
+        except PyMongoError as e:
+            logging.error(f"Erro Mongo ao buscar aula {aula_id} na data {date_time.date()}: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Erro geral ao buscar aula {aula_id} na data {date_time.date()}: {e}")
+            return None
+        
+
+    async def find_next_enrolled_aula_date(self, aula_id: int, student_id: int) -> Optional[datetime]:
+        UTC = pytz.utc
+        utc_now = datetime.now(UTC) 
+        
+        cutoff_dt_utc = utc_now - timedelta(minutes=5)
+        cutoff_dt_rounded = cutoff_dt_utc.replace(microsecond=0)
+        
+        query = {
+            "AulaID": aula_id, 
+            "participantes": student_id, # <-- Mantenha este filtro, pois é o suspeito
+            "dataAgendaAula": {"$gte": cutoff_dt_rounded}
+        }
+        
+
+        logging.debug(f"DEBUG_REPO_INPUT: aula_id={aula_id}, student_id={student_id}")
+        logging.debug(f"DEBUG_REPO_CUTOFF: Data de corte (Rounded UTC): {cutoff_dt_rounded!r}") 
+        logging.debug(f"DEBUG_REPO_QUERY: Query de busca final: {query}")
+        try:
+            aula_cursor = self.collection.find(query).sort("dataAgendaAula", 1).limit(1)
+            results = await aula_cursor.to_list(length=1) 
+            aula_mongo = results[0] if results else None
+            
+            logging.debug(f"DEBUG: Resultado da busca crua: {aula_mongo}\n\n\n\n\n")
+                
+        except Exception as e:
+            logging.error(f'Erro fatal ao buscar próxima aula {aula_id} no Mongo: {e}', exc_info=True)
+            return None
+        
+        if aula_mongo and aula_mongo.get("dataAgendaAula"):
+            # Se entrar aqui, funcionou.
+            return aula_mongo["dataAgendaAula"]
+        
+        return None   
+
+    async def add_participant_by_date(self, aula_id: int, participant_id: int, aula_date: datetime):
+        """
+        Adiciona um participante em uma ocorrência de aula específica.
+        """
+        update_result = await self.collection.update_one(
+            {
+                "AulaID": aula_id,
+                "dataAgendaAula": aula_date,
+            },
+            {
+                "$addToSet": {"participantes": participant_id}
+            }
+        )
+        return update_result.modified_count > 0 or update_result.matched_count > 0
     

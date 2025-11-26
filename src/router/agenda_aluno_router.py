@@ -1,7 +1,7 @@
 
-from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
+from fastapi import APIRouter, Depends, Query, Path, HTTPException, status,Form,UploadFile,File
 from typing import List, Optional,Dict,Any
-from datetime import date
+from datetime import date,datetime
 from sqlalchemy.orm import Session
 from motor.motor_asyncio import AsyncIOMotorCollection
 import logging
@@ -14,7 +14,7 @@ from src.controllers.agenda_controller import AgendaController
 
 from src.model.agendaAlunoModel.AgendaAlunoRepository import AgendaAlunoRepository,AgendaAlunoUpdate
 from src.repository.ContratoRepository import ContratoRepository 
-from src.schemas.agenda_aluno_schemas import AgendaAlunoResponse
+from src.schemas.agenda_aluno_schemas import AgendaAlunoResponse,StatusPresencaEnum
 from src.schemas.agenda_schemas import AgendaAulaResponseSchema, AgendaAulaCreateSchema
 from src.model.AgendaModel import AgendaAulaRepository
 
@@ -90,6 +90,41 @@ async def get_my_aulas_endpoint(
     )
 
 @router.get(
+    "/detalhes_alunos/{aula_id}", 
+    response_model=List[AgendaAlunoResponse], 
+    summary="[PROFESSOR] Buscar AgendaAluno de todos os participantes de uma aula específica"
+)
+async def get_participants_agenda_details_endpoint(
+    aula_id: int = Path(..., description="ID da Aula (Studio/SQL)"),
+    class_date: date = Query(..., description="Data da aula (YYYY-MM-DD) para buscar os participantes"),
+    agenda_aluno_ctrl: AgendaAlunoController = Depends(get_agenda_aluno_controller),
+    agenda_aulas_repo: AgendaAulaRepository = Depends(get_agenda_aula_repository), 
+    current_user: dict = Depends(auth_manager)
+):
+    # if current_user.get("lv_acesso") not in ["instrutor", "colaborador", "supremo"]:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado. Apenas instrutores e administradores.")
+        
+    class_dt = datetime.combine(class_date, datetime.min.time())
+    aula_agendada = await agenda_aulas_repo.find_aula_by_id_and_date(
+        aula_id=aula_id, 
+        date_time=class_dt
+    )
+    if not aula_agendada:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Aula ID {aula_id} agendada para {class_date.isoformat()} não encontrada."
+        )
+    student_ids: List[int] = aula_agendada.get("participantes", [])
+    if not student_ids:
+        return [] 
+    return await agenda_aluno_ctrl.get_students_agenda_by_ids(
+        student_ids=student_ids, 
+        class_date=class_date, 
+        current_user=current_user
+    )
+
+
+@router.get(
     "/aluno/{estudante_id}",
     response_model=List[AgendaAlunoResponse],
     summary="Listar agenda de aulas futuras e passadas de um estudante."
@@ -115,23 +150,38 @@ async def get_student_agenda_endpoint(
 @router.patch(
     "/presenca/{registro_id}",
     response_model=AgendaAlunoResponse,
-    summary="Registrar presença ou falta de um estudante em uma aula (Debita a aula do contrato)."
+    summary="Registrar presença/falta e anexar fotos de evolução."
 )
 async def update_status_presenca_endpoint(
-    update_data: AgendaAlunoUpdate,
+    status_presenca: Optional[StatusPresencaEnum] = Form(None), 
+    nota_evolucao: Optional[str] = Form(None),
+
+    anexos_files: Optional[List[UploadFile]] = File(None, description="Imagens de evolução para anexar."),
+    
     registro_id: str = Path(..., description="ID do registro da agenda do aluno (Mongo Object ID)."),
     agenda_aluno_ctrl: AgendaAlunoController = Depends(get_agenda_aluno_controller),
     current_user: dict = Depends(auth_manager)
 ):
+    update_data = AgendaAlunoUpdate(
+        StatusPresenca=status_presenca, 
+        NotaEvolucao=nota_evolucao
+    )
+    
+    anexos_bytes: List[bytes] = []
+    if anexos_files:
+        for file in anexos_files:
+            # Lemos o conteúdo binário de cada arquivo
+            anexos_bytes.append(await file.read())
+            # Não fechamos aqui, pois o objeto UploadFile é gerenciado pelo FastAPI
+
     updated_doc = await agenda_aluno_ctrl.update_status_presenca(
         registro_id=registro_id, 
         update_data=update_data,
-        current_user=current_user
+        current_user=current_user,
+        anexos_files_bytes=anexos_bytes 
     )
     
     return AgendaAlunoResponse.model_validate(updated_doc)
-
-
 
 
 

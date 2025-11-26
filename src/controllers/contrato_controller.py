@@ -159,7 +159,7 @@ class ContratoController:
         data_to_update = data_payload.model_dump(exclude_none=True)
         
         if not data_to_update:
-            return ContratoResponse.model_validate(contrato_db) # Nada para atualizar
+            return ContratoResponse.model_validate(contrato_db) 
 
         try:
             updated_contrato = contrato_repo.update_contrato(contrato_id, data_to_update)
@@ -237,5 +237,4 @@ class ContratoController:
             'detalhes_plano': detalhes_plano_response
         }
         
-        # Usamos model_validate no dicionário, que é mais seguro quando se tem campos aninhados obrigatórios
         return PlanoAtivoDetalhadoResponse.model_validate(response_data)

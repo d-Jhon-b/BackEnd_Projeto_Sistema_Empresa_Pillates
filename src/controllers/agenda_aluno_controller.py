@@ -15,17 +15,16 @@ from src.controllers.utils.TargetUserFinder import TargetUserFinder
 from src.model.AgendaModel import AgendaAulaRepository 
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.services.cloudinaryService import CloudinaryService 
+
 class AgendaAlunoController:
     def __init__(self, db_session: Session, agenda_aluno_repo: AgendaAlunoRepository,agenda_aulas_repo: AgendaAulaRepository): 
         self.db_session = db_session
         self.agenda_repo = agenda_aluno_repo
         self.contrato_repo = ContratoRepository(db_session=db_session)
-
         self.agenda_aulas_repo = agenda_aulas_repo 
+        self.cloudinary_service = CloudinaryService()
 
-
-    # def __init__(self, agenda_repo: AgendaAlunoRepository, db_session: Session,contrato_repo: ContratoRepository):
-        # self.contrato_repo = contrato_repo 
 
     async def get_agenda_by_estudante(
         self, 
@@ -55,16 +54,49 @@ class AgendaAlunoController:
             logging.error(f'Erro ao buscar agenda do aluno {id_estudante}: {err}')
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao consultar a agenda do aluno.")
         
+    async def _handle_anexos_upload(
+        self, 
+        registro_id: str, 
+        estudante_id: int, 
+        anexos: List[bytes]
+    ) -> List[str]:
+        if not anexos:
+            return []
+            
+        uploaded_urls: List[str] = []
+        
+        for idx, file_bytes in enumerate(anexos):
+            try:
+
+                public_id = f"evolucao/{estudante_id}/{registro_id}_{idx}"
+                folder = "anexos_evolucao"                
+                secure_url = await self.cloudinary_service.upload_optimized_image(
+                    file_contents=file_bytes, 
+                    folder=folder, 
+                    public_id=public_id
+                )
+                uploaded_urls.append(secure_url)
+                
+            except Exception as e:
+                logging.error(f"Falha ao processar e subir o anexo {idx} para o Cloudinary: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Falha ao processar e enviar o anexo {idx} para a nuvem."
+                )
+                
+        return uploaded_urls
+    
 
     async def update_status_presenca(
         self, 
         registro_id: str, 
         update_data: AgendaAlunoUpdate,
-        current_user: Dict[str, Any]
+        current_user: Dict[str, Any],
+        anexos_files_bytes: Optional[List[bytes]] = None
     ) -> Dict[str, Any]:
+        
         UserValidation._check_instrutor_permission(current_user=current_user)
         registro_original = await self.agenda_repo.select_registro_by_id(registro_id) 
-
         if not registro_original:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -72,6 +104,19 @@ class AgendaAlunoController:
             )
 
         estudante_id = registro_original.get("EstudanteID") 
+        if anexos_files_bytes:
+            
+            new_anexos_urls = await self._handle_anexos_upload(
+                registro_id=registro_id, 
+                estudante_id=estudante_id, 
+                anexos=anexos_files_bytes 
+            )
+            
+            existing_anexos = registro_original.get("AnexosLinks", [])
+
+            update_data.anexos_links = existing_anexos + new_anexos_urls
+
+
         status_antigo = registro_original.get("StatusPresenca") 
         novo_status = update_data.status_presenca
 
@@ -82,7 +127,6 @@ class AgendaAlunoController:
             status_antigo not in status_que_consomem
         )
 
-        # if novo_status == "Presente" and status_antigo != "Presente":
         if deve_debitar:
             logging.info(f"Tentando debitar aula para Estudante ID: {estudante_id}")
             try:
@@ -172,7 +216,6 @@ class AgendaAlunoController:
         start_dt = datetime.combine(start_date, datetime.min.time()) if start_date else None
         end_dt = datetime.combine(end_date, datetime.max.time()) if end_date else None
         
-        # 3. Busca no Repositório
         agenda_db = await agenda_aluno_repo.get_agenda_by_student_id(
             estudante_id=estudante_id, 
             start_date=start_dt, 
@@ -180,11 +223,38 @@ class AgendaAlunoController:
         )
 
         if not agenda_db:
-            return [] # Retorna lista vazia se não houver registros
+            return [] 
         
-        # 4. Converte para Schema de Resposta
         return [AgendaAlunoResponse.model_validate(registro) for registro in agenda_db]
     
+
+    async def get_students_agenda_by_ids(
+        self, 
+        student_ids: List[int], 
+        class_date: date, 
+        current_user: Dict[str, Any]
+    ) -> List[AgendaAlunoResponse]:
+        UserValidation._check_instrutor_permission(current_user=current_user)
+        # if current_user.get("lv_acesso") not in ["instrutor", "colaborador", "supremo"]:
+        #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado. Apenas instrutores e administradores podem ver a agenda de outros alunos.")
+
+        start_dt = datetime.combine(class_date, datetime.min.time())
+        end_dt = datetime.combine(class_date, datetime.max.time())
+        
+        try:
+            registros = await self.agenda_repo.find_registros_by_multiple_students_and_period(
+                estudante_ids=student_ids,
+                start_dt=start_dt,
+                end_dt=end_dt
+            )
+            
+            return [AgendaAlunoResponse.model_validate(registro) for registro in registros]
+            
+        except Exception as err:
+            logging.error(f'Erro ao buscar agendas dos alunos {student_ids} para a data {class_date}: {err}')
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao consultar as agendas dos alunos.")
+        
+
 
 
     async def delete_registro_agenda(
@@ -256,20 +326,3 @@ class AgendaAlunoController:
             "mongo_agenda_aulas_modified_count": mongo_aulas_modified_count
         }
 
-
-
-
-    # async def create_registro(self, data: AgendaAlunoCreate) -> Dict[str, Any]:
-
-    #     try:
-    #         registro_inserido = await self.agenda_repo.insert_registro(
-    #             data.model_dump(by_alias=True, exclude_none=True)
-    #         )
-            
-    #         return registro_inserido
-            
-    #     except HTTPException as e:
-    #         raise e
-    #     except Exception as e:
-    #         logging.error(f"Erro inesperado ao criar registro de aula: {e}")
-    #         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao criar registro de aula.")

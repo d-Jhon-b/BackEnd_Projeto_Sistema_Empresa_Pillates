@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, status, HTTPException, Query,Path
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from starlette.concurrency import run_in_threadpool
-
+from motor.motor_asyncio import AsyncIOMotorCollection
 from src.controllers.solicitacao_controller import SolicitacaoController
 from src.schemas.solicitacao_schemas import SolicitacaoCreatePayload,SolicitacaoCreate, SolicitacaoUpdate, SolicitacoesBase, SolicitacaoResponseSchema, StatusSolcitacaoEnum, TipoDeSolicitacaoEnum
 from src.database.dependencies import get_db 
 from src.utils.authUtils import auth_manager # Importe sua função de autenticação
 
 from src.model.AgendaModel import AgendaAulaRepository 
+from src.database.dependencies import get_agenda_aluno_dependency,get_agenda_aulas_dependency
+
 
 router = APIRouter(
     prefix="/solicitacao",
@@ -18,9 +20,15 @@ router = APIRouter(
 solicitacao_controller = SolicitacaoController()
 
 
+def get_agenda_repo(
+    collection: AsyncIOMotorCollection = Depends(get_agenda_aulas_dependency) 
+) -> AgendaAulaRepository:
+    # Agora estamos instanciando corretamente, passando a Collection do Mongo injetada.
+    return AgendaAulaRepository(collection=collection)
 
-def get_agenda_repo(db: Session = Depends(get_db)) -> AgendaAulaRepository:
-    return AgendaAulaRepository(AgendaAulaRepository)
+
+# def get_agenda_repo(db: Session = Depends(get_db)) -> AgendaAulaRepository:
+#     return AgendaAulaRepository(AgendaAulaRepository)
 
 # def get_solicitacao_controller(db: Session = Depends(get_db)) -> SolicitacaoController:
 #     return SolicitacaoController()
@@ -41,7 +49,6 @@ async def get_all_solicitacoes_endpoint(
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)
     ):
-    # 🚨 CORREÇÃO: Usar await run_in_threadpool para chamar o método síncrono do Controller
     return await run_in_threadpool(
         solicitacao_controller.select_all_solicitacoes,
         session_db=db, 
