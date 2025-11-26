@@ -60,7 +60,6 @@ app.add_middleware(
     allow_methods=["*"],   
     allow_headers=["*"],   
 )
-
 app.include_router(auth_router.router)#ok
 app.include_router(solicitacao_router.router)
 app.include_router(plano_router.router)
@@ -82,7 +81,6 @@ app.include_router(excecao_router.router)
 app.include_router(adesao_plano_router.router)
 app.include_router(contrato_router.router)
 app.include_router(pagamento_router.router)
-
 
 
 @app.get("/", tags=["Root"])

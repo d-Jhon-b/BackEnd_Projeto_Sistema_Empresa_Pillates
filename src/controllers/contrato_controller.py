@@ -4,14 +4,18 @@ from typing import Dict, Any, Optional, List
 
 from src.model.ContratoModel import ContratoModel
 from src.model.AdesaoPlanoModel import AdesaoPlanoModel
+from src.model.PlanoModel import PlanosModel
 from src.schemas.contrato_schemas import ContratoCreate, ContratoResponse, ContratoUpdate
 from src.controllers.validations.permissionValidation import UserValidation
 from src.controllers.validations.ContratoValidations import ContratoValidation 
 from src.model.UserModel import UserModel
 from src.model.AlunoModel import AlunoModel
 from src.model.userModel.typeUser.aluno import Estudante
+from src.model.planosModel.contratoConfig import Contrato
+from src.model.planosModel.planoConfig import Planos
+from src.model.planosModel.planosPersonalizadosConfig import PlanosPersonalizados
 from src.controllers.utils.TargetUserFinder import TargetUserFinder
-
+from src.schemas.plano_detalhado_schemas import PlanoAtivoDetalhadoResponse, PlanoDetalhe
 
 class ContratoController:
 
@@ -174,7 +178,7 @@ class ContratoController:
 
 
     
-    def get_my_active_plano_and_contract(self, session_db: Session, current_user: Dict[str, Any]) -> ContratoResponse:
+    def get_my_active_plano_and_contract(self, session_db: Session, current_user: Dict[str, Any]) -> PlanoAtivoDetalhadoResponse:
         
         user_id = current_user.get('id_user')
         if user_id is None:
@@ -194,7 +198,44 @@ class ContratoController:
         if contrato_ativo is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
-                detail=f"Nenhum contrato ativo (plano vigente) encontrado para o estudante ID {fk_id_estudante}."
+                detail=f"Nenhum contrato ativo (plano vigente) encontrado para o estudante."
             )
-            
-        return ContratoResponse.model_validate(contrato_ativo)
+        
+        plano_obj:Planos = contrato_ativo.plano 
+        plano_personalizado_obj:PlanosPersonalizados = contrato_ativo.plano_personalizado 
+
+        if plano_obj:
+            detalhes_plano_data = {
+                "nome_plano": f"Plano {plano_obj.tipo_plano.capitalize()}",
+                "modalidade": plano_obj.modalidade_plano.replace('_', ' x '),
+                "tipo_plano": plano_obj.tipo_plano, 
+                "descricao_plano":plano_obj.descricao_plano,
+                "valor_final_contrato": float(contrato_ativo.valor_final),
+                "qtde_aulas_totais_plano": plano_obj.qtde_aulas_totais,
+            }
+        elif plano_personalizado_obj:
+            detalhes_plano_data = {
+                "nome_plano": plano_personalizado_obj.nome_plano, 
+                "modalidade": plano_personalizado_obj.modalidade_plano_livre,
+                "tipo_plano": plano_personalizado_obj.tipo_plano_livre,
+                "descricao_plano":plano_personalizado_obj.descricao_plano,
+                "valor_final_contrato": float(contrato_ativo.valor_final),
+                "qtde_aulas_totais_plano": plano_personalizado_obj.qtde_aulas_totais,
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Contrato ativo encontrado, mas sem Plano Padrão ou Personalizado associado."
+            )
+
+        detalhes_plano_response = PlanoDetalhe.model_validate(detalhes_plano_data)
+        response_data = {
+            'id_contrato': contrato_ativo.id_contrato,
+            'data_termino': contrato_ativo.data_termino, 
+            'aulas_restantes': contrato_ativo.aulas_restantes,
+            'status_contrato': contrato_ativo.status_contrato,
+            'detalhes_plano': detalhes_plano_response
+        }
+        
+        # Usamos model_validate no dicionário, que é mais seguro quando se tem campos aninhados obrigatórios
+        return PlanoAtivoDetalhadoResponse.model_validate(response_data)

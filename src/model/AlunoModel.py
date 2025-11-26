@@ -69,6 +69,7 @@ class AlunoModel:
                 stmt = stmt.where(Usuario.id_user == user_id)
             results = self.session.execute(stmt).unique().scalar_one_or_none()
             student_value = results
+            
             return student_value
         except SQLAlchemyError as err:
             logging.error(f'erro ao buscar aluno:\n{err}')

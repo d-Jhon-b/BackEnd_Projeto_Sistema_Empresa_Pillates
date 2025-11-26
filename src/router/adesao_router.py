@@ -6,8 +6,9 @@ from src.services.AdesaoContratoService import AdesaoContratoService
 from src.schemas.adesao_plano_schemas import SubscribePlanoPayload, AdesaoPlanoBase,AdesaoPlanoUpdate
 from src.controllers.validations.permissionValidation import UserValidation
 from src.schemas.contrato_schemas import ContratoCreate,ContratoResponse,ContratoUpdate
-
+from src.schemas.plano_detalhado_schemas import PlanoAtivoDetalhadoResponse
 from src.controllers.contrato_controller import ContratoController
+
 router = APIRouter(
     prefix="/planos",
     tags=["Planos - Adesão e Contrato"] 
@@ -37,7 +38,7 @@ async def aderir_plano_e_gerar_contrato_endpoint(
 
 @router.get(
     "/my-active-plano", 
-    response_model=ContratoResponse, # Retorna o Contrato ativo
+    response_model=PlanoAtivoDetalhadoResponse, 
     summary="Busca o Contrato ativo/vigente do estudante logado (Meu Plano). (Requer Aluno/Admin)"
 )
 def get_my_active_plano_endpoint(

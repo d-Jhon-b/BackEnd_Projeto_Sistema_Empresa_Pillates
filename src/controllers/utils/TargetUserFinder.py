@@ -62,14 +62,15 @@ class TargetUserFinder:
   
         estudante_model = AlunoModel(db_session=session_db)
         target_user_id = estudante_model.select_student_by_id(user_id=user_id) 
+        
         if target_user_id is None: # Use 'is None' pois 0 ou outros IDs são possíveis, embora improvável
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail=f"Estudante ID {target_user_id} não encontrado."
             )
         id_estundate=target_user_id.estudante.id_estudante
+        
         print(id_estundate)
-            
         return id_estundate
     
     
