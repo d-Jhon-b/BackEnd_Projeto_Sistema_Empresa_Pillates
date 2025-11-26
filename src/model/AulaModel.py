@@ -150,10 +150,12 @@ class AulaModel:
     #     return self.session.execute(stmt).scalars().all()
 
     def select_my_aulas(self, user_id: int, is_instructor: bool = False) -> List[int]:
+        # print(f'{is_instructor}\n\n\n\n')
         if is_instructor:
             try:
                 stmt_professor = select(Professor.id_professor).where(Professor.fk_id_user == user_id)
                 professor_id = self.session.execute(stmt_professor).scalar_one_or_none()
+                print(professor_id)
             except NameError:
                 raise RuntimeError("Modelo 'Professor' não encontrado para mapeamento de ID.")
 

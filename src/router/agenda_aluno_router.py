@@ -69,7 +69,7 @@ def get_agenda_aluno_controller(
     )
 
 
-@router.get("/minhas_aulas", response_model=List[AgendaAulaResponseSchema], summary="[ALUNO] Buscar Minhas Aulas Agendadas por Período")
+@router.get("/minhas_aulas", response_model=List[AgendaAulaResponseSchema], summary="[ALUNO] ou [Professor] Buscar Minhas Aulas Agendadas por Período")
 async def get_my_aulas_endpoint(
     start_date: date = Query(..., description="Data de início (YYYY-MM-DD)"),
     end_date: date = Query(..., description="Data de fim (YYYY-MM-DD)"),

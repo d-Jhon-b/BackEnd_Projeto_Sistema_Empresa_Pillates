@@ -45,7 +45,7 @@ class AgendaController:
         user_id = current_user.get("id_user")
         user_level = current_user.get("lv_acesso")
         is_instructor = user_level in ["instrutor", "colaborador", "supremo"]
-        
+        # print(is_instructor)
         UserValidation._check_all_permission(current_user)
         aula_model = AulaModel(db_session=db_session_sql)
         aulas_ids = await run_in_threadpool(
