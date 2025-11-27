@@ -12,6 +12,7 @@ from src.model.userModel.typeUser.Instrutor import Professor
 from src.model.userModel.typeUser.colaborador import Administracao, Recepcionista, Adm_plus
 
 
+
 class Usuario(Base.Base):
 
     __tablename__ = 'usuario'

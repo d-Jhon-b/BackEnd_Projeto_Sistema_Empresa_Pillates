@@ -1,15 +1,17 @@
-# Importar classes ORM
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import select, insert, delete, update
+from sqlalchemy import select, insert, delete, update, func
 from sqlalchemy.exc import SQLAlchemyError
-
+from datetime import datetime, date
 #importa classes do pydantic 
 from typing import List, Optional, Dict, Any
 
 #importando classes das tabelas de config
 from src.model.aulaModel.aulaConfig import Aula, Estudante_Aula
+from src.model.userModel.userConfig import Usuario
+from src.model.userModel.typeUser.aluno import Estudante
+from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
 from src.database.connPostGreNeon import CreateSessionPostGre
-
+from src.model.userModel.typeUser.Instrutor import Professor
 from src.model.aulaModel.validations.num_estudantes import NumAlunosValidation
 
 
@@ -45,12 +47,10 @@ class AulaModel:
         try:
             new_aula = Aula(**aula_data)
             self.session.add(new_aula)
-            self.session.flush() # Obtém o ID da aula
-
-            # Matrícula inicial, se houver estudantes
+            self.session.flush()
             if estudantes_ids:
                 for estudante_id in estudantes_ids:
-                    # 'normal' é o valor padrão no seu Enum
+                    # 'normal' é o valor padrão do Enum
                     matricula = Estudante_Aula(
                         fk_id_estudante=estudante_id,
                         fk_id_aula=new_aula.id_aula,
@@ -87,7 +87,6 @@ class AulaModel:
     def delete_aula_by_id(self, aula_id: int) -> bool:
         """Deleta uma aula pelo ID."""
         try:
-            # O ORM cascade deve cuidar das matrículas em Estudante_Aula
             # result = self.session.execute(delete(Aula).where(Aula.id_aula == aula_id))
             # self.session.commit()
             # return result.rowcount > 0
@@ -138,17 +137,97 @@ class AulaModel:
             self.session.rollback()
             raise
 
+    # def select_my_aulas(self, user_id: int, is_instructor: bool = False) -> List[int]:
+    #     if is_instructor:
+    #         stmt = select(Aula.id_aula).where(
+    #             (Aula.fk_id_professor == user_id) | (Aula.fk_id_professor_substituto == user_id)
+    #         )
+    #     else:
+    #         stmt = select(Estudante_Aula.fk_id_aula).where(
+    #             Estudante_Aula.fk_id_estudante == user_id
+    #         )
+            
+    #     return self.session.execute(stmt).scalars().all()
+
     def select_my_aulas(self, user_id: int, is_instructor: bool = False) -> List[int]:
+        # print(f'{is_instructor}\n\n\n\n')
         if is_instructor:
+            try:
+                stmt_professor = select(Professor.id_professor).where(Professor.fk_id_user == user_id)
+                professor_id = self.session.execute(stmt_professor).scalar_one_or_none()
+                print(professor_id)
+            except NameError:
+                raise RuntimeError("Modelo 'Professor' não encontrado para mapeamento de ID.")
+
+            if professor_id is None:
+                return [] 
+                
             stmt = select(Aula.id_aula).where(
-                (Aula.fk_id_professor == user_id) | (Aula.fk_id_professor_substituto == user_id)
+                (Aula.fk_id_professor == professor_id) | (Aula.fk_id_professor_substituto == professor_id)
             )
-        else:
+            
+        else: 
+            try:
+                stmt_estudante = select(Estudante.id_estudante).where(Estudante.fk_id_user == user_id)
+                estudante_id = self.session.execute(stmt_estudante).scalar_one_or_none()
+            except NameError:
+                raise RuntimeError("Modelo 'Estudante' não encontrado para mapeamento de ID.")
+            
+            if estudante_id is None:
+                return [] 
+                
             stmt = select(Estudante_Aula.fk_id_aula).where(
-                Estudante_Aula.fk_id_estudante == user_id
+                Estudante_Aula.fk_id_estudante == estudante_id
             )
             
         return self.session.execute(stmt).scalars().all()
+
+    def count_future_enrollments(self, estudante_id: int) -> int:
+        current_datetime = datetime.now()
+        stmt = select(func.count(Estudante_Aula.fk_id_aula)).join(Aula).where(
+            Estudante_Aula.fk_id_estudante == estudante_id,
+            Aula.data_aula > current_datetime
+        )
+        
+        count = self.session.execute(stmt).scalar_one()
+        
+        return count if count is not None else 0
+        
+
+
+
+
+        #----------adicionado para, mas não aplicado de froma exata
+    def unenroll_student(self, aula_id: int, estudante_id: int) -> bool:
+        try:
+            stmt = delete(Estudante_Aula).where(
+                (Estudante_Aula.fk_id_aula == aula_id) & 
+                (Estudante_Aula.fk_id_estudante == estudante_id)
+            )
+            result = self.session.execute(stmt)
+            self.session.commit()
+            
+            return result.rowcount > 0
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise
+    #------------------não aplicado para produto final
+
+
+# create_session = CreateSessionPostGre()
+# session = create_session.get_session()
+# aula_model = AulaModel(session)
+# import logging
+# try:
+#     user_id=1
+#     estudante_id=False
+
+#     my_class = aula_model.select_my_aulas(1)
+#     for i in my_class:
+#         print(i)    
+# except Exception as err:
+#     logging.error(f'{err}')
+#     print(err)
 
 # from datetime import datetime
 # from src.model.userModel.typeUser.aluno import Estudante
@@ -191,3 +270,35 @@ class AulaModel:
 # except Exception as e:
 #     print(f"Erro Inesperado: {e}")
     
+
+
+
+# import os
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import sessionmaker
+# from src.database.connPostGreNeon import CreateSessionPostGre
+    
+
+
+# try:
+#     create_session = CreateSessionPostGre()
+#     db_session = create_session.get_session()
+    
+#     # Assumindo que sua classe AulaModel se chama 'AulaModel'
+#     aula_model = AulaModel(db_session=db_session) 
+    
+#     ID_ESTUDANTE = 1 # O mesmo estudante que tem 4 aulas restantes
+    
+#     aulas_futuras = aula_model.count_future_enrollments(ID_ESTUDANTE)
+#     print(f"Estudante {ID_ESTUDANTE} tem {aulas_futuras} aulas futuras matriculadas.")
+    
+#     # AQUI ESTÁ A CHAVE: Se aulas_futuras for 4, 5, etc., o erro 400 é esperado.
+#     # Se for 0 ou 1, o erro 400 é INESPERADO.
+#     if aulas_futuras >= 4:
+#         print("AVISO CRÍTICO: Matrículas futuras consomem todo o saldo restante (4).")
+        
+# except Exception as e:
+#     print(f"ERRO INESPERADO no teste do AulaModel: {e}")
+# finally:
+#     if 'db_session' in locals():
+#         db_session.close()

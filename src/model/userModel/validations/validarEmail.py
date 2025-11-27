@@ -1,6 +1,7 @@
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from src.model.userModel.userConfig import Usuario
+from sqlalchemy.orm import Session
 
 class ValidarEmail():
     @staticmethod

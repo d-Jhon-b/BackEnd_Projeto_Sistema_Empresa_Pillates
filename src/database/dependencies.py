@@ -51,3 +51,4 @@ def create_mongo_collection_dependency(collection_name: str) -> Callable[[], Gen
 
 # Injetor para a coleção 'AgendaAulas'
 get_agenda_aulas_dependency = create_mongo_collection_dependency("AgendaAulas")
+get_agenda_aluno_dependency = create_mongo_collection_dependency("AgendaAluno")

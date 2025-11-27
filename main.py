@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.router import (
-    auth_router, aluno_router, 
+    auth_router, 
+    aluno_router, 
     instrutor_router, 
     colaborador_router, 
     user_router, 
@@ -8,7 +9,13 @@ from src.router import (
     estudio_router,
     excecao_router,
     aula_router,
-    solicitacao_router
+    solicitacao_router,
+    plano_router,
+    adesao_plano_router,
+    contrato_router,
+    pagamento_router,
+    adesao_router,
+    agenda_aluno_router
 )
 from src.database.connMongo import MongoConnectionManager 
 from contextlib import asynccontextmanager
@@ -53,18 +60,27 @@ app.add_middleware(
     allow_methods=["*"],   
     allow_headers=["*"],   
 )
+app.include_router(auth_router.router)#ok
+app.include_router(solicitacao_router.router)
+app.include_router(plano_router.router)
+app.include_router(aula_router.router)#ok
+app.include_router(adesao_router.router)
+app.include_router(agenda_router.router)
+app.include_router(agenda_aluno_router.router)
 
-app.include_router(auth_router.router)
-app.include_router(aluno_router.router)
-app.include_router(instrutor_router.router)
-app.include_router(colaborador_router.router)
-app.include_router(user_router.router)
+
+app.include_router(aluno_router.router) #ok
+app.include_router(instrutor_router.router) #ok
+app.include_router(colaborador_router.router) #ok
+app.include_router(user_router.router)#ok
+
+
+
 app.include_router(estudio_router.router)
 app.include_router(excecao_router.router)
-app.include_router(aula_router.router)
-app.include_router(agenda_router.router)
-app.include_router(solicitacao_router.router)
-
+app.include_router(adesao_plano_router.router)
+app.include_router(contrato_router.router)
+app.include_router(pagamento_router.router)
 
 
 @app.get("/", tags=["Root"])

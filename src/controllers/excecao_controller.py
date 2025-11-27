@@ -96,8 +96,3 @@ class ExcecaoController:
         return ExcecaoResponseSchema.model_validate(updated_doc)
     
 
-            
-    # def _get_estudio_repo(self, db_session: Session) -> EstudioModel:
-    #     """ Instancia o Repositório SQL para validação da FK. """
-    #     return EstudioModel(db_session=db_session)
-

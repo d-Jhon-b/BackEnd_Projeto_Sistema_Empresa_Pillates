@@ -45,7 +45,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_prof_estudante_fk_id_professor'), 'professor_estudante', ['fk_id_professor'], unique=False)
     
     # Tabela 'adesao_plano' (FK para 'usuario')
-    op.create_index(op.f('ix_adesao_plano_fk_id_user'), 'adesao_plano', ['fk_id_user'], unique=False)
+    # op.create_index(op.f('ix_adesao_plano_fk_id_user'), 'adesao_plano', ['fk_id_user'], unique=False)
 
    
     """Tabelas de Aulas"""
@@ -54,19 +54,27 @@ def upgrade() -> None:
     op.create_index(op.f('ix_aula_fk_id_estudio'), 'aula', ['fk_id_estudio'], unique=False)
     op.create_index(op.f('ix_aula_fk_id_professor'), 'aula', ['fk_id_professor'], unique=False)
 
+    op.create_index(op.f('ix_aula_fk_id_professor_subst'), 'aula', ['fk_id_professor_substituto'], unique=False)
+
     # Tabela 'estudante_aula' (FKs para 'estudante' e 'aula')
     op.create_index(op.f('ix_estudante_aula_fk_id_estudante'), 'estudante_aula', ['fk_id_estudante'], unique=False)
     op.create_index(op.f('ix_estudante_aula_fk_id_aula'), 'estudante_aula', ['fk_id_aula'], unique=False)
     
    
     # Tabelas Financeiras
-   
-    
+
+    #Indices para aplicar a associacao de plano com adesao_plano: Tabelas plano e planoPersonalizado
+    op.create_index(op.f('ix_adesao_plano_fk_id_plano'), 'adesao_plano', ['fk_id_plano'], unique=False)
+    op.create_index(op.f('ix_adesao_plano_fk_id_plano_personalizado'), 'adesao_plano', ['fk_id_plano_personalizado'], unique=False)
+    op.create_index(op.f('ix_adesao_plano_fk_id_estudante'), 'adesao_plano', ['fk_id_estudante'], unique=False)
+
+
     # Tabela 'contrato' (FKs para 'estudante' e 'planos')
     op.create_index(op.f('ix_contrato_fk_id_estudante'), 'contrato', ['fk_id_estudante'], unique=False)
     op.create_index(op.f('ix_contrato_fk_id_plano'), 'contrato', ['fk_id_plano'], unique=False)
 
     # Tabela 'venda_extra' (FK para 'estudante')
+    op.create_index(op.f('ix_contrato_fk_id_adesao'), 'contrato', ['fk_id_adesao_plano'], unique=False)
     op.create_index(op.f('ix_venda_extra_fk_id_estudante'), 'venda_extra', ['fk_id_estudante'], unique=False)
     
     # Tabela 'pagamento' (FKs para 'contrato', 'estudante' e 'venda_extra')
@@ -74,7 +82,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_pagamento_fk_id_estudante'), 'pagamento', ['fk_id_estudante'], unique=False)
     op.create_index(op.f('ix_pagamento_fk_id_venda_extra'), 'pagamento', ['fk_id_venda_extra'], unique=False)
     
-    op.create_index(op.f('ix_solicitacoes_fk_id_user'), 'solicitacoes', ['fk_id_user'], unique=False)
+    op.create_index(op.f('ix_solicitacoes_fk_id_estudante'), 'solicitacoes', ['fk_id_estudante'], unique=False)
     op.create_index(op.f('ix_solicitacoes_fk_id_estudio'), 'solicitacoes', ['fk_id_estudio'], unique=False)
     
     # Opcional, mas útil para o fluxo de trabalho:
@@ -93,18 +101,30 @@ def downgrade() -> None:
     
     op.drop_index(op.f('ix_venda_extra_fk_id_estudante'), table_name='venda_extra')
 
+    op.drop_index(op.f('ix_contrato_fk_id_adesao'), table_name='contrato')
     op.drop_index(op.f('ix_contrato_fk_id_plano'), table_name='contrato')
     op.drop_index(op.f('ix_contrato_fk_id_estudante'), table_name='contrato')
+
+    op.drop_index(op.f('ix_adesao_plano_fk_id_plano'), table_name='adesao_plano')
+    op.drop_index(op.f('ix_adesao_plano_fk_id_estudante'), table_name='adesao_plano')
+
+    # op.drop_index(op.f('ix_adesao_plano_fk_id_estudante'), table_name='adesao_plano')
 
     # Remoção de Índices de Aulas
     op.drop_index(op.f('ix_estudante_aula_fk_id_aula'), table_name='estudante_aula')
     op.drop_index(op.f('ix_estudante_aula_fk_id_estudante'), table_name='estudante_aula')
+    
+    op.drop_index(op.f('ix_aula_fk_id_professor_subst'), table_name='aula')
 
     op.drop_index(op.f('ix_aula_fk_id_professor'), table_name='aula')
     op.drop_index(op.f('ix_aula_fk_id_estudio'), table_name='aula')
     
     # Remoção de Índices de Registro, Ligação e Adesão
-    op.drop_index(op.f('ix_adesao_plano_fk_id_user'), table_name='adesao_plano')
+    # op.drop_index(op.f('ix_adesao_plano_fk_id_user'), table_name='adesao_plano')
+
+    # op.drop_index(op.f('ix_contrato_fk_id_plano'), table_name='contrato')
+    # op.drop_index(op.f('ix_contrato_fk_id_estudante'), table_name='contrato')
+    
 
     op.drop_index(op.f('ix_prof_estudante_fk_id_professor'), table_name='professor_estudante')
     op.drop_index(op.f('ix_prof_estudante_fk_id_estudante'), table_name='professor_estudante')

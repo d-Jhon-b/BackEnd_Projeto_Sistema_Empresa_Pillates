@@ -44,6 +44,9 @@ class AgendaAulaCreateSchema(BaseModel):
     fk_id_aula: int = Field(..., alias="AulaID") 
     fk_id_professor: int = Field(..., alias="professorResponsavel")
     fk_id_estudio: int = Field(..., alias="EstudioID")
+    
+    titulo_aula: str = Field(..., max_length=150, alias="tituloAulaCompleto")
+
     disciplina: str = Field(..., max_length=100)
     data_aula: datetime = Field(..., alias="dataAgendaAula")
     desc_aula: Optional[str] = Field(None, alias="descAgendaAula")

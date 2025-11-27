@@ -10,7 +10,7 @@ AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload,
 AlunoUpdatePayload
 )
 from src.controllers.validations.permissionValidation import UserValidation
-
+from src.controllers.utils.TargetUserFinder import TargetUserFinder
 
 from src.controllers.operations.operations import Operations
 
@@ -40,11 +40,14 @@ class AlunoController:
         users_from_db = user_model.select_all_students(studio_id=studio_id)
         return [UserResponse.model_validate(user) for user in users_from_db]
     
+   
+
     def select_aluno_by_id(self, user_id: int, current_user: dict, db_session: Session):
         UserValidation.check_self_or_admin_permission(current_user, user_id)
 
         user_model = AlunoModel(db_session=db_session)
-        user = user_model.select_student_by_id(user_id=user_id) 
+        student_user_id = TargetUserFinder.check_and_get_target_user_id_all_users(session_db=db_session, current_user=current_user, estudante_id=user_id)
+        user = user_model.select_student_by_id(user_id=student_user_id) 
 
         if not user:
             raise HTTPException(
