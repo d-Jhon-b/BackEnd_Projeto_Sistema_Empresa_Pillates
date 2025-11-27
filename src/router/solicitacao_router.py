@@ -63,7 +63,7 @@ async def get_all_solicitacoes_endpoint(
     status_code=status.HTTP_201_CREATED,
     summary="Enviar nova solicitação para Colaboradores"
 )
-async def create_new_request_endpoint( # 🚨 MUDAR para async def
+async def create_new_request_endpoint( 
     payload: SolicitacaoCreatePayload,
     db: Session = Depends(get_db),
     current_user: dict = Depends(auth_manager)

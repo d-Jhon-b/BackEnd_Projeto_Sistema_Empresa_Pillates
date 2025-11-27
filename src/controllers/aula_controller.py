@@ -56,8 +56,9 @@ class AulaController:
 
     async def create_new_aula(self, aula_data: AulaCreate, current_user: dict, db_session: Session,agenda_repo: AgendaAulaRepository, excecao_repo: ExcecaoRepository) -> AulaResponse:
         UserValidation._check_admin_permission(current_user)
-        aula_model = AulaModel(db_session=db_session)
 
+        
+        aula_model = AulaModel(db_session=db_session)
         data_aula = aula_data.data_aula.date() 
         estudio_id = aula_data.fk_id_estudio
 
