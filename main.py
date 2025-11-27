@@ -32,12 +32,10 @@ async def lifespan(app: FastAPI):
     try:
         await MongoConnectionManager.connect()
     except Exception as e:
-        # Se a conexão falhar, o erro será logado no connMongo.py
         print(f"ATENÇÃO: Conexão com MongoDB pode ter falhado no Lifespan: {e}")
         
     yield 
     
-    # --- SHUTDOWN ---
     print("Fechando serviços (Lifespan)...")
     await MongoConnectionManager.close()
     print("Conexão com MongoDB Atlas fechada.")
@@ -87,4 +85,3 @@ app.include_router(pagamento_router.router)
 def read_root():
     return {"message": "Bem-vindo à API do Sistema de Pilates!"}
 
-# app.include_router(financas_router.router)

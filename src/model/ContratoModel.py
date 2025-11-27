@@ -142,7 +142,7 @@ class ContratoModel():
         ).filter(
             Contrato.fk_id_estudante == fk_id_estudante
         ).order_by(
-            Contrato.data_inicio.desc() # Ordena do mais novo para o mais antigo
+            Contrato.data_inicio.desc() 
         ).all()
         return contratos
     

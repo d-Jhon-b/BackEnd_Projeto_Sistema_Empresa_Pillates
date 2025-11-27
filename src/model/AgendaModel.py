@@ -6,7 +6,10 @@ from bson import ObjectId
 from pymongo.errors import PyMongoError
 import logging
 from src.database.dependencies import MongoConnectionManager
-import pytz # Você provavelmente precisará instalar: pip install pytz
+import pytz 
+
+
+
 #teste
 import asyncio
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -102,8 +105,8 @@ class AgendaAulaRepository:
         
         update_result = await self.collection.find_one_and_update(
             {"AulaID": aula_id},
-            {"$addToSet": {"participantes": participant_id}}, # $addToSet garante que não haverá duplicatas
-            return_document=True # Retorna o documento atualizado
+            {"$addToSet": {"participantes": participant_id}}, 
+            return_document=True 
         )
         # print('funcionou')
         return update_result
@@ -233,7 +236,7 @@ class AgendaAulaRepository:
         
         query = {
             "AulaID": aula_id, 
-            "participantes": student_id, # <-- Mantenha este filtro, pois é o suspeito
+            "participantes": student_id, 
             "dataAgendaAula": {"$gte": cutoff_dt_rounded}
         }
         

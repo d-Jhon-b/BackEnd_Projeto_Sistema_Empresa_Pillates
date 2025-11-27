@@ -69,24 +69,10 @@ class ContratoController:
         if not contrato_db:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
-                detail=f"Contrato com ID não encontrado."
-                # detail=f"Contrato com ID {contrato_id} não encontrado."
+                detail=f"Contrato com ID não encontrado{contrato_id}."
+                # detail=f"Contrato com ID {contrato_db} não encontrado."
             )
-        # estudante_model = AlunoModel(db_session=session_db)
-        # id_user = estudante_model.select_id_user_by_fk_id_estudante(contrato_db.fk_id_estudante)
-        # target_user_id = id_user
-        # if not target_user_id:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-        #         detail="Contrato encontrado, mas estudante associado não localizado."
-        #     )
-        
-        # UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
-        # if not contrato_db:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_404_NOT_FOUND, 
-        #         detail=f"Contrato com ID {contrato_id} não encontrado."
-        #     )
+
         
         TargetUserFinder.check_and_get_target_user_id(session_db, contrato_db.fk_id_estudante, current_user)
         return ContratoResponse.model_validate(contrato_db)
@@ -95,16 +81,6 @@ class ContratoController:
 
     def select_active_contrato_by_estudante(self, session_db: Session, estudante_id: int, current_user: Dict[str, Any]) -> Optional[ContratoResponse]:
 
-        # estudante_model = AlunoModel(db_session=session_db)
-        # target_user_id = estudante_model.select_id_user_by_fk_id_estudante(estudante_id)
-        
-        # if not target_user_id:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_404_NOT_FOUND, 
-        #         detail=f"Estudante ID {estudante_id} não encontrado ou sem usuário associado."
-        #     )
-            
-        # UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
         TargetUserFinder.check_and_get_target_user_id(session_db, estudante_id, current_user)
         contrato_repo = ContratoModel(session_db=session_db)
         contrato_db = contrato_repo.select_active_contract_by_estudante(estudante_id)
@@ -120,16 +96,7 @@ class ContratoController:
     
 
     def select_all_contratos_by_estudante(self, session_db: Session, estudante_id: int, current_user: Dict[str, Any]) -> List[ContratoResponse]:
-        # estudante_model = AlunoModel(db_session=session_db)
-        # target_user_id = estudante_model.select_id_user_by_fk_id_estudante(estudante_id)
-        
-        # if not target_user_id:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_404_NOT_FOUND, 
-        #         detail=f"Estudante ID {estudante_id} não encontrado ou sem usuário associado."
-        #     )
-            
-        # UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
+
         TargetUserFinder.check_and_get_target_user_id(session_db, estudante_id, current_user)
         contrato_repo = ContratoModel(session_db=session_db)
         contratos_db = contrato_repo.select_all_contracts_by_estudante(estudante_id)

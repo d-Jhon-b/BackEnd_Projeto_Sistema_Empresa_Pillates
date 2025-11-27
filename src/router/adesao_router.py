@@ -75,21 +75,3 @@ def delete_adesao_contrato_unificado(
     
     return 
 
-
-# @router.patch(
-#     "/adesao/{adesao_id}",
-#     status_code=status.HTTP_200_OK,
-#     response_model=AdesaoPlanoBase, # Use AdesaoPlanoBase ou um Response com o Contrato
-#     summary="Atualiza campos não críticos de uma Adesão (e Contrato)."
-# )
-# async def atualizar_adesao_endpoint(
-#     adesao_id: int,
-#     data_update: AdesaoPlanoUpdate,
-#     service: AdesaoContratoService = Depends(get_adesao_contrato_service),
-#     current_user: dict = Depends(auth_manager)
-# ):
-#     UserValidation._check_admin_permission(current_user)
-
-#     result = service.update_adesao_and_contract(adesao_id, data_update)
-
-#     return result["adesao"]

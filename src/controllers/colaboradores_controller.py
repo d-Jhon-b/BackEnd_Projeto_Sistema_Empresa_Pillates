@@ -17,10 +17,10 @@ class ColaboradoreController:
 
         user_data_dict = payload.user_data.model_dump()
 
-        if payload.senha_user: #verifica se o valor da senha existe
-            password_to_use = payload.senha_user #se sim, passa o valor para a criação da conta
+        if payload.senha_user: 
+            password_to_use = payload.senha_user 
         else:
-            password_to_use = payload.user_data.num_doc_user #se não, passa o valor do documento para a criação da conta
+            password_to_use = payload.user_data.num_doc_user
 
         user_data_dict['senha_user'] = password_to_use
         user_data_dict['lv_acesso'] = NivelAcessoEnum.COLABORADOR
@@ -63,7 +63,6 @@ class ColaboradoreController:
         endereco_data = raw_data.pop('endereco', None)
         contatos_data = raw_data.pop('contatos', None)
         
-        # O campo 'is_recepcionista' está no payload de nível superior
         is_recepcionista_value = raw_data.pop('is_recepcionista', None) 
 
         colaborador_extra_data = None

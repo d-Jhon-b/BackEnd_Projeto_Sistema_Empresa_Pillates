@@ -3,7 +3,6 @@ from sqlalchemy import select, insert, delete, update, func
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional, Dict, Any
 
-# Importar classes ORM
 from src.model.aulaModel.aulaConfig import Aula, Estudante_Aula
 from src.database.connPostGreNeon import CreateSessionPostGre
 # from src.model.aulaModel.aulaConfig import Aula

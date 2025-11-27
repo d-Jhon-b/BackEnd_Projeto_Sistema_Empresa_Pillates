@@ -173,14 +173,12 @@ class ForgotPasswordRequest(BaseModel):
 
 #---update 
 class EnderecoUpdateSchema(BaseModel):
-    # ID é essencial para a lógica 1:N de UPDATE/DELETE
     id_endereco: Optional[int] = None 
     tipo_endereco: Optional[TipoEnderecoEnum] = None
     endereco: Optional[str] = Field(None, max_length=255)
     cep: Optional[str] = Field(None, max_length=8)
 
 class ContatoUpdateSchema(BaseModel):
-    # ID é essencial para a lógica 1:N de UPDATE/DELETE
     id_contato: Optional[int] = None 
     tipo_contato: Optional[TipoContatoEnum] = None
     numero_contato: Optional[str] = Field(None, max_length=255)
@@ -206,12 +204,10 @@ class AlunoUpdatePayload(BaseModel):
     endereco: Optional[List[EnderecoUpdateSchema]] = None
     contatos: Optional[List[ContatoUpdateSchema]] = None
     
-    # Dados Extras
     extra_aluno: Optional[ExtraDataAlunoUpdateSchema] = None
 
 class InstrutorUpdatePayload(BaseModel):
     fk_id_estudio: Optional[int] = None
-    # Campos da Tabela Usuario
     name_user: Optional[str] = Field(None, max_length=100)
     email_user: Optional[EmailStr] = None 
     senha_user: Optional[str] = Field(None, min_length=8)

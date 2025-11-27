@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from src.model.planosModel.adesaoPlanoConfig import AdesaoPlano
 from src.model.planosModel.contratoConfig import Contrato 
-from src.model.AdesaoPlanoModel import AdesaoPlanoModel # Importando do arquivo principal solto
+from src.model.AdesaoPlanoModel import AdesaoPlanoModel 
 from src.model.PlanoModel import PlanosModel 
 from src.model.PlanosCustomizadosModel import PlanosPersonalizadosModel 
 
@@ -38,10 +38,7 @@ class PlanoValidationRepository:
         
         for adesao in active_adesoes:
             contrato = self._get_active_contract(adesao.id_adesao_plano)
-            
             if contrato:
-                # Para simplificar agora: Se achou um contrato válido, presumimos elegibilidade.
-                # A lógica de consumo/tipo de plano virá no próximo passo.
                 return True
                 
         raise ValueError("O estudante não está elegível para matrícula. Plano ativo não encontrado ou contrato pendente/expirado.")

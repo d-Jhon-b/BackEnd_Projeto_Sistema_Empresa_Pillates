@@ -46,12 +46,10 @@ class AuthService:
             logging.warning(f"Tentativa de redefinição p/ e-mail não cadastrado: {payload.email}")
             return {"message": "Se um usuário com este e-mail existir, um link será enviado."}
 
-        #token de reset
         expires_delta = timedelta(minutes=15)
         reset_data = {"sub": user.email_user, "scope": "password_reset"}
         reset_token = auth_manager.create_access_token(data=reset_data, expires_delta=expires_delta)
 
-        #Envia o e-mail
         background_tasks.add_task(
             self.email_service.send_password_reset_email,
             email_to=user.email_user,
@@ -76,10 +74,10 @@ class AuthService:
         if not user:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Usuário do token não encontrado.")
             
-        # Cria o novo hash 
         hash_bytes = HashPassword.hash_password(payload.new_password)
         hash_str = hash_bytes.decode('utf-8')
-        #Atualiza no banco 
+
+
         success = self.user_model.update_user_password(
             user_id=user.id_user,
             hashed_password_str=hash_str

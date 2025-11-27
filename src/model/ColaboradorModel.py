@@ -70,17 +70,3 @@ class ColaboradorModel:
             logging.error(f'Erro ao buscar colaborador por ID:\n{err}')
             return None
         
-
-# create_session = CreateSessionPostGre()
-# session = create_session.get_session()
-
-# try:
-#     Colabmodel = ColaboradorModel(session)
-#     # select_colab = Colabmodel.select_colaborador_by_id(3)
-#     # print(select_colab)
-#     select_colab2 = Colabmodel.select_all_colaboradores(1)
-    
-#     for i in select_colab2:
-#         print(i)
-# except SQLAlchemyError as err:
-#     print(err)

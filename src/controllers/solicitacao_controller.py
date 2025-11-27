@@ -77,17 +77,6 @@ class SolicitacaoController():
 
             return SolicitacaoResponseSchema.model_validate(new_request)
 
-            # solicitacao_model = SolicitacoesModel(session_db=session_db)
-            # request_data_dict = data_request.model_dump(exclude_none=True)
-            
-            # request_data_dict['fk_id_estudante'] = user_id 
-            # request_data_dict['fk_id_estudio'] = fk_id_estudio
-            # solicitacao_data_full = SolicitacaoCreate(**request_data_dict)
-            # new_request = solicitacao_model.create_solicitacao(solicitacao_data_full) # Usa o objeto SolicitacaoCreate completo
-
-            # return SolicitacaoResponseSchema.model_validate(new_request)
-
-        
         except Exception as err:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -100,11 +89,10 @@ class SolicitacaoController():
         try:
             solicitacoes_model=SolicitacoesModel(session_db=session_db)
             lv_acesso = current_user.get('lv_acesso')
-            # if id_estudio is None:
-            #     solicitacoes_from_db = solicitacoes_model.select_all_solicitacoes(fk_id_estudio)
+
             if id_estudio is None:
                 if lv_acesso == NivelAcessoEnum.SUPREMO.value:
-                    solicitacoes_from_db = solicitacoes_model.select_all_solicitacoes() #Vai buscar todas as solicitações de todos os estudios
+                    solicitacoes_from_db = solicitacoes_model.select_all_solicitacoes() 
                 else:
                     solicitacoes_from_db = solicitacoes_model.select_all_solicitacoes(fk_id_estudio)
             else:
@@ -171,7 +159,7 @@ class SolicitacaoController():
 
 
             update_data = SolicitacaoUpdate(
-                status_solicitacao=status_solicitacao, # Usa o status fornecido
+                status_solicitacao=status_solicitacao, 
             )
         
         except HTTPException as err:
@@ -182,7 +170,6 @@ class SolicitacaoController():
             session_db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro durante o processamento da solicitação {solicitacao_db.id_solicitacao}: {e}")
 
-        # 5. Persiste a atualização do status e retorna
         updated_solicitacao = await run_in_threadpool(
             solicitacao_model.update_solicitacao,
             id_solicitacao,
@@ -231,10 +218,7 @@ class SolicitacaoController():
                     
             logging.info(f"Data antiga encontrada: {data_aula_antiga}. Nova data calculada: {data_proxima_semana}")
             
-            # --- CORREÇÃO: Usar o título para encontrar a nova ocorrência (ID 39) ---
-            
-            # 3. BUSCAR O DOCUMENTO DA AULA ANTIGA PARA OBTER O TÍTULO RECORRENTE
-            # Usa AulaID (38) e data (19/01) para encontrar o documento e o título ("AulaFinal")
+
             aula_antiga_mongo = await agenda_repo.find_aula_by_id_and_date(
                 aula_id=fk_id_aula_ref,
                 date_time=data_aula_antiga 
@@ -250,7 +234,7 @@ class SolicitacaoController():
 
             logging.info(f"Buscando próxima ocorrência por TÍTULO ('{titulo_aula_recorrente}') na data {data_proxima_semana}")
             
-            proxima_aula_mongo = await agenda_repo.find_aula_by_titulo_and_date( # <-- NOVO MÉTODO NECESSÁRIO NO REPOSITORY
+            proxima_aula_mongo = await agenda_repo.find_aula_by_titulo_and_date(
                 titulo_aula=titulo_aula_recorrente,
                 date_time=data_proxima_semana 
             )
@@ -261,7 +245,7 @@ class SolicitacaoController():
                     detail="Não foi possível reagendar: A ocorrência desta aula na próxima semana não foi encontrada no calendário."
                 )
                 
-            fk_id_nova_aula = proxima_aula_mongo["AulaID"] # Obtém o ID correto da nova ocorrência (Ex: 39)
+            fk_id_nova_aula = proxima_aula_mongo["AulaID"] 
             logging.info(f"Ocorrência da próxima semana encontrada com o NOVO ID: {fk_id_nova_aula}")
 
             removed_success = await agenda_repo.remove_participant_by_date(

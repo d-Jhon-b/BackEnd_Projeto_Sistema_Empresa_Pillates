@@ -21,9 +21,7 @@ class CloudinaryService:
             api_secret=self.API_SECRET,
             secure=True
         )
-        
-        # 3. Inicializa o processador de imagem (síncrono)
-        # Configuração: Largura/Altura Máxima 1080px, Qualidade 80%
+
         self.image_processor = ImageProcessor(max_size=(1080, 1080), quality=80)
 
     async def upload_optimized_image(
@@ -32,20 +30,13 @@ class CloudinaryService:
         folder: str, 
         public_id: str
     ) -> str:
-        """
-        1. Processa a imagem (operação síncrona).
-        2. Faz o upload para o Cloudinary (operação I/O).
-        3. Retorna a URL segura.
-        """
-        
-        # 1. Otimização no Pool de Threads (Para não travar o loop de eventos)
+
         try:
             logging.info("Iniciando otimização da imagem no pool de threads.")
-            # Chama o método síncrono do Pillow de forma assíncrona
             optimized_contents = await run_in_threadpool(
                 self.image_processor.optimize_image, 
                 file_contents, 
-                'JPEG' # Formato de saída otimizado
+                'JPEG' 
             )
             logging.info("Otimização concluída. Tamanho otimizado: %d bytes.", len(optimized_contents))
 
@@ -53,10 +44,8 @@ class CloudinaryService:
             logging.error(f"Erro de otimização: {e}")
             raise Exception(f"Falha ao processar a imagem: {e}")
 
-        # 2. Upload para o Cloudinary
         try:
-            # Upload usa a conexão HTTP, que o Cloudinary SDK trata. 
-            # Não precisa de run_in_threadpool para o SDK do Cloudinary.
+
             upload_result = cloudinary.uploader.upload(
                 optimized_contents, 
                 folder=folder,

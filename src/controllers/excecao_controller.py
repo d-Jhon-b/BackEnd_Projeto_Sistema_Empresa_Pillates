@@ -25,14 +25,6 @@ class ExcecaoController:
         estudio_id = excecao_data.fk_id_estudio
         ExcecaoValidation._check_estudio_exists(db_session_sql, estudio_id)
 
-        # estudio_id = excecao_data.fk_id_estudio
-        # estudio_repo = self._get_estudio_repo(db_session_sql)
-        # if not estudio_repo.check_exists_by_id(estudio_id):
-        #     raise HTTPException(
-        #         status_code=status.HTTP_404_NOT_FOUND,
-        #         detail=f"Estúdio com ID {estudio_id} não encontrado."
-        #     )
-            
         data_to_insert = excecao_data.model_dump(by_alias=True)
         new_id = await self.excecao_repo.insert_excecao(data_to_insert)
 
@@ -55,12 +47,6 @@ class ExcecaoController:
 
         if estudio_id is not None:
             ExcecaoValidation._check_estudio_exists(db_session_sql, estudio_id)
-            #  estudio_repo = self._get_estudio_repo(db_session_sql)
-            #  if not estudio_repo.check_exists_by_id(estudio_id):
-            #     raise HTTPException(
-            #         status_code=status.HTTP_404_NOT_FOUND,
-            #         detail=f"Estúdio com ID {estudio_id} para filtro não encontrado."
-            #     )
 
         excecoes_data = await self.excecao_repo.find_excecoes_by_period(start_date, end_date, estudio_id)
         

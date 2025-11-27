@@ -59,18 +59,3 @@ class ProfessorModel:
             logging.error(f'erro ao buscar aluno:\n{err}')
             return err
         
-
-# session_create = CreateSessionPostGre()
-# get_db = session_create.get_session()
-
-# try:
-#     alunoTest = ProfessorModel(db_session=get_db)
-#     aluno_select = alunoTest.select_all_insttructor(1)
-#     for a in aluno_select:
-#         print(a)
-
-#     aluno_select_id = alunoTest.select_instructor_by_id(1)
-#     print(aluno_select_id)
-# except Exception as err:
-#     print(err)
-#     get_db.close()

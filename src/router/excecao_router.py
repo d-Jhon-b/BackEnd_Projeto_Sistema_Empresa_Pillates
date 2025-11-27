@@ -86,7 +86,6 @@ async def update_excecao_route(
     current_user: Dict[str, Any] = Depends(auth_manager),
     controller: ExcecaoController = Depends(get_excecao_controller_dependency)
 ):
-    # Lógica para garantir que dados de atualização foram fornecidos
     if not update_data.model_dump(by_alias=True, exclude_none=True):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

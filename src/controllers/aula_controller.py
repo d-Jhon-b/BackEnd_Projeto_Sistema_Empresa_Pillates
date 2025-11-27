@@ -292,20 +292,9 @@ class AulaController:
                 )
                 await agenda_repo.create(agenda_create_schema)
 
-                # for estudante_id in estudantes_ids:
-                #     aluno_agenda_data = AgendaAlunoCreate(
-                #         fk_id_estudante=estudante_id,
-                #         fk_id_aula_sql=new_aula_sql.id_aula,
-                #         fk_id_professor_sql=new_aula_sql.fk_id_professor,
-                #         data_hora_aula=dt_completa,
-                #         disciplina=recorrencia_data.disciplina,
-                #         fk_id_estudio=new_aula_sql.fk_id_estudio
-                #     )
-                #     await agenda_aluno_repo.create_registro(aluno_agenda_data)
                 
                 aulas_criadas.append(new_aula_sql.id_aula)
             
-            # Commit da transação SQL
             await run_in_threadpool(db_session.commit)
 
         except SQLAlchemyError as e:
@@ -428,7 +417,6 @@ class AulaController:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao matricular em série de aulas.")
 
 
-    #-------------parte inacabada ainda
     async def unenroll_student_from_aula(
         self, 
         aula_id: int, 
@@ -443,7 +431,6 @@ class AulaController:
 
         aula_model = AulaModel(db_session=db_session)
         
-        # 1. REMOÇÃO SQL (Estudante_Aula)
         deleted_sql = await run_in_threadpool(
             aula_model.unenroll_student, 
             aula_id, 
@@ -451,7 +438,6 @@ class AulaController:
         )
         
         if not deleted_sql:
-            # Se a matrícula não foi encontrada no SQL, a operação não pode continuar
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail=f"Matrícula do Estudante {estudante_id} na Aula {aula_id} não encontrada no SQL."

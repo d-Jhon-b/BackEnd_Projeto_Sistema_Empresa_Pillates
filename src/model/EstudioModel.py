@@ -58,7 +58,6 @@ class EstudioModel:
         try:
             data_to_update = update_data.model_dump(by_alias=True, exclude_none=True)
             
-            # Mapeamento para nomes de colunas do SQLAlchemy
             if 'endereco' in data_to_update:
                 data_to_update['endereco_estudio'] = data_to_update.pop('endereco')
             if 'cep' in data_to_update:
@@ -112,14 +111,3 @@ class EstudioModel:
             return False
         
 
-
-# create_session = CreateSessionPostGre()
-# session =create_session.get_session()
-
-# estudio_model= EstudioModel(session)
-# try: 
-#     estudio_id=int(2)
-#     res = estudio_model.delete_estudio(estudio_id=estudio_id)
-#     print(res)
-# except Exception as err:
-#     print(err)

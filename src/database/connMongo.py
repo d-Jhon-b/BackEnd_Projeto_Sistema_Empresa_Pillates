@@ -48,29 +48,3 @@ class MongoConnectionManager:
             )
          return cls.client
     
-
-# if __name__ == "__main__":
-#     import asyncio
-    
-#     async def test_connection():
-#         print("\n--- 🧪 Teste de Conexão Direta ao MongoDB Atlas ---")
-#         try:
-#             # Tenta conectar
-#             await MongoConnectionManager.connect()
-            
-            
-            
-#             print("\n SUCESSO! A conexão com o MongoDB Atlas foi estabelecida com sucesso.")
-            
-#         except Exception as e:
-#             # Se a conexão falhar, o erro detalhado será impresso pelo método connect()
-#             print("\n FALHA: Não foi possível estabelecer a conexão com o MongoDB Atlas.")
-#             # O detalhe exato do erro deve ter sido impresso acima
-            
-#         finally:
-#             # Garante que a conexão seja fechada após o teste
-#             await MongoConnectionManager.close()
-#             print("Conexão fechada.")
-            
-#     # Executa a função assíncrona
-#     asyncio.run(test_connection())

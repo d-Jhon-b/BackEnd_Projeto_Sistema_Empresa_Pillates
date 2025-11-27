@@ -344,20 +344,3 @@ class UserModel():
             return None
         
 
-
-
-# session_create = CreateSessionPostGre()
-# db_session = session_create.get_session()
-
-# try:
-#     aluno_test = UserModel(db_session=db_session)
-#     aluno_select_all = aluno_test.select_all_users(studio_id=1)
-#     for a in aluno_select_all:
-#         print(a) 
-#     # aluno_select_one = aluno_test.select_user_id(user_id=1)
-#     # print(aluno_select_one)
-
-# except Exception as err:
-#     print(f"\nErro fatal ao iniciar a sessão ou rodar testes: {err}")
-# finally:
-#     db_session.close()

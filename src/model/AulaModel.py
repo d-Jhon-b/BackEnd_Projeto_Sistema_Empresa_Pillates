@@ -197,7 +197,7 @@ class AulaModel:
 
 
 
-        #----------adicionado para, mas não aplicado de froma exata
+        #----------adicionado para tirar um aluno da aula, mas não aplicado de froma exata
     def unenroll_student(self, aula_id: int, estudante_id: int) -> bool:
         try:
             stmt = delete(Estudante_Aula).where(
@@ -213,92 +213,3 @@ class AulaModel:
             raise
     #------------------não aplicado para produto final
 
-
-# create_session = CreateSessionPostGre()
-# session = create_session.get_session()
-# aula_model = AulaModel(session)
-# import logging
-# try:
-#     user_id=1
-#     estudante_id=False
-
-#     my_class = aula_model.select_my_aulas(1)
-#     for i in my_class:
-#         print(i)    
-# except Exception as err:
-#     logging.error(f'{err}')
-#     print(err)
-
-# from datetime import datetime
-# from src.model.userModel.typeUser.aluno import Estudante
-# from src.model.UserModel import UserModel
-# create_session=CreateSessionPostGre()
-# session = create_session.get_session()
-# aula_model=AulaModel(db_session=session)
-
-# MOCK_FK_PROFESSOR = 1 
-# MOCK_FK_ESTUDIO = 1
-# TITULO_DA_AULA = f"Teste de Inserção {datetime.now().strftime('%Y%m%d%H%M%S')}"
-# MOCK_DATA_AULA = datetime(2026, 12, 25, 10, 0, 0) # Exemplo de data futura
-# MOCK_DESC = "Aula criada via teste de integracao do Model."
-
-# aula_data_sql = {
-#     "fk_id_professor": MOCK_FK_PROFESSOR,
-#     "fk_id_estudio": MOCK_FK_ESTUDIO,
-#     "data_aula": MOCK_DATA_AULA,
-#     "titulo_aula": TITULO_DA_AULA,
-#     "desc_aula": MOCK_DESC
-# }
-
-# estudantes_ids = [2, 3] 
-
-# try:
-#     print(f"\n--- Iniciando Teste de Inserção SQL Real ---")
-#     print(f"Dados: {aula_data_sql}")
-    
-#     new_aula_orm = aula_model.insert_new_aula(
-#         aula_data=aula_data_sql,
-#         estudantes_ids=estudantes_ids
-#     )
-
-#     print(f"ID da Aula: {new_aula_orm.id_aula}")
-#     print(f"Título: {new_aula_orm.titulo_aula}")
-#     print(f"Matrículas: {[ea.fk_id_estudante for ea in new_aula_orm.estudantes_associacao]}")
-
-# except SQLAlchemyError as e:
-#     print(f"Detalhes: {e}")
-# except Exception as e:
-#     print(f"Erro Inesperado: {e}")
-    
-
-
-
-# import os
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import sessionmaker
-# from src.database.connPostGreNeon import CreateSessionPostGre
-    
-
-
-# try:
-#     create_session = CreateSessionPostGre()
-#     db_session = create_session.get_session()
-    
-#     # Assumindo que sua classe AulaModel se chama 'AulaModel'
-#     aula_model = AulaModel(db_session=db_session) 
-    
-#     ID_ESTUDANTE = 1 # O mesmo estudante que tem 4 aulas restantes
-    
-#     aulas_futuras = aula_model.count_future_enrollments(ID_ESTUDANTE)
-#     print(f"Estudante {ID_ESTUDANTE} tem {aulas_futuras} aulas futuras matriculadas.")
-    
-#     # AQUI ESTÁ A CHAVE: Se aulas_futuras for 4, 5, etc., o erro 400 é esperado.
-#     # Se for 0 ou 1, o erro 400 é INESPERADO.
-#     if aulas_futuras >= 4:
-#         print("AVISO CRÍTICO: Matrículas futuras consomem todo o saldo restante (4).")
-        
-# except Exception as e:
-#     print(f"ERRO INESPERADO no teste do AulaModel: {e}")
-# finally:
-#     if 'db_session' in locals():
-#         db_session.close()

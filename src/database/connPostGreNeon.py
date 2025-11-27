@@ -43,15 +43,3 @@ class CreateSessionPostGre():
             return None       
         return Session(bind=self.engine)
     
-
-# db_connector = CreateSessionPostGre()
-# session_instance = db_connector.get_session()
-
-# if session_instance:
-#     comand = select(func.version())
-#     with session_instance as session:
-#         res=session.execute(comand).fetchone()
-#         print(res)
-
-# else:
-#     print(f'erro')

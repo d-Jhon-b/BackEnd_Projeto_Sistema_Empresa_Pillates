@@ -238,7 +238,3 @@ class AdesaoPlanoController:
 
     
         
-    # def get_my_plan(self, session:Session, curret_user: Dict[str, Any]):
-        
-
-    #     return
