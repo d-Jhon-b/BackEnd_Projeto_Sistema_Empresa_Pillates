@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from typing import List, Dict, Any
 
 
@@ -9,6 +10,8 @@ from src.controllers.plano_personalizado_controller import PlanosPersonalizadosC
 from src.schemas.plano_schemas import PlanoResponse
 from src.schemas.planos_personalizados_schemas import PlanoPersonalizadoResponse
 from src.controllers.validations.permissionValidation import UserValidation
+
+from src.model.planosModel import adesaoPlanoConfig, planosPersonalizadosConfig
 
 
 class ConsultaPlanosGeralController:
