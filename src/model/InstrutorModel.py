@@ -70,7 +70,7 @@ class ProfessorModel:
             id_user = self.session.execute(stmt).scalar_one_or_none()        
         # UserValidation.check_self_or_admin_permission
             
-            print(f'{id_user}\n\n\n\n\n')
+            # print(f'{id_user}\n\n\n\n\n')
             return id_user
         except SQLAlchemyError as err:
             logging.error(f"Erro de DB ao buscar id_user pelo id_estudante: {err}")

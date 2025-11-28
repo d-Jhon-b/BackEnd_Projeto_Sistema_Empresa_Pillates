@@ -23,8 +23,6 @@ class TargetUserFinder:
 
         estudante_model = AlunoModel(db_session=session_db)
         target_user_id = estudante_model.select_id_user_by_fk_id_estudante(estudante_id)
-        
-        
 
         if not target_user_id:
             raise HTTPException(
@@ -130,7 +128,6 @@ class TargetUserFinder:
         # professor_id:int = None
     ) -> int:
         id_user = current_user.get('id_user')
-        print(f'chegou aq1\n\n\n\n')
 
         professor_model = ProfessorModel(db_session=session_db)
         target_instrutor_user_id = professor_model.select_instructor_by_id(id_user)

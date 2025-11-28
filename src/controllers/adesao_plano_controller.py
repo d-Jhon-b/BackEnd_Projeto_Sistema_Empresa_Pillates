@@ -119,7 +119,6 @@ class AdesaoPlanoController:
 
         aluno_model = AlunoModel(session_db)
         fk_id_user=aluno_model.select_id_user_by_fk_id_estudante(estudante_id=estudante_id)
-        print(f'{fk_id_user}\n\n\n\n')
 
         UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=fk_id_user)
 

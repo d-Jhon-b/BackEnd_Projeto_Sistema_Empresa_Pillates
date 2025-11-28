@@ -53,7 +53,7 @@ def select_all_colaboradores_endpoint(
     current_user: dict = Depends(auth_manager)
 ):
     user_estudio = current_user.get('fk_id_estudio')
-    print(f'{user_estudio}\n\n\n\n\n')
+    # print(f'{user_estudio}\n\n\n\n\n')
     return colaborador_controller.select_all_colaboradores_controller(studio_id=studio_id, current_user=current_user, db_session=db)
 
 

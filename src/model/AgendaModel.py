@@ -249,7 +249,7 @@ class AgendaAulaRepository:
             results = await aula_cursor.to_list(length=1) 
             aula_mongo = results[0] if results else None
             
-            logging.debug(f"DEBUG: Resultado da busca crua: {aula_mongo}\n\n\n\n\n")
+            # logging.debug(f"DEBUG: Resultado da busca crua: {aula_mongo}\n\n\n\n\n")
                 
         except Exception as e:
             logging.error(f'Erro fatal ao buscar próxima aula {aula_id} no Mongo: {e}', exc_info=True)
