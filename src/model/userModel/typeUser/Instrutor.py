@@ -25,20 +25,3 @@ class Professor(Base.Base):
     def __repr__(self):
         return f"\n\n\n<Professor(id={self.id_professor},\n\nformação:{self.formacao}\n\nfk_user_id='{self.fk_id_user}\n\n\ntipo_especializacao:{self.tipo_especializacao}'\n\n\n data de contratação:{self.data_contratacao})>"
     
-
-# if __name__ == "__main__":
-#     try:
-#         createSession = CreateSessionPostGre()
-#         session = createSession.get_session()
-
-#         if not session:
-#             print(f'erro ao criar sessão para acesso')
-#         else:
-#             comand = select(Professor)
-#             res = session.execute(comand)
-#             todos_res = res.scalars().all()
-#             print(todos_res)
-#     except Exception as err:
-#         print(err)
-#     finally:
-#         session.close()
