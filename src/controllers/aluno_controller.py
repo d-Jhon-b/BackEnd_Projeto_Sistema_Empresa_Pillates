@@ -3,16 +3,20 @@ from sqlalchemy.orm import Session
 from src.model.UserModel import UserModel
 
 from src.model.AlunoModel import AlunoModel
+from src.model.AulaModel import AulaModel
 
 from src.utils.authUtils import auth_manager
 from src.schemas.user_schemas import (UserResponse, LoginRequestSchema, NivelAcessoEnum, 
 AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload,
-AlunoUpdatePayload
+AlunoUpdatePayload,AlunoResponseName
 )
 from src.controllers.validations.permissionValidation import UserValidation
 from src.controllers.utils.TargetUserFinder import TargetUserFinder
 
 from src.controllers.operations.operations import Operations
+import logging
+
+
 
 class AlunoController:
     def create_aluno(self, payload: AlunoCreatePayload, current_user: dict, db_session: Session):
@@ -41,6 +45,43 @@ class AlunoController:
         return [UserResponse.model_validate(user) for user in users_from_db]
     
    
+
+
+
+    def select_students_info_for_instrucotr(self, current_user: dict, db_session, aluno_id:int):
+        user_model = AlunoModel(db_session=db_session)
+        professor_id_response = TargetUserFinder.check_id_instrutor_by_id_user(current_user=current_user, session_db=db_session)
+        
+        estudante_id_response = TargetUserFinder.check_and_get_target_user_id_no_validation(session_db=db_session, estudante_id=aluno_id)
+        
+        try:
+            user = user_model.select_student_by_id(user_id=estudante_id_response)
+
+            if user is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, 
+                    detail=f"Aluno com ID {aluno_id} não encontrado."
+                )
+            
+            user_new = {
+                "id_user": user.id_user,
+                "name_user": user.name_user,
+                "nasc_user": user.nasc_user,
+                "foto_user": getattr(user, 'foto_user', None) 
+            }
+            
+            return AlunoResponseName.model_validate(user_new)
+        
+        except HTTPException as e:
+            raise e
+        except Exception as err:
+            logging.error(f'Erro ao processar buscar nome de estundate: \nerro:{err}')
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                detail="Erro interno ao buscar dados do estudante."
+            )
+
+
 
     def select_aluno_by_id(self, user_id: int, current_user: dict, db_session: Session):
         UserValidation.check_self_or_admin_permission(current_user, user_id)

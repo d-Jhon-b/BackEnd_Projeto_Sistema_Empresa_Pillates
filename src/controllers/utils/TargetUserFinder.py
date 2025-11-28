@@ -3,10 +3,12 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any
 
 from src.model.AlunoModel import AlunoModel
+from src.model.InstrutorModel import ProfessorModel
 from src.model.userModel.typeUser.aluno import Estudante
+from src.model.userModel.typeUser.Instrutor import Professor
 from src.controllers.validations.permissionValidation import UserValidation
-
-
+from sqlalchemy.exc import SQLAlchemyError
+import logging
 class TargetUserFinder:
 
     @staticmethod
@@ -73,7 +75,49 @@ class TargetUserFinder:
         print(id_estundate)
         return id_estundate
     
+
+
     
+    @staticmethod
+    def check_id_instrutor_by_id_user(
+        session_db:Session,
+        current_user:dict
+    ):
+        user_id = current_user.get('id_user')
+        professor_model = ProfessorModel(db_session=session_db)
+        professor_response = professor_model.select_instructor_by_id(user_id=user_id)
+
+        if professor_response is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Professor de ID {professor_response} não encontrado."
+            )
+        professor_user_id = professor_response.professor.fk_id_user
+        professor_id_response = professor_response.professor.id_professor
+        UserValidation.check_self_or_admin_permission(current_user=current_user,target_user_id=professor_user_id)
+        return professor_id_response
+    
+
+    @staticmethod
+    def check_and_get_target_user_id_no_validation(
+        session_db: Session, 
+        estudante_id: int, 
+    ) -> int:
+
+        estudante_model = AlunoModel(db_session=session_db)
+        target_user_id = estudante_model.select_id_user_by_fk_id_estudante(estudante_id)
+        
+        if not target_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Estudante ID {estudante_id} não encontrado ou sem usuário associado."
+            )
+            
+        return target_user_id
+
+
+
+
     # @staticmethod
     # def check_estudante_id(
     #     current_user:Dict[str, Any],

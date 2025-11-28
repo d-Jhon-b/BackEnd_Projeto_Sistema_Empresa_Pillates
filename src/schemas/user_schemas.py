@@ -127,7 +127,14 @@ class RecepcionistaResponse(BaseModel):
     class Config:
         from_attributes = True
 
+#-----teste
+class AlunoResponseName(BaseModel):
+    id_user:int
+    name_user: str = Field(..., max_length=100)
+    nasc_user: Optional[date] = None
+    foto_user: Optional[str]
 
+#teste
 
 class UserResponse(UserBaseSchema):
     id_user: int

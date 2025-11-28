@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends, Query, Path
 from sqlalchemy.orm import Session
-from src.schemas.user_schemas import AlunoCreatePayload, UserResponse, AlunoUpdatePayload
+from src.schemas.user_schemas import AlunoResponseName, AlunoCreatePayload, UserResponse, AlunoUpdatePayload
 # from src.controllers.userController import UserController
 from fastapi import HTTPException
 
@@ -70,4 +70,21 @@ def update_aluno_endpoint(
         update_data=update_data,
         current_user=current_user,
         db_session=db
+    )
+
+
+@router.get('/aluno-instrutor/{user_id}',
+    response_model=AlunoResponseName, 
+    status_code=status.HTTP_200_OK, 
+    summary="Rota para instrutor buscar estudantes"            
+)
+def select_alunos_for_instrutor(
+    estudante_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(auth_manager)
+):
+    return aluno_controller.select_students_info_for_instrucotr(
+        current_user=current_user,
+        db_session=db,
+        aluno_id=estudante_id
     )

@@ -13,7 +13,7 @@ from src.model.solicitacoesModel.solicitacoesConfig import Solicitacoes
 from src.database.connPostGreNeon import CreateSessionPostGre
 from src.model.userModel.typeUser.Instrutor import Professor
 from src.model.aulaModel.validations.num_estudantes import NumAlunosValidation
-
+import logging
 
 class AulaModel:
     def __init__(self, db_session: Session):
@@ -213,3 +213,36 @@ class AulaModel:
             raise
     #------------------não aplicado para produto final
 
+
+#     def select_aluno_aula_by_professor_id(self, professor_id):
+#         try:
+#             stmt = select(Aula.id_aula).where(Aula.fk_id_professor == professor_id)
+#             id_aula_resultado = self.session.execute(stmt).unique().all()
+
+#             logging.error(f'{id_aula_resultado}')
+#             print(f'{id_aula_resultado}\n\n\n')
+
+#             return id_aula_resultado
+#         except SQLAlchemyError as err:
+#             logging.error(f'Erro ao buscar aula com base no professor: \n{err}')
+#             return None
+#         except Exception as err:
+#             logging.error(f'Erro ao processar busca de aula com base no professor: \n{err}')
+#             return None
+        
+
+# create_seesion = CreateSessionPostGre()
+# session = create_seesion.get_session()
+# aula_model = AulaModel(db_session=session)
+
+# try:
+#     id_sensei = 1
+#     res = aula_model.select_aluno_aula_by_professor_id(professor_id=id_sensei)
+#     print(res)
+
+
+# except SQLAlchemyError as err:
+#     print(err)
+
+# except Exception as err:
+#     print(err)
