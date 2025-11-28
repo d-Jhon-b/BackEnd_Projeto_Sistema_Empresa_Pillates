@@ -84,8 +84,10 @@ class AlunoController:
 
 
     def select_aluno_by_id(self, user_id: int, current_user: dict, db_session: Session):
-        UserValidation.check_self_or_admin_permission(current_user, user_id)
 
+        
+        UserValidation.check_self_or_intructor_or_admin_permission(current_user, user_id)
+        
         user_model = AlunoModel(db_session=db_session)
         student_user_id = TargetUserFinder.check_and_get_target_user_id_all_users(session_db=db_session, current_user=current_user, estudante_id=user_id)
         user = user_model.select_student_by_id(user_id=student_user_id) 
@@ -97,6 +99,9 @@ class AlunoController:
             )
         return UserResponse.model_validate(user)
     
+
+
+
     def update_aluno_data(self, user_id: int, update_data: AlunoUpdatePayload, current_user: dict, db_session: Session) -> UserResponse:
         UserValidation.check_self_or_admin_permission(current_user, user_id)
         user_model = UserModel(db_session=db_session)

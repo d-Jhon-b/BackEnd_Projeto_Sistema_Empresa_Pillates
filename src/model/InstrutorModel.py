@@ -59,3 +59,23 @@ class ProfessorModel:
             logging.error(f'erro ao buscar aluno:\n{err}')
             return err
         
+
+
+
+    def select_id_user_by_fk_id_professor(self, professor_id:int)->Optional[int]:
+        try:
+            stmt =(
+                select(Professor.fk_id_user).join(Usuario).where(Professor.id_professor == professor_id)
+            )   
+            id_user = self.session.execute(stmt).scalar_one_or_none()        
+        # UserValidation.check_self_or_admin_permission
+            
+            print(f'{id_user}\n\n\n\n\n')
+            return id_user
+        except SQLAlchemyError as err:
+            logging.error(f"Erro de DB ao buscar id_user pelo id_estudante: {err}")
+            raise err
+        except Exception as err:
+            logging.error(f"Erro ao buscar id_user pelo id_estudante: {err}")
+            raise err
+        

@@ -34,6 +34,9 @@ def get_aluno_by_id_endpoint(
 ):
     return aluno_controller.select_aluno_by_id(user_id=user_id, current_user=current_user, db_session=db)
 
+
+
+
 @router.get("/", response_model=List[UserResponse], summary="Listar todos os alunos por estudio (Requer autenticação de Admin)")
 def get_all_alunos_endpoint(
     db: Session = Depends(get_db),
@@ -74,6 +77,7 @@ def update_aluno_endpoint(
 
 
 @router.get('/aluno-instrutor/{user_id}',
+    # response_model=UserResponse, 
     response_model=AlunoResponseName, 
     status_code=status.HTTP_200_OK, 
     summary="Rota para instrutor buscar estudantes"            

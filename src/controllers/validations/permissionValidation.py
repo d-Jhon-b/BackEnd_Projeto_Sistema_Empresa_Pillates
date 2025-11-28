@@ -4,7 +4,7 @@ from src.model.UserModel import UserModel
 from src.utils.authUtils import auth_manager
 from src.schemas.user_schemas import UserResponse, LoginRequestSchema, NivelAcessoEnum, AlunoCreatePayload, InstrutorCreatePayload, ColaboradorCreatePayload
 
-
+import logging
 class UserValidation():
     @staticmethod
     def _check_permission( current_user: dict, allowed_levels: list):
@@ -85,7 +85,7 @@ class UserValidation():
     def check_self_or_intructor_or_admin_permission(current_user: dict, target_user_id: int):
         requester_id = current_user.get("id_user")
         requester_level = current_user.get("lv_acesso")
-
+        
         is_admin_or_instructor = requester_level in [
             NivelAcessoEnum.SUPREMO.value, 
             NivelAcessoEnum.COLABORADOR.value,
@@ -93,7 +93,7 @@ class UserValidation():
         ]
         
         is_requesting_self = (requester_id == target_user_id)
-
+        
         if not (is_admin_or_instructor or is_requesting_self):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

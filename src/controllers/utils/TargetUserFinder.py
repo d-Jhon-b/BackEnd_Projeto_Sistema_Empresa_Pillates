@@ -9,6 +9,9 @@ from src.model.userModel.typeUser.Instrutor import Professor
 from src.controllers.validations.permissionValidation import UserValidation
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+
+
+
 class TargetUserFinder:
 
     @staticmethod
@@ -21,13 +24,15 @@ class TargetUserFinder:
         estudante_model = AlunoModel(db_session=session_db)
         target_user_id = estudante_model.select_id_user_by_fk_id_estudante(estudante_id)
         
+        
+
         if not target_user_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail=f"Estudante ID {estudante_id} não encontrado ou sem usuário associado."
             )
-            
-        UserValidation.check_self_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
+        
+        UserValidation.check_self_or_intructor_or_admin_permission(current_user=current_user, target_user_id=target_user_id)
         return target_user_id
     
 
@@ -48,7 +53,7 @@ class TargetUserFinder:
             )
             
         # Aplica a validação de permissão estendida (Admin/Colaborador/Instrutor OU Dono)
-        UserValidation.check_self_or_admin_permission(
+        UserValidation.check_self_or_intructor_or_admin_permission(
             current_user=current_user, 
             target_user_id=target_user_id
         )
@@ -115,6 +120,43 @@ class TargetUserFinder:
             
         return target_user_id
 
+
+
+    @staticmethod
+    def check_and_get_target_user_id_all(
+        session_db: Session, 
+        # estudante_id: int, 
+        current_user: Dict[str, Any],
+        # professor_id:int = None
+    ) -> int:
+        id_user = current_user.get('id_user')
+        print(f'chegou aq1\n\n\n\n')
+
+        professor_model = ProfessorModel(db_session=session_db)
+        target_instrutor_user_id = professor_model.select_instructor_by_id(id_user)
+        teste=target_instrutor_user_id.professor.fk_id_user
+
+        if target_instrutor_user_id:
+            UserValidation.check_self_or_intructor_or_admin_permission(current_user=current_user, target_user_id=teste)
+            return target_instrutor_user_id.professor.fk_id_user
+
+        estudante_model = AlunoModel(db_session=session_db)
+        target_estudante_user_id = estudante_model.select_student_by_id(id_user)
+        
+        if target_estudante_user_id:
+            print(f'chegou aq3\n\n\n\n')
+            UserValidation.check_self_or_intructor_or_admin_permission(current_user=current_user, target_user_id=target_estudante_user_id.id_user)
+            return target_estudante_user_id.estudante.fk_id_user
+ 
+        
+        if not target_estudante_user_id or not target_instrutor_user_id:
+        # if not target_instrutor_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Estudante ou Professor ou ID {id_user} não encontrado ou sem usuário associado."
+            )
+        
+        
 
 
 
