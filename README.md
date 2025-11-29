@@ -85,3 +85,18 @@ Pydantic: Para validação e serialização de dados (Schemas).
 -Em seu Diretório principal rode o comando:
 `pip install --no-index --find-links=packages -r instacoes_offline.txt` ->
 
+
+
+
+
+# Aplicação em Docker:
+6. O Docker é usado para isolar o ambiente e preparar o projeto para a nuvem (ex: Render).
+- Necessário a instalação do docker desktop:
+    - `https://www.docker.com/products/docker-desktop/`
+    
+6.1. Comandos para construir a imagem a partir do Dockerfile:
+` docker build -t sig-pillates-fastapi:latest . ` 
+
+6.2. Execução Local do Container (Teste de Produção)
+`docker run -d --name sig-app-live -p 8000:80 sig-pillates-fastapi:latest`
+- Para testar localmente (acessível em http://localhost:8000):
