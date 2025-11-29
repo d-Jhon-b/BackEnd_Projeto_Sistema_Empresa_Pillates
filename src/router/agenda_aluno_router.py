@@ -170,9 +170,7 @@ async def update_status_presenca_endpoint(
     anexos_bytes: List[bytes] = []
     if anexos_files:
         for file in anexos_files:
-            # Lemos o conteúdo binário de cada arquivo
             anexos_bytes.append(await file.read())
-            # Não fechamos aqui, pois o objeto UploadFile é gerenciado pelo FastAPI
 
     updated_doc = await agenda_aluno_ctrl.update_status_presenca(
         registro_id=registro_id, 
