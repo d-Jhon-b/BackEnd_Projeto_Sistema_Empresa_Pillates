@@ -101,7 +101,7 @@ class AulaController:
                 fk_id_estudio=new_aula.fk_id_estudio,
                 data_aula=new_aula.data_aula, 
                 desc_aula=new_aula.desc_aula, 
-                
+                tituloAulaCompleto=new_aula.titulo_aula,
                 disciplina=aula_data.disciplina,         
                 duracao_minutos=aula_data.duracao_minutos, 
                 
@@ -114,10 +114,11 @@ class AulaController:
         
         except SQLAlchemyError as e:
             db_session.rollback() 
-            print(f"ERRO DE PERSISTÊNCIA: {type(e).__name__}: {e}") 
+            # print(f"ERRO DE PERSISTÊNCIA: {type(e).__name__}: {e}") 
+            logging(f'{e}\n\n\n')
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Erro ao criar aula (verifique se as FKs de Estúdio/Professor são válidas).")
         except Exception as e:
-            print(f"ERRO DE PERSISTÊNCIA: {type(e).__name__}: {e}")
+            # print(f"ERRO DE PERSISTÊNCIA: {type(e).__name__}: {e}")
             db_session.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro ao agendar a aula: {e}. A aula no SQL foi revertida.")
 
